@@ -245,7 +245,7 @@ export default function LandingPage() {
           loop
           muted
           playsInline
-          src="https://pub-bb786bf7d0694660bdaf27d408482fbb.r2.dev/Landing%20page%20background%20video/TAZ-Hero-section-bg.mp4"
+          src="https://media.theathleticzone.in/Landing%20page%20background%20video/TAZ-Hero-section-bg.mp4"
           className="absolute inset-0 w-full h-full object-cover opacity-40 "
           poster="https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?auto=format&fit=crop&q=80&w=2000"
         />
