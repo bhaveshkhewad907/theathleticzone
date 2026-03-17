@@ -27,7 +27,7 @@ const distributeEvenly = (users: any[]) => {
   const baseSize = Math.floor(N / groupCount);
   let remainder = N % groupCount;
 
-  const groups = [];
+  const groups: any[] = [];
   let index = 0;
 
   for (let i = 0; i < groupCount; i++) {

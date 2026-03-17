@@ -19,7 +19,7 @@ export const processSessionLifecycle = async () => {
     });
 
     // 🚀 PERFORMANCE UPGRADE: Array to hold all DB instructions
-    const bulkOps = [];
+    const bulkOps: any[] = [];
 
     for (const session of sessions) {
       const timeMatch = session.scheduledTime.match(/(\d+):(\d+)\s*(AM|PM)?/i);

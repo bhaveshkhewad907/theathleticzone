@@ -244,7 +244,7 @@ export const acceptCoachInvite = async (token: string, password: string) => {
     invitationToken: { $exists: true },
   });
 
-  let matchedCoach = null;
+  let matchedCoach: any = null;
 
   for (const coach of coaches) {
     const isMatch = await bcrypt.compare(token, coach.invitationToken!);

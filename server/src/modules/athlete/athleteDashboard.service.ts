@@ -34,7 +34,7 @@ export const getAthleteDashboard = async (userId: string) => {
     status: { $in: ["SCHEDULED", "LIVE"] },
   }).sort({ scheduledDate: 1, scheduledTime: 1 }); // Sort by soonest
 
-  let upcomingSession = null;
+  let upcomingSession: any = null;
 
   if (schedule) {
     const timing = getSessionTimingMeta(schedule);

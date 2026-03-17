@@ -324,8 +324,8 @@ export const getMySubscriptionState = async (userId: string) => {
 
   const now = new Date();
 
-  let activeSub = null;
-  let expiredSub = null;
+  let activeSub: any = null;
+  let expiredSub: any = null;
 
   for (const sub of subscriptions) {
     if (sub.status === "ACTIVE" && sub.endDate && now <= sub.endDate) {
