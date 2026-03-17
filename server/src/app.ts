@@ -27,6 +27,7 @@ const globalLimiter = rateLimit({
 });
 
 const app = express();
+app.set("trust proxy", 1);
 
 // 1. SENTRY: Initialization (v8 Syntax auto-instruments requests)
 Sentry.init({
