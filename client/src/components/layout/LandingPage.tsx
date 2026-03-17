@@ -119,7 +119,7 @@ const cinematicReveal = {
    Main Component
    ========================================================================== */
 export default function LandingPage() {
-  const WHATSAPP_NUMBER = "9680223777";
+  const WHATSAPP_NUMBER = "+919680223777";
   const WHATSAPP_LINK = `https://wa.me/${WHATSAPP_NUMBER}?text=Hello,%20I%20am%20interested%20in%20joining%20The%20Athletic%20Zone.%20Could%20I%20please%20request%20more%20information%20regarding%20your%20training%20sectors%20and%20facility%20access?`;
   const [sectors, setSectors] = useState<SportSector[]>([]);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
