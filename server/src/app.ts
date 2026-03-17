@@ -10,6 +10,7 @@ import errorHandler from "./middlewares/error.middleware";
 import * as Sentry from "@sentry/node";
 import promBundle from "express-prom-bundle";
 import { logger } from "./utils/logger";
+import ApiError from "./utils/apiError";
 
 // 👇 ARCHITECTURE UPGRADE: Import the single master router
 import apiRoutes from "./modules/index.routes";
@@ -69,12 +70,22 @@ app.use(
 app.use(globalLimiter);
 
 app.use(cookieParser());
+const allowedOrigins = [
+  "https://theathleticzone.in",
+  "https://www.theathleticzone.in", // Add this if it's missing!
+  "https://theathleticzone.vercel.app",
+  "http://localhost:5173",
+];
+
 app.use(
   cors({
-    origin:
-      process.env.NODE_ENV === "production"
-        ? process.env.CLIENT_URL
-        : "http://localhost:5173",
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        callback(new ApiError(401, "Not allowed by CORS"));
+      }
+    },
     credentials: true,
   }),
 );
