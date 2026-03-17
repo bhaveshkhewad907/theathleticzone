@@ -22,6 +22,8 @@ export interface IUser extends Document {
   isBlocked: boolean;
   createdAt: Date;
   updatedAt: Date;
+  invitationToken?: string;
+  invitationExpires?: Date;
 }
 
 const userSchema = new Schema<IUser>(
