@@ -1,0 +1,241 @@
+import { useState, useContext } from "react";
+import {
+  Menu,
+  LogOut,
+  LayoutDashboard,
+  CreditCard,
+  PlayCircle,
+  User,
+  ShoppingBag,
+  Shield,
+  Radio,
+} from "lucide-react";
+import { motion } from "framer-motion";
+import { Outlet, NavLink, useLocation } from "react-router-dom";
+import AuthContext from "../../context/AuthContext";
+import AuraBackground from "../../components/layout/AuraBackground";
+import Footer from "./Footer";
+
+export default function AthleteLayout() {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const auth = useContext(AuthContext);
+  const location = useLocation();
+
+  if (!auth) return null;
+
+  const navItems = [
+    { label: "Performance Hub", path: "/athlete", icon: LayoutDashboard },
+    {
+      label: "Active Subscriptions",
+      path: "/athlete/subscriptions",
+      icon: CreditCard,
+    },
+    { label: "Training Vault", path: "/athlete/my-courses", icon: PlayCircle },
+    { label: "Live Training", path: "/athlete/live-plans", icon: Radio },
+    { label: "Marketplace", path: "/athlete/courses", icon: ShoppingBag },
+    { label: "Personal Profile", path: "/athlete/profile", icon: User },
+  ];
+  const userProfileImage = (auth.user as unknown as { profileImage?: string })
+    ?.profileImage;
+
+  return (
+    <div className="min-h-screen text-white flex font-sans selection:bg-amber-500/30 relative z-0">
+      <AuraBackground imageUrl={userProfileImage} />
+
+      {/* 🚀 UPGRADED: Mobile Sidebar Dark Overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden transition-opacity duration-300"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar - Elite Athlete Command */}
+
+      <aside
+        className={`fixed z-50 inset-y-0 left-0 w-72 bg-black/20 backdrop-blur-2xl border-r border-white/5 shadow-[10px_0_30px_rgba(0,0,0,0.5)] transform transition-all duration-500 ease-in-out
+        ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0 md:static md:block`}
+      >
+        <div className="p-8 mb-4">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 bg-amber-500 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(245,158,11,0.3)]">
+              <span className="text-black font-black text-xl italic">AZ</span>
+            </div>
+            <div>
+              <h2 className="text-sm font-black tracking-tighter uppercase italic leading-none">
+                The Athletic Zone
+              </h2>
+              <h2 className="text-[10px] font-bold tracking-[0.3em] uppercase text-amber-500/80 mt-1">
+                • Athlete
+              </h2>
+            </div>
+          </div>
+        </div>
+
+        <nav className="p-6 space-y-2">
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/20 mb-6 ml-3">
+            Training Sectors
+          </p>
+          {navItems.map((item) => (
+            <NavLink
+              key={item.label}
+              to={item.path}
+              end={item.path === "/athlete"}
+              onClick={() => setSidebarOpen(false)}
+              className={({ isActive }) =>
+                `group relative px-4 py-3 rounded-xl transition-all duration-300 flex items-center gap-3 overflow-hidden ${
+                  isActive
+                    ? "bg-white/[0.05] border border-white/10 text-white"
+                    : "hover:bg-white/[0.03] border border-transparent text-white/40"
+                }`
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  <div
+                    className={`absolute left-0 top-1/2 -translate-y-1/2 h-4 w-[2px] bg-amber-500 rounded-full transition-all duration-300 ${isActive ? "opacity-100" : "opacity-0"}`}
+                  />
+                  <item.icon
+                    size={18}
+                    className={
+                      isActive ? "text-amber-500" : "group-hover:text-white/80"
+                    }
+                  />
+                  <span
+                    className={`text-[11px] font-black uppercase tracking-widest transition-colors ${isActive ? "text-amber-500" : ""}`}
+                  >
+                    {item.label}
+                  </span>
+                </>
+              )}
+            </NavLink>
+          ))}
+
+          <button
+            onClick={auth.logout}
+            className="flex items-center gap-3 px-4 py-3 mt-12 text-red-500/40 hover:text-red-500 hover:bg-red-500/5 rounded-xl transition-all w-full text-[11px] font-black uppercase tracking-widest active:scale-95"
+          >
+            <LogOut size={18} />
+            Terminate Session
+          </button>
+        </nav>
+      </aside>
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col h-screen overflow-hidden bg-transparent">
+        {/* 🚀 UPGRADED: Mobile-First Sticky Header */}
+        <header className="sticky top-0 w-full border-b border-white/5 bg-black/40 backdrop-blur-xl z-30 shadow-md">
+          {/* ========================================= */}
+          {/* DESKTOP HEADER (Preserved unchanged) */}
+          {/* ========================================= */}
+          <div className="hidden md:flex items-center justify-between px-8 py-6">
+            <div className="flex items-center gap-6">
+              <div>
+                <div className="flex items-center gap-3">
+                  <div className="relative flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.8)]"></span>
+                  </div>
+                  <h1 className="text-xl font-black tracking-tighter uppercase italic leading-none drop-shadow-lg">
+                    System <span className="text-amber-500">Active</span>
+                  </h1>
+                </div>
+                <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest mt-1 ml-5">
+                  Authorized Athlete: {auth.user?.name || "Unverified"}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 px-4 py-1.5 text-[10px] font-black rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20 tracking-widest uppercase shadow-[0_0_15px_rgba(245,158,11,0.1)]">
+                <Shield size={12} />
+                CLEARANCE: {auth.user?.role || "PENDING"}
+              </div>
+
+              <div className="w-10 h-10 rounded-xl bg-[#0B0F14] border border-amber-500/20 overflow-hidden flex items-center justify-center text-sm font-black text-amber-500 shadow-xl hover:border-amber-500/50 hover:bg-amber-500/5 transition-all cursor-pointer">
+                {userProfileImage ? (
+                  <img
+                    src={userProfileImage}
+                    alt="Avatar"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  auth.user?.name?.charAt(0).toUpperCase() || "A"
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* ========================================= */}
+          {/* MOBILE HEADER (Compact 2-Row System) */}
+          {/* ========================================= */}
+          <div className="flex flex-col md:hidden px-4 py-3 gap-1">
+            {/* Row 1: Controls & Identity */}
+            <div className="flex items-center justify-between">
+              {/* Touch-optimized hamburger */}
+              <button
+                className="text-white/70 hover:text-white p-2 -ml-2 active:scale-95 transition-transform"
+                onClick={() => setSidebarOpen(true)}
+              >
+                <Menu size={24} />
+              </button>
+
+              {/* Centered System Status */}
+              <div className="flex items-center gap-2">
+                <div className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.8)]"></span>
+                </div>
+                <h1 className="text-lg font-black tracking-tighter uppercase italic leading-none drop-shadow-lg">
+                  System <span className="text-amber-500">Active</span>
+                </h1>
+              </div>
+
+              {/* Touch-optimized Avatar */}
+              <div className="w-9 h-9 rounded-xl bg-[#0B0F14] border border-amber-500/20 overflow-hidden flex items-center justify-center text-sm font-black text-amber-500 shadow-xl active:scale-95 transition-transform">
+                {userProfileImage ? (
+                  <img
+                    src={userProfileImage}
+                    alt="Avatar"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  auth.user?.name?.charAt(0).toUpperCase() || "A"
+                )}
+              </div>
+            </div>
+
+            {/* Row 2: Secondary Name Label */}
+            <div className="text-center pb-1">
+              <p className="text-[9px] font-bold text-white/50 uppercase tracking-widest truncate px-4">
+                Athlete: {auth.user?.name || "Unverified"}
+              </p>
+            </div>
+          </div>
+        </header>
+
+        {/* Dynamic Page Scrollable Container */}
+        <main className="flex-1 overflow-y-auto relative p-4 md:p-12 pb-24 scroll-smooth">
+          {/* 🚀 UPGRADED: Floating Mobile Clearance Badge */}
+          <div className="flex justify-end mb-6 md:hidden">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[9px] font-black rounded-full bg-black/40 backdrop-blur-md text-amber-500 border border-amber-500/30 tracking-widest uppercase shadow-[0_4px_15px_rgba(245,158,11,0.15)]">
+              <Shield size={10} />
+              CLEARANCE: {auth.user?.role || "PENDING"}
+            </div>
+          </div>
+
+          <motion.div
+            key={location.pathname}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="max-w-7xl mx-auto"
+          >
+            <Outlet />
+          </motion.div>
+          <Footer />
+        </main>
+      </div>
+    </div>
+  );
+}
