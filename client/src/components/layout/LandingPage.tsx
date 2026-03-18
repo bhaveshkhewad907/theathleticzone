@@ -247,7 +247,7 @@ export default function LandingPage() {
           playsInline
           src="https://media.theathleticzone.in/Landing%20page%20background%20video/TAZ-Hero-section-bg.mp4"
           className="absolute inset-0 w-full h-full object-cover opacity-40 "
-          poster="https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?auto=format&fit=crop&q=80&w=2000"
+          poster="https://media.theathleticzone.in/Landing%20page%20background%20video/poster-image%20(1).avif"
         />
         {/* Layer 1: Deep Navy/Charcoal Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-[#0F1724]/95 via-[#0B0F14]/80 to-[#0F1724]/95 mix-blend-multiply" />

@@ -1,39 +1,59 @@
+import { lazy } from "react";
 import { createBrowserRouter } from "react-router-dom";
 import ProtectedRoute from "../components/layout/ProtectedRoute";
 import RootRedirect from "../components/layout/RootRedirect";
-import LoginPage from "../pages/auth/LoginPage";
-import OAuthSuccess from "../pages/auth/OAuthSuccess";
-import AthleteLayout from "../components/layout/AthleteLayout";
-import AthleteDashboard from "../pages/athlete/AthleteDashboard";
-import AthleteSubscriptions from "../pages/athlete/AthleteSubscriptions";
-import LivePlans from "../pages/athlete/LivePlans";
-import AdminLayout from "../components/layout/AdminPanelLayout";
-import AdminDashboard from "../pages/admin/AdminDashboard";
-import AdminGroupSuggestions from "../pages/admin/AdminGroupSuggestions";
-import AdminSessions from "../pages/admin/AdminSessions";
-import AcceptCoachInvite from "../pages/auth/AcceptCoachInvite";
-import AdminInviteCoach from "../pages/admin/AdminInviteCoach";
-import AdminInvitations from "../pages/admin/AdminInvitations";
-import CoachDashboard from "../pages/coach/CoachDashboard";
-import CoachLayout from "../components/layout/CoachLayout";
-import AttendanceHistory from "../pages/athlete/AttendanceHistory";
-import CoursesMarketplace from "../pages/athlete/CoursesMarketplace";
-import MyCourses from "../pages/athlete/MyCourses";
-import AdminCourses from "../pages/admin/AdminCourses";
-import CoachHistory from "../pages/coach/CoachHistory";
-import RegisterPage from "../pages/auth/RegisterPage";
-import AthleteProfile from "../pages/athlete/AthleteProfile";
-import CoachSessionNotes from "../pages/coach/CoachSessionNotes";
-import ForgotPassword from "../pages/auth/ForgotPassword";
-import ManageSports from "../pages/admin/ManageSports";
 import NotFound from "../components/ui/NotFound";
-import TermsOfService from "../pages/public/TermsOfService";
-import PrivacyPolicy from "../pages/public/PrivacyPolicy";
-import RefundPolicy from "../pages/public/RefundPolicy";
-import CoachProfile from "../pages/coach/CoachProfile";
-import AthleteFeedback from "../pages/athlete/AthleteFeedback";
 
-// Later we’ll add AdminLayout & CoachLayout
+// 1. Keep Layouts & Critical Routing Static (Loads Instantly)
+import AthleteLayout from "../components/layout/AthleteLayout";
+import AdminLayout from "../components/layout/AdminPanelLayout";
+import CoachLayout from "../components/layout/CoachLayout";
+import { Loadable } from "../components/ui/Loadable";
+
+// 2. Lazy Load All Pages (Splits the code into tiny chunks)
+const LoginPage = lazy(() => import("../pages/auth/LoginPage"));
+const RegisterPage = lazy(() => import("../pages/auth/RegisterPage"));
+const ForgotPassword = lazy(() => import("../pages/auth/ForgotPassword"));
+const OAuthSuccess = lazy(() => import("../pages/auth/OAuthSuccess"));
+const AcceptCoachInvite = lazy(() => import("../pages/auth/AcceptCoachInvite"));
+
+const TermsOfService = lazy(() => import("../pages/public/TermsOfService"));
+const PrivacyPolicy = lazy(() => import("../pages/public/PrivacyPolicy"));
+const RefundPolicy = lazy(() => import("../pages/public/RefundPolicy"));
+
+const AthleteDashboard = lazy(
+  () => import("../pages/athlete/AthleteDashboard"),
+);
+const AthleteSubscriptions = lazy(
+  () => import("../pages/athlete/AthleteSubscriptions"),
+);
+const LivePlans = lazy(() => import("../pages/athlete/LivePlans"));
+const AthleteFeedback = lazy(() => import("../pages/athlete/AthleteFeedback"));
+const CoursesMarketplace = lazy(
+  () => import("../pages/athlete/CoursesMarketplace"),
+);
+const MyCourses = lazy(() => import("../pages/athlete/MyCourses"));
+const AttendanceHistory = lazy(
+  () => import("../pages/athlete/AttendanceHistory"),
+);
+const AthleteProfile = lazy(() => import("../pages/athlete/AthleteProfile"));
+
+const AdminDashboard = lazy(() => import("../pages/admin/AdminDashboard"));
+const AdminGroupSuggestions = lazy(
+  () => import("../pages/admin/AdminGroupSuggestions"),
+);
+const AdminSessions = lazy(() => import("../pages/admin/AdminSessions"));
+const AdminInviteCoach = lazy(() => import("../pages/admin/AdminInviteCoach"));
+const AdminInvitations = lazy(() => import("../pages/admin/AdminInvitations"));
+const AdminCourses = lazy(() => import("../pages/admin/AdminCourses"));
+const ManageSports = lazy(() => import("../pages/admin/ManageSports"));
+
+const CoachDashboard = lazy(() => import("../pages/coach/CoachDashboard"));
+const CoachHistory = lazy(() => import("../pages/coach/CoachHistory"));
+const CoachSessionNotes = lazy(
+  () => import("../pages/coach/CoachSessionNotes"),
+);
+const CoachProfile = lazy(() => import("../pages/coach/CoachProfile"));
 
 const router = createBrowserRouter([
   {
@@ -46,35 +66,35 @@ const router = createBrowserRouter([
   },
   {
     path: "/login",
-    element: <LoginPage />,
+    element: Loadable(LoginPage),
   },
   {
     path: "/register",
-    element: <RegisterPage />,
+    element: Loadable(RegisterPage),
   },
   {
     path: "/forgot-password",
-    element: <ForgotPassword />,
+    element: Loadable(ForgotPassword),
   },
   {
     path: "/oauth-success",
-    element: <OAuthSuccess />,
+    element: Loadable(OAuthSuccess),
   },
   {
     path: "/accept-coach-invite",
-    element: <AcceptCoachInvite />,
+    element: Loadable(AcceptCoachInvite),
   },
   {
     path: "/terms",
-    element: <TermsOfService />,
+    element: Loadable(TermsOfService),
   },
   {
     path: "/privacy",
-    element: <PrivacyPolicy />,
+    element: Loadable(PrivacyPolicy),
   },
   {
     path: "/refund-policy",
-    element: <RefundPolicy />,
+    element: Loadable(RefundPolicy),
   },
 
   // ==========================
@@ -87,37 +107,19 @@ const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-      {
-        path: "/athlete",
-        element: <AthleteDashboard />,
-      },
+      { path: "/athlete", element: Loadable(AthleteDashboard) },
       {
         path: "/athlete/subscriptions",
-        element: <AthleteSubscriptions />,
+        element: Loadable(AthleteSubscriptions),
       },
-      {
-        path: "/athlete/live-plans",
-        element: <LivePlans />,
-      },
-      {
-        path: "/athlete/feedback",
-        element: <AthleteFeedback />,
-      },
-      {
-        path: "/athlete/courses",
-        element: <CoursesMarketplace />,
-      },
-      {
-        path: "/athlete/profile",
-        element: <AthleteProfile />,
-      },
-      {
-        path: "/athlete/my-courses",
-        element: <MyCourses />,
-      },
+      { path: "/athlete/live-plans", element: Loadable(LivePlans) },
+      { path: "/athlete/feedback", element: Loadable(AthleteFeedback) },
+      { path: "/athlete/courses", element: Loadable(CoursesMarketplace) },
+      { path: "/athlete/profile", element: Loadable(AthleteProfile) },
+      { path: "/athlete/my-courses", element: Loadable(MyCourses) },
       {
         path: "/athlete/attendance-history",
-        element: <AttendanceHistory />,
+        element: Loadable(AttendanceHistory),
       },
     ],
   },
@@ -132,36 +134,19 @@ const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-      {
-        path: "/admin",
-        element: <AdminDashboard />,
-      },
-      {
-        path: "/admin/groups",
-        element: <AdminGroupSuggestions />,
-      },
-      {
-        path: "/admin/sessions",
-        element: <AdminSessions />,
-      },
-      {
-        path: "/admin/invite-coach",
-        element: <AdminInviteCoach />,
-      },
-      {
-        path: "/admin/courses",
-        element: <AdminCourses />,
-      },
-      {
-        path: "/admin/manage-sports",
-        element: <ManageSports />,
-      },
-      {
-        path: "/admin/invitations",
-        element: <AdminInvitations />,
-      },
+      { path: "/admin", element: Loadable(AdminDashboard) },
+      { path: "/admin/groups", element: Loadable(AdminGroupSuggestions) },
+      { path: "/admin/sessions", element: Loadable(AdminSessions) },
+      { path: "/admin/invite-coach", element: Loadable(AdminInviteCoach) },
+      { path: "/admin/courses", element: Loadable(AdminCourses) },
+      { path: "/admin/manage-sports", element: Loadable(ManageSports) },
+      { path: "/admin/invitations", element: Loadable(AdminInvitations) },
     ],
   },
+
+  // ==========================
+  // COACH ROUTES
+  // ==========================
   {
     element: (
       <ProtectedRoute allowedRoles={["COACH"]}>
@@ -169,22 +154,10 @@ const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-      {
-        path: "/coach/dashboard",
-        element: <CoachDashboard />,
-      },
-      {
-        path: "/coach/history",
-        element: <CoachHistory />,
-      },
-      {
-        path: "/coach/notes/:sessionId",
-        element: <CoachSessionNotes />,
-      },
-      {
-        path: "/coach/profile",
-        element: <CoachProfile />,
-      },
+      { path: "/coach/dashboard", element: Loadable(CoachDashboard) },
+      { path: "/coach/history", element: Loadable(CoachHistory) },
+      { path: "/coach/notes/:sessionId", element: Loadable(CoachSessionNotes) },
+      { path: "/coach/profile", element: Loadable(CoachProfile) },
     ],
   },
 ]);
