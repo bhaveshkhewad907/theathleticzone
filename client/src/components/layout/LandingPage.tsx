@@ -124,7 +124,8 @@ export default function LandingPage() {
   const [sectors, setSectors] = useState<SportSector[]>([]);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const GALLERY = Array.from({ length: 15 }).map(
-    (_, index) => `/center-images/center-image-${index + 1}.PNG`,
+    (_, index) =>
+      `https://media.theathleticzone.in/center-images/center-image-${index + 1}.jpg`,
   );
   const [reviews, setReviews] = useState<ReviewData[]>([]);
   const reviewScrollRef = useRef<HTMLDivElement>(null);

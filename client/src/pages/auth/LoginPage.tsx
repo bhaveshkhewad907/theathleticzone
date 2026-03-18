@@ -16,11 +16,11 @@ import { AxiosError } from "axios";
 
 // 🎬 Background System Assets
 const BACKGROUND_IMAGES = [
-  "/auth-bg-one.jpg",
-  "/auth-bg-two.jpg",
-  "/auth-bg-three.jpg",
-  "/auth-bg-four.jpg",
-  "/auth-bg-five.jpg",
+  "https://media.theathleticzone.in/auth-bg-images/auth-bg-one.jpg",
+  "https://media.theathleticzone.in/auth-bg-images/auth-bg-two.jpg",
+  "https://media.theathleticzone.in/auth-bg-images/auth-bg-three.jpg",
+  "https://media.theathleticzone.in/auth-bg-images/auth-bg-four.jpg",
+  "https://media.theathleticzone.in/auth-bg-images/auth-bg-five.jpg",
 ];
 
 export default function LoginPage() {
