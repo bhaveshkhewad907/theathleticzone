@@ -14,7 +14,6 @@ import {
   sendPasswordResetEmail,
   sendVerificationEmail,
 } from "../../services/email.service";
-import { profile } from "console";
 
 export const register = async (
   req: Request,
@@ -22,7 +21,6 @@ export const register = async (
   next: NextFunction,
 ) => {
   try {
-    // 🛡️ Validate input using the hardened schema
     const parsed = registerSchema.safeParse(req.body);
 
     if (!parsed.success) {
@@ -32,25 +30,19 @@ export const register = async (
 
     const { name, email, password, sportId } = parsed.data;
 
-    // 1. Create the user record in the database
-    // 🛡️ Force the role to 'ATHLETE' inside the registration service/logic
-    // This ensures no one can sign up as an Admin or Coach
     const user = await registerAthlete({
       name,
       email,
       password,
-      sportId, // Mandatory for future grouping
+      sportId,
     });
 
-    // 2. Generate a cryptographically secure 6-digit activation code
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // 3. Attach verification metadata (Valid for 24 hours)
     user.verificationOTP = otp;
     user.verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
     await user.save();
 
-    // 4. Dispatch the activation email via Resend
     await sendVerificationEmail(user.email, otp);
 
     res.status(201).json({
@@ -60,7 +52,7 @@ export const register = async (
       data: {
         id: user._id,
         email: user.email,
-        isVerified: false, // 👈 Frontend uses this to show the OTP screen
+        isVerified: false,
       },
     });
   } catch (error) {
@@ -99,7 +91,6 @@ export const login = async (
   next: NextFunction,
 ) => {
   try {
-    // 1. Validate the incoming request body first
     const parsed = loginSchema.safeParse(req.body);
 
     if (!parsed.success) {
@@ -109,13 +100,11 @@ export const login = async (
 
     const { email, password } = parsed.data;
 
-    // 2. Attempt to authenticate the user and generate tokens
     const { user, accessToken, refreshToken } = await loginAthlete(
       email,
       password,
     );
     if (user.isBlocked) throw new ApiError(403, "Account suspended.");
-    // 3. Security Guard: Prevent entry if the email is not verified
     if (!user.isVerified) {
       throw new ApiError(
         403,
@@ -132,18 +121,16 @@ export const login = async (
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    // 🛡️ SECURITY UPGRADE: Secure Access Token Cookie
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: isProduction,
       sameSite: isProduction ? "none" : "lax",
-      maxAge: 15 * 60 * 1000, // 15 Minutes
+      maxAge: 15 * 60 * 1000,
     });
 
     res.status(200).json({
       success: true,
       message: "Login successful",
-      // ❌ accessToken removed from raw JSON payload
       data: {
         id: user._id,
         name: user.name,
@@ -179,7 +166,6 @@ export const refresh = async (
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    // 🛡️ SECURITY UPGRADE: Set new access token cookie
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: isProduction,
@@ -189,20 +175,21 @@ export const refresh = async (
 
     res.status(200).json({ success: true, message: "Session refreshed" });
   } catch (error) {
-    // 🛡️ SECURITY PATCH: If refresh fails (user deleted, token invalid),
-    // we MUST purge the cookies so the frontend doesn't get trapped in a loop.
     const isProduction = process.env.NODE_ENV === "production";
 
+    // 🚀 THE FIX: Fully match cookie flags for deletion
     res.clearCookie("refreshToken", {
       httpOnly: true,
       secure: isProduction,
       sameSite: isProduction ? "none" : "lax",
+      path: "/",
     });
 
     res.clearCookie("accessToken", {
       httpOnly: true,
       secure: isProduction,
       sameSite: isProduction ? "none" : "lax",
+      path: "/",
     });
 
     next(error);
@@ -216,8 +203,20 @@ export const logout = async (
 ) => {
   try {
     const refreshToken = req.cookies.refreshToken;
+    const isProduction = process.env.NODE_ENV === "production";
+
+    // 🚀 THE FIX: Fully match cookie flags for deletion
+    const clearCookieOptions = {
+      httpOnly: true,
+      secure: isProduction,
+      // 🚀 THE FIX: Explicitly cast the output so TS knows it's safe
+      sameSite: (isProduction ? "none" : "lax") as "none" | "lax",
+      path: "/",
+    };
 
     if (!refreshToken) {
+      res.clearCookie("refreshToken", clearCookieOptions);
+      res.clearCookie("accessToken", clearCookieOptions);
       return res.status(200).json({
         success: true,
         message: "Logged out",
@@ -226,15 +225,8 @@ export const logout = async (
 
     await logoutSession(refreshToken);
 
-    // 🛡️ SECURITY UPGRADE: Purge both cookies from the browser
-    res.clearCookie("refreshToken", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-    });
-    res.clearCookie("accessToken", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-    });
+    res.clearCookie("refreshToken", clearCookieOptions);
+    res.clearCookie("accessToken", clearCookieOptions);
 
     res.status(200).json({ success: true, message: "Logged out successfully" });
   } catch (error) {
@@ -268,7 +260,6 @@ export const acceptCoachInvite: RequestHandler = async (req, res, next) => {
       isVerified: true,
     });
 
-    // 🛡️ SECURITY UPGRADE: Generate tokens and set as cookies
     const accessToken = jwt.sign(
       { id: coach._id, role: coach.role },
       process.env.JWT_ACCESS_SECRET as string,
@@ -298,7 +289,6 @@ export const acceptCoachInvite: RequestHandler = async (req, res, next) => {
 
     const isProduction = process.env.NODE_ENV === "production";
 
-    // Set cookies exactly like the login route
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: isProduction,
@@ -356,25 +346,22 @@ export const validateCoachInvite: RequestHandler = async (req, res, next) => {
   }
 };
 
-// 1. Forgot Password - Generates & Sends OTP
 export const forgotPassword: RequestHandler = async (req, res, next) => {
   try {
     const { email } = req.body;
     const user = await User.findOne({ email });
 
     if (!user) {
-      // We return 200 even if user not found for security (prevents user enumeration)
       return res.status(200).json({
         success: true,
         message: "If an account exists, an OTP has been dispatched.",
       });
     }
 
-    // Generate a 6-digit numeric OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
     user.passwordResetOTP = otp;
-    user.passwordResetExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 Min window
+    user.passwordResetExpires = new Date(Date.now() + 10 * 60 * 1000);
     await user.save();
 
     await sendPasswordResetEmail(user.email, otp);
@@ -388,7 +375,6 @@ export const forgotPassword: RequestHandler = async (req, res, next) => {
   }
 };
 
-// 2. Reset Password - Verifies OTP & Updates Password
 export const resetPassword: RequestHandler = async (req, res, next) => {
   try {
     const { email, otp, newPassword } = req.body;
@@ -423,12 +409,9 @@ export const googleCallback = async (
   next: NextFunction,
 ) => {
   try {
-    // Passport passes the data from google.strategy.ts's done() function into req.user
     const { accessToken, refreshToken } = req.user as any;
-
     const isProduction = process.env.NODE_ENV === "production";
 
-    // 🛡️ Set secure cookies exactly like local login
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: isProduction,
@@ -443,9 +426,6 @@ export const googleCallback = async (
       maxAge: 15 * 60 * 1000,
     });
 
-    // 🚀 Redirect to the frontend.
-    // If the athlete has no sport yet, your AuthContext will automatically
-    // catch them and redirect them to /athlete/profile?onboarding=true!
     res.redirect(`${process.env.CLIENT_URL}/athlete`);
   } catch (error) {
     res.redirect(`${process.env.CLIENT_URL}/login?error=auth_failed`);

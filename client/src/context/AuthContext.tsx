@@ -39,8 +39,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.warn("Logout error:", error);
     }
+
     setAuth(null);
-    window.location.href = "/login";
+
+    // 🚀 THE FIX: Use replace to prevent "back button" auto-login loops
+    window.location.replace("/login");
   };
 
   useEffect(() => {
@@ -49,11 +52,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const initAuth = async () => {
       try {
-        // 🚀 UPGRADED: Point to the robust user controller instead of auth
         const meRes = await api.get("/users/me");
         const userData = meRes.data.data;
 
-        // 🚀 UPGRADED: Safely map _id to id for your Context Interface, and pass the whole object
         setAuth({
           ...userData,
           id: userData._id || userData.id,
@@ -62,7 +63,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (
           userData.role === "ATHLETE" &&
           (!userData.sports || userData.sports.length === 0) &&
-          !userData.sport // 🚀 THE FIX: Don't trigger the alarm if they have a core sport!
+          !userData.sport
         ) {
           if (!window.location.pathname.includes("/athlete/profile")) {
             toast.error(
