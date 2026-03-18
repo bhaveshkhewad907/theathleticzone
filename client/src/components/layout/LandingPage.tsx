@@ -240,23 +240,35 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen text-[#E5E7EB] font-sans selection:bg-amber-500/30 overflow-x-hidden relative">
       {/* 🎬 GLOBAL CINEMATIC BACKGROUND SYSTEM */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
+      <div className="fixed inset-0 z-0 pointer-events-none bg-[#0F1724]">
+        {/* 📱 MOBILE VIEW: Static Image Fallback (Massive Scroll Performance Boost) */}
+        <img
+          src="https://media.theathleticzone.in/Landing%20page%20background%20video/poster-image%20(1).avif"
+          alt="The Athletic Zone Background"
+          className="absolute inset-0 w-full h-full object-cover opacity-40 md:hidden"
+        />
+
+        {/* 💻 DESKTOP VIEW: Full Premium Video */}
         <video
           autoPlay
           loop
           muted
           playsInline
           src="https://media.theathleticzone.in/Landing%20page%20background%20video/TAZ-Hero-section-bg%20(1).mp4"
-          className="absolute inset-0 w-full h-full object-cover opacity-40 "
+          className="hidden md:block absolute inset-0 w-full h-full object-cover opacity-40"
           poster="https://media.theathleticzone.in/Landing%20page%20background%20video/poster-image%20(1).avif"
         />
+
         {/* Layer 1: Deep Navy/Charcoal Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-[#0F1724]/95 via-[#0B0F14]/80 to-[#0F1724]/95 mix-blend-multiply" />
+
         {/* Layer 2: Dark Vignette Edge Blur */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,#0B0F14_100%)] opacity-90" />
+
         {/* Layer 3: Cinematic Atmospheric Light Beams */}
         <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-amber-500/10 blur-[150px] rounded-full animate-[pulse_8s_ease-in-out_infinite]" />
         <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-blue-900/10 blur-[150px] rounded-full animate-[pulse_10s_ease-in-out_infinite_reverse]" />
+
         {/* Layer 4: Cinematic Grain Texture */}
         <div
           className="absolute inset-0 opacity-[0.03] mix-blend-overlay"
