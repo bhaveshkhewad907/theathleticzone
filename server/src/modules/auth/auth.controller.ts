@@ -284,9 +284,17 @@ export const acceptCoachInvite: RequestHandler = async (req, res, next) => {
       },
     );
 
-    await CoachInvitation.updateOne(
-      { _id: invitation._id },
+    // 🚀 ULTIMATE FAILSAFE: Update by exact token and log the result
+    const updatedInvite = await CoachInvitation.findOneAndUpdate(
+      { token: token },
       { $set: { status: "ACCEPTED" } },
+      { new: true }, // This tells Mongoose to return the freshly updated document
+    );
+
+    // 🕵️ DEBUG LOG: This will print to your Render server logs
+    console.log(
+      "SYSTEM CHECK - Invite Status Updated To:",
+      updatedInvite?.status,
     );
 
     const isProduction = process.env.NODE_ENV === "production";
