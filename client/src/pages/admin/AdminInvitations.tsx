@@ -16,7 +16,8 @@ export default function AdminInvitations() {
 
   const fetchInvites = async () => {
     try {
-      const res = await api.get("/admin/invitations");
+      // 🚀 THE FIX: Add a timestamp query to completely bypass browser caching
+      const res = await api.get(`/admin/invitations?t=${new Date().getTime()}`);
       setData(res.data.data);
     } catch {
       toast.error("Failed to load invitations");
@@ -24,7 +25,6 @@ export default function AdminInvitations() {
       setLoading(false);
     }
   };
-
   useEffect(() => {
     fetchInvites();
   }, []);
