@@ -7,7 +7,7 @@ interface Invitation {
   _id: string;
   email: string;
   expiresAt: string;
-  status: "PENDING" | "EXPIRED";
+  status: "PENDING" | "EXPIRED" | "ACCEPTED";
 }
 
 export default function AdminInvitations() {
@@ -121,29 +121,34 @@ export default function AdminInvitations() {
               </div>
 
               <div className="relative z-10 flex items-center gap-6 mt-6 md:mt-0 w-full md:w-auto justify-end">
-                <button
-                  onClick={() => handleRevoke(invite._id)}
-                  className="text-[10px] font-black uppercase tracking-[0.2em] text-red-500/40 hover:text-red-500 transition-colors py-2"
-                >
-                  Revoke
-                </button>
-
+                {" "}
                 <div
                   className={`px-5 py-2 rounded-full text-[9px] font-black uppercase tracking-[0.2em] border backdrop-blur-sm ${
                     invite.status === "PENDING"
                       ? "border-amber-500/20 text-amber-500 bg-amber-500/5"
-                      : "border-red-500/20 text-red-400 bg-red-500/5"
+                      : invite.status === "ACCEPTED"
+                        ? "border-emerald-500/20 text-emerald-400 bg-emerald-500/5"
+                        : "border-red-500/20 text-red-400 bg-red-500/5"
                   }`}
                 >
                   {invite.status}
                 </div>
-
-                <button
-                  onClick={() => handleResend(invite.email)}
-                  className="bg-[#E5E7EB] text-black text-[10px] font-black uppercase tracking-[0.2em] px-8 py-3 rounded-[12px] hover:bg-amber-500 transition-all active:scale-95 shadow-[0_0_15px_rgba(255,255,255,0.05)] hover:shadow-[0_0_20px_rgba(245,158,11,0.3)]"
-                >
-                  Resend
-                </button>
+                {invite.status !== "ACCEPTED" && (
+                  <>
+                    <button
+                      onClick={() => handleRevoke(invite._id)}
+                      className="text-[10px] font-black uppercase tracking-[0.2em] text-red-500/40 hover:text-red-500 transition-colors py-2"
+                    >
+                      Revoke
+                    </button>
+                    <button
+                      onClick={() => handleResend(invite.email)}
+                      className="bg-[#E5E7EB] text-black text-[10px] font-black uppercase tracking-[0.2em] px-8 py-3 rounded-[12px] hover:bg-amber-500 transition-all active:scale-95 shadow-[0_0_15px_rgba(255,255,255,0.05)] hover:shadow-[0_0_20px_rgba(245,158,11,0.3)]"
+                    >
+                      Resend
+                    </button>
+                  </>
+                )}
               </div>
 
               {/* Hover Glow Background */}
