@@ -88,7 +88,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => unsubscribeLogout(handleLogout);
   }, []);
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0F1724] flex flex-col items-center justify-center gap-4">
+        <div className="w-10 h-10 border-2 border-amber-500/20 border-t-amber-500 rounded-full animate-spin" />
+        <div className="text-amber-500/50 text-[10px] font-black uppercase tracking-[0.3em]">
+          Initializing Hub
+        </div>
+      </div>
+    );
+  }
 
   return (
     <AuthContext.Provider
