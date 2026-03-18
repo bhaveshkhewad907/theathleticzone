@@ -284,8 +284,10 @@ export const acceptCoachInvite: RequestHandler = async (req, res, next) => {
       },
     );
 
-    invitation.status = "ACCEPTED";
-    await invitation.save();
+    await CoachInvitation.updateOne(
+      { _id: invitation._id },
+      { $set: { status: "ACCEPTED" } },
+    );
 
     const isProduction = process.env.NODE_ENV === "production";
 
