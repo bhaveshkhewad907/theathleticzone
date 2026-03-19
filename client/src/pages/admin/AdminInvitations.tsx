@@ -16,17 +16,27 @@ export default function AdminInvitations() {
 
   const fetchInvites = async () => {
     try {
-      // 🚀 THE FIX: Add a timestamp query to completely bypass browser caching
       const res = await api.get(`/admin/invitations?t=${new Date().getTime()}`);
       setData(res.data.data);
     } catch {
-      toast.error("Failed to load invitations");
+      // We remove the toast.error here so it doesn't spam the user if a background ping drops
+      console.error("Failed to sync invitations in background");
     } finally {
       setLoading(false);
     }
   };
+
   useEffect(() => {
+    // 1. Fetch immediately when the page loads
     fetchInvites();
+
+    // 2. 🚀 THE FIX: Set up the background radar to fetch fresh data every 5 seconds
+    const radarInterval = setInterval(() => {
+      fetchInvites();
+    }, 5000);
+
+    // 3. Clean up the radar when the admin leaves the page
+    return () => clearInterval(radarInterval);
   }, []);
 
   const handleResend = async (email: string) => {

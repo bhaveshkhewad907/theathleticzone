@@ -10,7 +10,6 @@ import errorHandler from "./middlewares/error.middleware";
 import * as Sentry from "@sentry/node";
 import promBundle from "express-prom-bundle";
 import { logger } from "./utils/logger";
-import ApiError from "./utils/apiError";
 
 // 👇 ARCHITECTURE UPGRADE: Import the single master router
 import apiRoutes from "./modules/index.routes";

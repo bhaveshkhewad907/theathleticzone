@@ -196,10 +196,18 @@ export const getCoachInvitations: RequestHandler = async (_req, res, next) => {
 
     const now = new Date();
 
-    const formatted = invitations.map((invite) => ({
-      ...invite,
-      status: invite.expiresAt > now ? "PENDING" : "EXPIRED",
-    }));
+    const formatted = invitations.map((invite) => {
+      // 🚀 THE FIX: If the database says ACCEPTED, do not overwrite it!
+      if (invite.status === "ACCEPTED") {
+        return invite;
+      }
+
+      // Otherwise, calculate if it is PENDING or EXPIRED based on the clock
+      return {
+        ...invite,
+        status: invite.expiresAt > now ? "PENDING" : "EXPIRED",
+      };
+    });
 
     res.status(200).json({
       success: true,
