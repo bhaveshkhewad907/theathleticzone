@@ -576,8 +576,8 @@ export default function LandingPage() {
                     animate={{ opacity: 1, filter: "blur(0px)", scale: 1 }}
                     exit={{ opacity: 0, filter: "blur(10px)", scale: 0.95 }}
                     transition={{
-                      duration: 0.8,
-                      delay: i * 0.1, // Staggered fade in
+                      duration: 1.8,
+                      delay: i * 0.4, // Staggered fade in
                       ease: "easeInOut",
                     }}
                     className={`relative rounded-[16px] md:rounded-[24px] overflow-hidden group shadow-[0_10px_30px_rgba(0,0,0,0.5)] border border-white/[0.05] ${gridClasses}`}
