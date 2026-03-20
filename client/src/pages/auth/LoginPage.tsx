@@ -172,10 +172,22 @@ export default function LoginPage() {
         <div className="p-10 md:p-14 flex flex-col justify-center relative bg-black/10">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-amber-500 to-transparent opacity-40" />
 
+          {/* 📱 MOBILE ONLY: Clickable AZ Logo to return to Landing Page */}
+          <Link
+            to="/"
+            className="md:hidden h-12 w-12 mb-8 bg-amber-500/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.2)] hover:bg-amber-500/20 transition-all active:scale-95 group"
+            title="Return to Headquarters"
+          >
+            <span className="text-amber-500 font-black text-xl italic group-hover:scale-110 transition-transform">
+              AZ
+            </span>
+          </Link>
+
           <div className="mb-10">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/40 border border-white/[0.05] text-[9px] font-black text-[#8A94A6] uppercase tracking-widest mb-4 shadow-inner">
               System Authentication
             </div>
+
             <h1 className="text-4xl font-black tracking-tighter uppercase italic text-white leading-none">
               {step === "LOGIN" ? "Access" : "Verify"}{" "}
               <span className="text-amber-500">Portal</span>
@@ -370,12 +382,18 @@ export default function LoginPage() {
 
         {/* RIGHT SIDE - Transparent Overlay / Branding */}
         <div className="hidden md:flex items-center justify-center relative overflow-hidden bg-black/10">
-          <div className="relative z-10 text-center px-10">
-            <div className="h-20 w-20 mx-auto bg-amber-500/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-amber-500/30 shadow-[0_0_40px_rgba(245,158,11,0.2)] mb-8">
-              <span className="text-amber-500 font-black text-4xl italic">
+          <div className="relative z-10 text-center px-10 flex flex-col items-center">
+            {/* 💻 DESKTOP: Clickable Interactive AZ Logo */}
+            <Link
+              to="/"
+              className="group h-20 w-20 mx-auto bg-amber-500/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-amber-500/30 shadow-[0_0_40px_rgba(245,158,11,0.2)] mb-8 hover:bg-amber-500/20 hover:shadow-[0_0_60px_rgba(245,158,11,0.4)] hover:-translate-y-1 transition-all active:scale-95 cursor-pointer"
+              title="Return to Headquarters"
+            >
+              <span className="text-amber-500 font-black text-4xl italic group-hover:scale-110 transition-transform">
                 AZ
               </span>
-            </div>
+            </Link>
+
             <h2 className="text-3xl font-black uppercase italic tracking-tighter text-white drop-shadow-lg">
               The Athletic Zone
             </h2>
