@@ -304,17 +304,20 @@ export default function LandingPage() {
           </div>
 
           <div className="flex items-center gap-4 md:gap-8">
-            <Link
-              to="/login"
-              className="text-[11px] font-black uppercase tracking-widest text-[#8A94A6] hover:text-white transition-colors hidden sm:block"
-            >
-              Access Portal
-            </Link>
+            {/* 💻 DESKTOP ONLY: Subtle Register Link */}
             <Link
               to="/register"
+              className="text-[11px] font-black uppercase tracking-widest text-[#8A94A6] hover:text-white transition-colors hidden sm:block"
+            >
+              Initialize Profile
+            </Link>
+
+            {/* 📱 MOBILE & DESKTOP: Primary Login Button */}
+            <Link
+              to="/login"
               className="px-5 py-3 md:px-8 md:py-4 bg-amber-500 text-black text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] rounded-[12px] md:rounded-[14px] hover:bg-amber-400 transition-all shadow-[0_10px_20px_rgba(245,158,11,0.2)] active:scale-95 flex items-center gap-1 md:gap-2 whitespace-nowrap"
             >
-              Initialize Profile <ChevronRight size={14} strokeWidth={3} />
+              Access Portal <ChevronRight size={14} strokeWidth={3} />
             </Link>
           </div>
         </div>
