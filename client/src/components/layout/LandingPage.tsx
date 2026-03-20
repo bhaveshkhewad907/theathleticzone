@@ -418,6 +418,17 @@ export default function LandingPage() {
         className="py-20 md:py-32 px-6 relative z-10 border-t border-white/[0.05] bg-black/20 backdrop-blur-sm"
       >
         <div className="max-w-7xl mx-auto group/carousel relative">
+          {/* Glassmorphic Left Arrow (Dynamically hidden if at the start) */}
+          {canScrollLeft && (
+            <button
+              onClick={scrollPrev}
+              className="absolute left-0 md:-left-6 top-[60%] -translate-y-1/2 z-30 h-16 w-16 rounded-full bg-white/5 backdrop-blur-xl border border-white/10 flex items-center justify-center text-white/50 hover:text-amber-500 hover:bg-amber-500/20 hover:border-amber-500/40 transition-all shadow-[0_0_30px_rgba(0,0,0,0.5)] opacity-0 group-hover/carousel:opacity-100  md:flex"
+            >
+              <ChevronLeft size={36} strokeWidth={1.5} />
+            </button>
+          )}
+
+          {/* 🛡️ SINGLE SCROLL CONTAINER (The duplicate is gone!) */}
           <div
             ref={scrollContainerRef}
             onScroll={handleSectorScroll}
@@ -425,16 +436,17 @@ export default function LandingPage() {
           >
             {sectors.map((sector, idx) => (
               <motion.div
-                key={sector._id}
+                key={sector._id} // 🛡️ Use database ID
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.1, duration: 0.8 }}
                 onClick={() => setSelectedSector(sector)} // 🚀 THE FIX: Opens the modal!
+                // 🛡️ THE FIX: Math explicitly sets 1 card on mobile, 2 on tablet, and exactly 4 on desktop!
                 className="group relative w-[85vw] md:w-[calc(50%-12px)] lg:w-[calc(25%-18px)] shrink-0 snap-start h-[400px] md:h-[500px] rounded-[24px] overflow-hidden bg-black/40 border border-white/[0.05] shadow-[0_15px_30px_rgba(0,0,0,0.5)] cursor-pointer"
               >
                 <img
-                  src={sector.imageUrl}
+                  src={sector.imageUrl} // 🛡️ Use database Image URL
                   alt={sector.name}
                   className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 opacity-50 group-hover:opacity-80"
                 />
@@ -461,54 +473,6 @@ export default function LandingPage() {
                     </span>
                     <ChevronRight size={14} strokeWidth={3} />
                   </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-          {/* Glassmorphic Left Arrow (Dynamically hidden if at the start) */}
-          {canScrollLeft && (
-            <button
-              onClick={scrollPrev}
-              className="absolute left-0 md:-left-6 top-[60%] -translate-y-1/2 z-30 h-16 w-16 rounded-full bg-white/5 backdrop-blur-xl border border-white/10 flex items-center justify-center text-white/50 hover:text-amber-500 hover:bg-amber-500/20 hover:border-amber-500/40 transition-all shadow-[0_0_30px_rgba(0,0,0,0.5)] opacity-0 group-hover/carousel:opacity-100  md:flex"
-            >
-              <ChevronLeft size={36} strokeWidth={1.5} />
-            </button>
-          )}
-
-          {/* 🛡️ THE FIX: Added onScroll listener to track user swipes */}
-          <div
-            ref={scrollContainerRef}
-            onScroll={handleSectorScroll}
-            className="flex gap-6 overflow-x-auto snap-x snap-mandatory pb-8 pt-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
-          >
-            {sectors.map((sector, idx) => (
-              <motion.div
-                key={sector._id} // 🛡️ Use database ID
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.1, duration: 0.8 }}
-                // 🛡️ THE FIX: Math explicitly sets 1 card on mobile, 2 on tablet, and exactly 4 on desktop!
-                className="group relative w-[85vw] md:w-[calc(50%-12px)] lg:w-[calc(25%-18px)] shrink-0 snap-start h-[400px] md:h-[500px] rounded-[24px] overflow-hidden bg-black/40 border border-white/[0.05] shadow-[0_15px_30px_rgba(0,0,0,0.5)] cursor-pointer"
-              >
-                <img
-                  src={sector.imageUrl} // 🛡️ Use database Image URL
-                  alt={sector.name}
-                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 opacity-50 group-hover:opacity-80"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F14] via-[#0B0F14]/60 to-transparent" />
-                <div className="absolute bottom-0 left-0 p-8 w-full">
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="h-10 w-10 bg-amber-500/10 backdrop-blur-md rounded-full flex items-center justify-center border border-amber-500/20 group-hover:bg-amber-500 group-hover:text-black transition-colors">
-                      <Crosshair size={18} strokeWidth={2.5} />
-                    </div>
-                    <h3 className="text-2xl font-black italic uppercase tracking-tighter text-white">
-                      {sector.name}
-                    </h3>
-                  </div>
-                  <p className="text-[#8A94A6] text-sm font-medium leading-relaxed group-hover:text-amber-100/80 transition-colors line-clamp-3">
-                    {sector.description} {/* 🛡️ Use database Description */}
-                  </p>
                 </div>
               </motion.div>
             ))}
