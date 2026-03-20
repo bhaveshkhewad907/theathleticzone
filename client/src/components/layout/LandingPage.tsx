@@ -521,70 +521,56 @@ export default function LandingPage() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-100px" }}
-            className="mb-16 text-center flex flex-col items-center"
+            className="mb-12 text-center flex flex-col items-center"
           >
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 text-[9px] font-black uppercase tracking-[0.3em] mb-4">
-              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />{" "}
-              Live Feed
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 text-[9px] font-black uppercase tracking-[0.3em] mb-4 shadow-inner">
+              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.8)]" />
+              Live Facility Feed
             </div>
             <h2 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter text-white drop-shadow-lg">
               The <span className="text-amber-500">Facility</span>
             </h2>
           </motion.div>
 
-          {/* 🚀 THE NEW INNOVATION: Auto-Swapping Bento Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 grid-rows-2 gap-4 h-[500px] md:h-[600px] relative">
+          {/* 🚀 THE UPGRADE: "Studio Grid" Layout */}
+          {/* We removed the fixed height on mobile so it can naturally fit all 5 images */}
+          <div className="grid grid-cols-2 md:grid-cols-4 md:grid-rows-2 gap-3 md:gap-4 md:h-[600px] w-full relative">
             <AnimatePresence mode="popLayout">
               {currentGallerySet.map((img, i) => {
-                // Determine layout rules for the Asymmetric Bento Box
-                let gridClasses = "";
-                if (i === 0) {
-                  // Huge Center Image (Dominates the view)
-                  gridClasses =
-                    "col-span-2 row-span-2 md:col-start-2 md:col-end-4 md:row-start-1 md:row-end-3";
-                } else if (i === 1) {
-                  // Top Left
-                  gridClasses =
-                    "col-span-1 row-span-1 md:col-start-1 md:col-end-2 md:row-start-1 md:row-end-2";
-                } else if (i === 2) {
-                  // Bottom Left
-                  gridClasses =
-                    "col-span-1 row-span-1 md:col-start-1 md:col-end-2 md:row-start-2 md:row-end-3";
-                } else if (i === 3) {
-                  // Top Right
-                  gridClasses =
-                    "col-span-1 row-span-1 md:col-start-4 md:col-end-5 md:row-start-1 md:row-end-2";
-                } else if (i === 4) {
-                  // Bottom Right
-                  gridClasses =
-                    "col-span-1 row-span-1 md:col-start-4 md:col-end-5 md:row-start-2 md:row-end-3";
-                }
+                const isHero = i === 0;
+
+                // 📱 Mobile: Hero is top full-width (aspect-video), others are squares below it.
+                // 💻 Desktop: Hero is left half (2 cols, 2 rows), others are 2x2 grid on right.
+                const gridClasses = isHero
+                  ? "col-span-2 md:col-span-2 md:row-span-2 aspect-[16/10] md:aspect-auto"
+                  : "col-span-1 md:col-span-1 md:row-span-1 aspect-square md:aspect-auto";
 
                 return (
                   <motion.div
-                    key={img} // 🛡️ The key forces Framer to animate when the URL changes
+                    key={img}
                     initial={{ opacity: 0, filter: "blur(10px)", scale: 1.05 }}
                     animate={{ opacity: 1, filter: "blur(0px)", scale: 1 }}
                     exit={{ opacity: 0, filter: "blur(10px)", scale: 0.95 }}
                     transition={{
                       duration: 0.8,
-                      delay: i * 0.1, // Staggers the fade for a high-tech cascading effect
+                      delay: i * 0.1, // Staggered fade in
                       ease: "easeInOut",
                     }}
-                    className={`relative rounded-[20px] overflow-hidden group shadow-[0_10px_30px_rgba(0,0,0,0.5)] border border-white/[0.05] ${gridClasses}`}
+                    className={`relative rounded-[16px] md:rounded-[24px] overflow-hidden group shadow-[0_10px_30px_rgba(0,0,0,0.5)] border border-white/[0.05] ${gridClasses}`}
                   >
                     <img
                       src={img}
                       alt={`Facility View ${i}`}
-                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-[2s] opacity-60 group-hover:opacity-100"
+                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-[2s] opacity-70 group-hover:opacity-100"
                     />
-                    {/* Glassmorphic Overlay for depth */}
+
+                    {/* Shadow gradient so the text is always readable */}
                     <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F14]/90 via-transparent to-transparent opacity-80 group-hover:opacity-40 transition-opacity duration-700" />
 
-                    {/* Decorative Tech Accents */}
-                    <div className="absolute bottom-4 left-4 md:bottom-6 md:left-6 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100">
-                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                      <span className="text-[9px] font-black uppercase tracking-[0.3em] text-white drop-shadow-md">
+                    {/* Camera Feed Label */}
+                    <div className="absolute bottom-4 left-4 flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500/80" />
+                      <span className="text-[9px] font-black uppercase tracking-[0.3em] text-white/90 drop-shadow-md">
                         Cam 0{i + 1}
                       </span>
                     </div>
@@ -594,14 +580,14 @@ export default function LandingPage() {
             </AnimatePresence>
           </div>
 
-          {/* ⏱️ Animated Progress Bar (Shows when the next swap will happen) */}
-          <div className="w-full max-w-sm mx-auto mt-12 h-[2px] bg-white/5 rounded-full overflow-hidden">
+          {/* ⏱️ Auto-Swap Timer Bar */}
+          <div className="w-full max-w-md mx-auto mt-10 h-[2px] bg-white/5 rounded-full overflow-hidden">
             <motion.div
-              key={galleryIndex} // Restarts animation on every swap
+              key={galleryIndex}
               initial={{ width: "0%" }}
               animate={{ width: "100%" }}
               transition={{ duration: 5, ease: "linear" }}
-              className="h-full bg-amber-500/50 shadow-[0_0_10px_rgba(245,158,11,0.5)]"
+              className="h-full bg-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.6)]"
             />
           </div>
         </div>
