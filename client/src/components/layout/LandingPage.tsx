@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Activity,
   BarChart3,
@@ -178,25 +178,18 @@ export default function LandingPage() {
     facilitySlides.push(GALLERY.slice(i, i + 5));
   }
 
-  const facilityScrollRef = useRef<HTMLDivElement>(null);
+  const [galleryIndex, setGalleryIndex] = useState(0);
 
-  const scrollFacilityNext = () => {
-    if (facilityScrollRef.current) {
-      facilityScrollRef.current.scrollBy({
-        left: facilityScrollRef.current.offsetWidth,
-        behavior: "smooth",
-      });
-    }
-  };
+  useEffect(() => {
+    // Automatically swap to the next 5 images every 5 seconds
+    const interval = setInterval(() => {
+      setGalleryIndex((prev) => (prev + 1) % facilitySlides.length);
+    }, 5000);
 
-  const scrollFacilityPrev = () => {
-    if (facilityScrollRef.current) {
-      facilityScrollRef.current.scrollBy({
-        left: -facilityScrollRef.current.offsetWidth,
-        behavior: "smooth",
-      });
-    }
-  };
+    return () => clearInterval(interval);
+  }, [facilitySlides.length]);
+
+  const currentGallerySet = facilitySlides[galleryIndex] || [];
 
   useEffect(() => {
     const fetchPublicSports = async () => {
@@ -522,76 +515,95 @@ export default function LandingPage() {
       </section>
 
       {/* 🏟️ SECTION 4: FACILITY GALLERY */}
-      <section className="py-20 md:py-32 px-6 relative z-10 border-t border-white/[0.05] bg-black/20 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto group/facility relative">
+      <section className="py-20 md:py-32 px-6 relative z-10 border-t border-white/[0.05] bg-black/20 backdrop-blur-sm overflow-hidden">
+        <div className="max-w-7xl mx-auto relative">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-100px" }}
-            className="mb-16"
+            className="mb-16 text-center flex flex-col items-center"
           >
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 text-[9px] font-black uppercase tracking-[0.3em] mb-4">
+              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />{" "}
+              Live Feed
+            </div>
             <h2 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter text-white drop-shadow-lg">
               The <span className="text-amber-500">Facility</span>
             </h2>
           </motion.div>
 
-          {/* Glassmorphic Left Arrow */}
-          {facilitySlides.length > 1 && (
-            <button
-              onClick={scrollFacilityPrev}
-              className="absolute left-0 md:-left-6 top-[60%] -translate-y-1/2 z-30 h-16 w-16 rounded-full bg-white/5 backdrop-blur-xl border border-white/10 flex items-center justify-center text-white/50 hover:text-amber-500 hover:bg-amber-500/20 hover:border-amber-500/40 transition-all shadow-[0_0_30px_rgba(0,0,0,0.5)] opacity-0 group-hover/facility:opacity-100  md:flex"
-            >
-              <ChevronLeft size={36} strokeWidth={1.5} />
-            </button>
-          )}
+          {/* 🚀 THE NEW INNOVATION: Auto-Swapping Bento Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 grid-rows-2 gap-4 h-[500px] md:h-[600px] relative">
+            <AnimatePresence mode="popLayout">
+              {currentGallerySet.map((img, i) => {
+                // Determine layout rules for the Asymmetric Bento Box
+                let gridClasses = "";
+                if (i === 0) {
+                  // Huge Center Image (Dominates the view)
+                  gridClasses =
+                    "col-span-2 row-span-2 md:col-start-2 md:col-end-4 md:row-start-1 md:row-end-3";
+                } else if (i === 1) {
+                  // Top Left
+                  gridClasses =
+                    "col-span-1 row-span-1 md:col-start-1 md:col-end-2 md:row-start-1 md:row-end-2";
+                } else if (i === 2) {
+                  // Bottom Left
+                  gridClasses =
+                    "col-span-1 row-span-1 md:col-start-1 md:col-end-2 md:row-start-2 md:row-end-3";
+                } else if (i === 3) {
+                  // Top Right
+                  gridClasses =
+                    "col-span-1 row-span-1 md:col-start-4 md:col-end-5 md:row-start-1 md:row-end-2";
+                } else if (i === 4) {
+                  // Bottom Right
+                  gridClasses =
+                    "col-span-1 row-span-1 md:col-start-4 md:col-end-5 md:row-start-2 md:row-end-3";
+                }
 
-          {/* 🛡️ THE FIX: Horizontal Carousel Container */}
-          <div
-            ref={facilityScrollRef}
-            className="flex overflow-x-auto snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] w-full pb-8"
-          >
-            {/* Map through the "Chunks" of 5 */}
-            {facilitySlides.map((slide, slideIndex) => (
-              // Each slide acts as a full-width container that holds your beloved Grid layout
-              <div
-                key={`slide-${slideIndex}`}
-                className="w-full shrink-0 snap-start grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 px-1"
-              >
-                {slide.map((img, i) => (
+                return (
                   <motion.div
-                    key={i}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    whileInView={{ opacity: 1, scale: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: i * 0.05 }}
-                    className={`relative rounded-[20px] overflow-hidden group shadow-[0_10px_30px_rgba(0,0,0,0.5)] border border-white/[0.05] ${
-                      i === 0
-                        ? "col-span-2 md:col-span-2 md:row-span-2 aspect-video md:aspect-auto"
-                        : "aspect-square"
-                    }`}
+                    key={img} // 🛡️ The key forces Framer to animate when the URL changes
+                    initial={{ opacity: 0, filter: "blur(10px)", scale: 1.05 }}
+                    animate={{ opacity: 1, filter: "blur(0px)", scale: 1 }}
+                    exit={{ opacity: 0, filter: "blur(10px)", scale: 0.95 }}
+                    transition={{
+                      duration: 0.8,
+                      delay: i * 0.1, // Staggers the fade for a high-tech cascading effect
+                      ease: "easeInOut",
+                    }}
+                    className={`relative rounded-[20px] overflow-hidden group shadow-[0_10px_30px_rgba(0,0,0,0.5)] border border-white/[0.05] ${gridClasses}`}
                   >
                     <img
                       src={img}
-                      alt={`Athletic Zone Facility Area ${slideIndex * 5 + i + 1}`}
-                      loading="lazy"
-                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-60 group-hover:opacity-100"
+                      alt={`Facility View ${i}`}
+                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-[2s] opacity-60 group-hover:opacity-100"
                     />
-                    <div className="absolute inset-0 bg-[#0B0F14]/20 group-hover:bg-transparent transition-colors duration-700" />
+                    {/* Glassmorphic Overlay for depth */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F14]/90 via-transparent to-transparent opacity-80 group-hover:opacity-40 transition-opacity duration-700" />
+
+                    {/* Decorative Tech Accents */}
+                    <div className="absolute bottom-4 left-4 md:bottom-6 md:left-6 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                      <span className="text-[9px] font-black uppercase tracking-[0.3em] text-white drop-shadow-md">
+                        Cam 0{i + 1}
+                      </span>
+                    </div>
                   </motion.div>
-                ))}
-              </div>
-            ))}
+                );
+              })}
+            </AnimatePresence>
           </div>
 
-          {/* Glassmorphic Right Arrow */}
-          {facilitySlides.length > 1 && (
-            <button
-              onClick={scrollFacilityNext}
-              className="absolute right-0 md:-right-6 top-[60%] -translate-y-1/2 z-30 h-16 w-16 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-white hover:text-amber-500 hover:bg-amber-500/20 hover:border-amber-500/40 transition-all shadow-[0_10px_40px_rgba(0,0,0,0.8)] opacity-100 md:opacity-50 md:group-hover/facility:opacity-100 md:flex"
-            >
-              <ChevronRight size={36} strokeWidth={1.5} />
-            </button>
-          )}
+          {/* ⏱️ Animated Progress Bar (Shows when the next swap will happen) */}
+          <div className="w-full max-w-sm mx-auto mt-12 h-[2px] bg-white/5 rounded-full overflow-hidden">
+            <motion.div
+              key={galleryIndex} // Restarts animation on every swap
+              initial={{ width: "0%" }}
+              animate={{ width: "100%" }}
+              transition={{ duration: 5, ease: "linear" }}
+              className="h-full bg-amber-500/50 shadow-[0_0_10px_rgba(245,158,11,0.5)]"
+            />
+          </div>
         </div>
       </section>
 
