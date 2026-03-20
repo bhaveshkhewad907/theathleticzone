@@ -51,16 +51,30 @@ router.get(
         refreshToken: string;
       };
 
+      // Automatically detect if we are on Render vs Localhost
+      const isProduction = process.env.NODE_ENV === "production";
+
       // 🍪 Set Refresh Token Cookie (HttpOnly)
       res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
-        secure: false, // IMPORTANT for localhost
-        sameSite: "lax", // keep lax for localhost
+        secure: isProduction, // 🚀 THE FIX: True in production
+        sameSite: isProduction ? "none" : "lax", // 🚀 THE FIX: "none" for cross-domain
         path: "/",
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
 
-      // 🔁 Redirect to frontend with access token
+      // 🍪 Set Access Token Cookie (To match your regular login flow!)
+      res.cookie("accessToken", accessToken, {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: isProduction ? "none" : "lax",
+        path: "/",
+        maxAge: 15 * 60 * 1000,
+      });
+
+      // 🔁 Redirect to frontend
+      // You can keep the token in the URL if your frontend relies on it,
+      // but since we just set the cookies above, the frontend doesn't even need it anymore!
       res.redirect(
         `${process.env.CLIENT_URL}/oauth-success?token=${accessToken}`,
       );
