@@ -123,6 +123,24 @@ export default function LandingPage() {
   const WHATSAPP_LINK = `https://wa.me/${WHATSAPP_NUMBER}?text=Hello,%20I%20am%20interested%20in%20joining%20The%20Athletic%20Zone.%20Could%20I%20please%20request%20more%20information%20regarding%20your%20training%20sectors%20and%20facility%20access?`;
   const [sectors, setSectors] = useState<SportSector[]>([]);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+
+  const handleSectorScroll = () => {
+    if (scrollContainerRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } =
+        scrollContainerRef.current;
+
+      // If scrollLeft is greater than 0, we can scroll back left
+      setCanScrollLeft(scrollLeft > 0);
+
+      // If scrollLeft + what we see (clientWidth) is less than the total width, we can still scroll right.
+      // (We subtract 5px as a buffer because some browsers calculate decimals weirdly)
+      setCanScrollRight(Math.ceil(scrollLeft + clientWidth) < scrollWidth - 5);
+    }
+  };
+
   const GALLERY = Array.from({ length: 15 }).map(
     (_, index) =>
       `https://media.theathleticzone.in/center-images/center-image-${index + 1}.jpg`,
@@ -194,14 +212,20 @@ export default function LandingPage() {
   useEffect(() => {
     const fetchPublicSports = async () => {
       try {
-        // Fetch active sports from your public or backend endpoint
         const res = await api.get("/sports");
         setSectors(res.data.data);
+
+        // 🚀 THE FIX: Check arrow visibility after data loads (slight delay to let React paint the UI)
+        setTimeout(() => handleSectorScroll(), 150);
       } catch (error) {
         console.error("Failed to fetch sports sectors", error);
       }
     };
     fetchPublicSports();
+
+    // Also re-check if the user resizes their browser window!
+    window.addEventListener("resize", handleSectorScroll);
+    return () => window.removeEventListener("resize", handleSectorScroll);
   }, []);
 
   const [coaches, setCoaches] = useState<CoachRoster[]>([]);
@@ -405,9 +429,8 @@ export default function LandingPage() {
             </div>
             <div className="h-[2px] w-32 bg-gradient-to-r from-amber-500 to-transparent mx-auto md:mx-0 opacity-50" />
           </motion.div>
-
-          {/* Glassmorphic Left Arrow (Appears on hover) */}
-          {sectors.length > 4 && (
+          {/* Glassmorphic Left Arrow (Dynamically hidden if at the start) */}
+          {canScrollLeft && (
             <button
               onClick={scrollPrev}
               className="absolute left-0 md:-left-6 top-[60%] -translate-y-1/2 z-30 h-16 w-16 rounded-full bg-white/5 backdrop-blur-xl border border-white/10 flex items-center justify-center text-white/50 hover:text-amber-500 hover:bg-amber-500/20 hover:border-amber-500/40 transition-all shadow-[0_0_30px_rgba(0,0,0,0.5)] opacity-0 group-hover/carousel:opacity-100  md:flex"
@@ -416,9 +439,10 @@ export default function LandingPage() {
             </button>
           )}
 
-          {/* 🛡️ THE FIX: Carousel Container (Hidden scrollbars, snap logic) */}
+          {/* 🛡️ THE FIX: Added onScroll listener to track user swipes */}
           <div
             ref={scrollContainerRef}
+            onScroll={handleSectorScroll}
             className="flex gap-6 overflow-x-auto snap-x snap-mandatory pb-8 pt-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
           >
             {sectors.map((sector, idx) => (
@@ -454,8 +478,8 @@ export default function LandingPage() {
             ))}
           </div>
 
-          {/* Glassmorphic Right Arrow (Visible immediately to indicate more content) */}
-          {sectors.length > 4 && (
+          {/* Glassmorphic Right Arrow (Dynamically hidden if at the end) */}
+          {canScrollRight && (
             <button
               onClick={scrollNext}
               className="absolute right-0 md:-right-6 top-[60%] -translate-y-1/2 z-30 h-16 w-16 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-white hover:text-amber-500 hover:bg-amber-500/20 hover:border-amber-500/40 transition-all shadow-[0_10px_40px_rgba(0,0,0,0.8)] opacity-100 md:opacity-50 md:group-hover/carousel:opacity-100  md:flex"
