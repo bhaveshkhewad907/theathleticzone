@@ -16,6 +16,7 @@ import {
   Briefcase,
   Award,
   Star,
+  X,
 } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import api from "../../services/api";
@@ -123,6 +124,10 @@ export default function LandingPage() {
   const WHATSAPP_LINK = `https://wa.me/${WHATSAPP_NUMBER}?text=Hello,%20I%20am%20interested%20in%20joining%20The%20Athletic%20Zone.%20Could%20I%20please%20request%20more%20information%20regarding%20your%20training%20sectors%20and%20facility%20access?`;
   const [sectors, setSectors] = useState<SportSector[]>([]);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const [selectedSector, setSelectedSector] = useState<SportSector | null>(
+    null,
+  );
 
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
@@ -413,22 +418,53 @@ export default function LandingPage() {
         className="py-20 md:py-32 px-6 relative z-10 border-t border-white/[0.05] bg-black/20 backdrop-blur-sm"
       >
         <div className="max-w-7xl mx-auto group/carousel relative">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            className="mb-20 text-center md:text-left flex flex-col md:flex-row justify-between items-end gap-6"
+          <div
+            ref={scrollContainerRef}
+            onScroll={handleSectorScroll}
+            className="flex gap-6 overflow-x-auto snap-x snap-mandatory pb-8 pt-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
           >
-            <div>
-              <h2 className="text-5xl md:text-6xl font-black uppercase italic tracking-tighter text-white drop-shadow-lg">
-                Training <span className="text-amber-500">Sectors</span>
-              </h2>
-              <p className="text-[10px] font-black text-[#8A94A6] uppercase tracking-[0.3em] mt-4">
-                Disciplines available for immediate deployment
-              </p>
-            </div>
-            <div className="h-[2px] w-32 bg-gradient-to-r from-amber-500 to-transparent mx-auto md:mx-0 opacity-50" />
-          </motion.div>
+            {sectors.map((sector, idx) => (
+              <motion.div
+                key={sector._id}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: idx * 0.1, duration: 0.8 }}
+                onClick={() => setSelectedSector(sector)} // 🚀 THE FIX: Opens the modal!
+                className="group relative w-[85vw] md:w-[calc(50%-12px)] lg:w-[calc(25%-18px)] shrink-0 snap-start h-[400px] md:h-[500px] rounded-[24px] overflow-hidden bg-black/40 border border-white/[0.05] shadow-[0_15px_30px_rgba(0,0,0,0.5)] cursor-pointer"
+              >
+                <img
+                  src={sector.imageUrl}
+                  alt={sector.name}
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 opacity-50 group-hover:opacity-80"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F14] via-[#0B0F14]/60 to-transparent" />
+
+                {/* 🚀 UPGRADED: Content overlay with a "View Details" hint */}
+                <div className="absolute bottom-0 left-0 p-8 w-full transition-transform duration-500 group-hover:-translate-y-2">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="h-10 w-10 bg-amber-500/10 backdrop-blur-md rounded-full flex items-center justify-center border border-amber-500/20 group-hover:bg-amber-500 group-hover:text-black transition-colors">
+                      <Crosshair size={18} strokeWidth={2.5} />
+                    </div>
+                    <h3 className="text-2xl font-black italic uppercase tracking-tighter text-white">
+                      {sector.name}
+                    </h3>
+                  </div>
+                  <p className="text-[#8A94A6] text-sm font-medium leading-relaxed group-hover:text-amber-100/80 transition-colors line-clamp-3 mb-4">
+                    {sector.description}
+                  </p>
+
+                  {/* Subtle hint that it's clickable */}
+                  <div className="flex items-center gap-2 text-amber-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <span className="text-[10px] font-black uppercase tracking-widest">
+                      Access Protocol
+                    </span>
+                    <ChevronRight size={14} strokeWidth={3} />
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
           {/* Glassmorphic Left Arrow (Dynamically hidden if at the start) */}
           {canScrollLeft && (
             <button
@@ -488,6 +524,64 @@ export default function LandingPage() {
             </button>
           )}
         </div>
+
+        {/* 🚀 THE NEW INNOVATION: Sector Detail Modal */}
+        <AnimatePresence>
+          {selectedSector && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedSector(null)} // Clicking the background closes it
+              className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 bg-black/80 backdrop-blur-md"
+            >
+              <motion.div
+                initial={{ scale: 0.95, y: 20, opacity: 0 }}
+                animate={{ scale: 1, y: 0, opacity: 1 }}
+                exit={{ scale: 0.95, y: 20, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()} // Clicking the modal itself WON'T close it
+                className="relative w-full max-w-2xl bg-[#0F1724] border border-white/10 rounded-[24px] overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.8)] flex flex-col max-h-[90vh]"
+              >
+                {/* Close Button */}
+                <button
+                  onClick={() => setSelectedSector(null)}
+                  className="absolute top-4 right-4 z-10 w-10 h-10 bg-black/50 hover:bg-black/80 backdrop-blur-md border border-white/10 rounded-full flex items-center justify-center text-white/70 hover:text-amber-500 transition-all"
+                >
+                  <X size={20} />
+                </button>
+
+                {/* Header Image */}
+                <div className="relative h-48 md:h-64 shrink-0">
+                  <img
+                    src={selectedSector.imageUrl}
+                    alt={selectedSector.name}
+                    className="absolute inset-0 w-full h-full object-cover opacity-60"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0F1724] to-transparent" />
+
+                  <div className="absolute bottom-6 left-6 md:left-8 flex items-center gap-4">
+                    <div className="h-12 w-12 bg-amber-500 rounded-full flex items-center justify-center text-black shadow-[0_0_20px_rgba(245,158,11,0.4)]">
+                      <Crosshair size={24} strokeWidth={2.5} />
+                    </div>
+                    <h3 className="text-3xl md:text-4xl font-black italic uppercase tracking-tighter text-white drop-shadow-lg">
+                      {selectedSector.name}
+                    </h3>
+                  </div>
+                </div>
+
+                {/* Scrollable Description Area */}
+                <div className="p-6 md:p-8 overflow-y-auto custom-scrollbar">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-[9px] font-black uppercase tracking-[0.2em] text-amber-500 mb-6">
+                    Official Protocol Description
+                  </div>
+                  <p className="text-[#E5E7EB] text-sm md:text-base leading-relaxed font-medium whitespace-pre-wrap">
+                    {selectedSector.description}
+                  </p>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </section>
 
       {/* 🧠 SECTION 3: NEXT-GEN INTELLIGENCE */}
