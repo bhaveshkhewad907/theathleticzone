@@ -615,7 +615,6 @@ export default function LandingPage() {
           </motion.div>
 
           {/* 🚀 THE UPGRADE: "Studio Grid" Layout */}
-          {/* We removed the fixed height on mobile so it can naturally fit all 5 images */}
           <div className="grid grid-cols-2 md:grid-cols-4 md:grid-rows-2 gap-3 md:gap-4 md:h-[600px] w-full relative">
             <AnimatePresence mode="popLayout">
               {currentGallerySet.map((img, i) => {
@@ -661,20 +660,8 @@ export default function LandingPage() {
               })}
             </AnimatePresence>
           </div>
-
-          {/* ⏱️ Auto-Swap Timer Bar */}
-          <div className="w-full max-w-md mx-auto mt-10 h-[2px] bg-white/5 rounded-full overflow-hidden">
-            <motion.div
-              key={galleryIndex}
-              initial={{ width: "0%" }}
-              animate={{ width: "100%" }}
-              transition={{ duration: 5, ease: "linear" }}
-              className="h-full bg-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.6)]"
-            />
-          </div>
         </div>
       </section>
-
       {/* 🏅 SECTION 5: ELITE COACHING STAFF */}
       <section className="py-20 md:py-32 px-6 relative z-10 bg-[#0B0F14]">
         <div className="max-w-7xl mx-auto group/coach relative">
