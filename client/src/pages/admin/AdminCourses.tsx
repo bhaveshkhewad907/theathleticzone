@@ -2,7 +2,21 @@ import { useState, useEffect } from "react";
 import api from "../../services/api";
 import axios from "axios";
 import { toast } from "react-hot-toast";
-import { Trash2, PowerOff, Power, AlertTriangle, X } from "lucide-react";
+import {
+  Trash2,
+  PowerOff,
+  Power,
+  AlertTriangle,
+  X,
+  Database,
+  LayoutTemplate,
+  Network,
+} from "lucide-react";
+
+// 🚀 IMPORTS: Protocol Command Center Modals
+import CreateStepModal from "./CreateStepModal";
+import CreateTemplateModal from "./CreateTemplateModal";
+import CourseArchitectModal from "./CourseArchitectModal";
 
 interface Course {
   _id: string;
@@ -18,6 +32,14 @@ export default function AdminCourses() {
   const [showModal, setShowModal] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+
+  // 🚀 STATE: Protocol Builder Modals
+  const [showStepModal, setShowStepModal] = useState(false);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [architectCourse, setArchitectCourse] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -156,23 +178,47 @@ export default function AdminCourses() {
 
   return (
     <div className="space-y-6 md:space-y-10 p-2 md:p-4 animate-in fade-in duration-700">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-[#121821] p-6 md:p-8 rounded-3xl border border-white/5 relative overflow-hidden gap-6">
+      {/* 🚀 UPGRADED: Protocol Command Center Header */}
+      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center bg-[#121821] p-6 md:p-8 rounded-3xl border border-white/5 relative overflow-hidden gap-6 shadow-2xl">
         <div className="relative z-10">
           <h1 className="text-3xl md:text-4xl font-black italic tracking-tighter uppercase text-white">
-            Content <span className="text-amber-500">Vault</span>
+            Course <span className="text-amber-500">Management</span>
           </h1>
           <p className="text-white/40 text-[10px] font-bold tracking-widest uppercase mt-2">
-            Manage and deploy training modules.
+            Manage storefront and structured training protocols.
           </p>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="relative z-10 w-full md:w-auto bg-amber-500 text-black px-6 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-amber-400 transition-all active:scale-95 shadow-xl shadow-amber-500/10"
-        >
-          Deploy New Course
-        </button>
+
+        <div className="relative z-10 flex flex-wrap items-center gap-3 w-full xl:w-auto">
+          {/* Tier 1: Vault */}
+          <button
+            onClick={() => setShowStepModal(true)}
+            className="flex-1 xl:flex-none flex items-center justify-center gap-2 px-5 py-4 bg-black/40 border border-white/10 hover:border-amber-500/50 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-inner hover:bg-black/60"
+          >
+            <Database size={14} className="text-amber-500" />
+            Content Vault
+          </button>
+
+          {/* Tier 2: Template Builder */}
+          <button
+            onClick={() => setShowTemplateModal(true)}
+            className="flex-1 xl:flex-none flex items-center justify-center gap-2 px-5 py-4 bg-black/40 border border-white/10 hover:border-amber-500/50 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-inner hover:bg-black/60"
+          >
+            <LayoutTemplate size={14} className="text-amber-500" />
+            Protocol Builder
+          </button>
+
+          {/* Legacy Drop Course */}
+          <button
+            onClick={() => setShowModal(true)}
+            className="w-full xl:w-auto bg-amber-500 text-black px-8 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-amber-400 transition-all active:scale-95 shadow-xl shadow-amber-500/10"
+          >
+            Deploy New Course
+          </button>
+        </div>
       </div>
 
+      {/* Grid of Courses */}
       <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
         {courses.map((course) => (
           <div
@@ -195,68 +241,82 @@ export default function AdminCourses() {
               {course.title}
             </h3>
 
-            <div className="mt-auto pt-4 px-2 flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <div
-                  className={`h-1.5 w-1.5 rounded-full ${
-                    course.isActive
-                      ? "bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.8)]"
-                      : "bg-red-500"
-                  }`}
-                />
-                <span className="text-[9px] font-black uppercase tracking-widest text-white/40">
-                  {course.isActive ? "Active" : "Offline"}
-                </span>
-              </div>
+            <div className="mt-auto pt-4 flex flex-col gap-4">
+              {/* Status & Quick Actions */}
+              <div className="flex justify-between items-center px-2">
+                <div className="flex items-center gap-2">
+                  <div
+                    className={`h-1.5 w-1.5 rounded-full ${
+                      course.isActive
+                        ? "bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.8)]"
+                        : "bg-red-500"
+                    }`}
+                  />
+                  <span className="text-[9px] font-black uppercase tracking-widest text-white/40">
+                    {course.isActive ? "Active" : "Offline"}
+                  </span>
+                </div>
 
-              <div className="flex items-center gap-2">
-                {course.isActive ? (
+                <div className="flex items-center gap-2">
+                  {course.isActive ? (
+                    <button
+                      onClick={() =>
+                        setActionModal({
+                          isOpen: true,
+                          type: "DEACTIVATE",
+                          courseId: course._id,
+                          courseTitle: course.title,
+                        })
+                      }
+                      className="p-2 rounded-xl bg-[#0B0F14] border border-white/5 text-amber-500/50 hover:text-amber-500 hover:border-amber-500/30 transition-all"
+                      title="Take Offline"
+                    >
+                      <PowerOff size={14} />
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() =>
+                        setActionModal({
+                          isOpen: true,
+                          type: "REACTIVATE",
+                          courseId: course._id,
+                          courseTitle: course.title,
+                        })
+                      }
+                      className="p-2 rounded-xl bg-[#0B0F14] border border-white/5 text-green-500/50 hover:text-green-500 hover:border-green-500/30 transition-all shadow-[0_0_15px_rgba(34,197,94,0)] hover:shadow-[0_0_15px_rgba(34,197,94,0.2)]"
+                      title="Bring Online"
+                    >
+                      <Power size={14} />
+                    </button>
+                  )}
+
                   <button
                     onClick={() =>
                       setActionModal({
                         isOpen: true,
-                        type: "DEACTIVATE",
+                        type: "DELETE",
                         courseId: course._id,
                         courseTitle: course.title,
                       })
                     }
-                    className="p-2 rounded-xl bg-[#0B0F14] border border-white/5 text-amber-500/50 hover:text-amber-500 hover:border-amber-500/30 transition-all"
-                    title="Take Offline"
+                    className="p-2 rounded-xl bg-[#0B0F14] border border-white/5 text-red-500/50 hover:text-red-500 hover:border-red-500/30 transition-all"
+                    title="Permanently Purge"
                   >
-                    <PowerOff size={14} />
+                    <Trash2 size={14} />
                   </button>
-                ) : (
-                  <button
-                    onClick={() =>
-                      setActionModal({
-                        isOpen: true,
-                        type: "REACTIVATE",
-                        courseId: course._id,
-                        courseTitle: course.title,
-                      })
-                    }
-                    className="p-2 rounded-xl bg-[#0B0F14] border border-white/5 text-green-500/50 hover:text-green-500 hover:border-green-500/30 transition-all shadow-[0_0_15px_rgba(34,197,94,0)] hover:shadow-[0_0_15px_rgba(34,197,94,0.2)]"
-                    title="Bring Online"
-                  >
-                    <Power size={14} />
-                  </button>
-                )}
-
-                <button
-                  onClick={() =>
-                    setActionModal({
-                      isOpen: true,
-                      type: "DELETE",
-                      courseId: course._id,
-                      courseTitle: course.title,
-                    })
-                  }
-                  className="p-2 rounded-xl bg-[#0B0F14] border border-white/5 text-red-500/50 hover:text-red-500 hover:border-red-500/30 transition-all"
-                  title="Permanently Purge"
-                >
-                  <Trash2 size={14} />
-                </button>
+                </div>
               </div>
+
+              {/* 🚀 UPGRADED: Architect Plan Button (Tier 3) */}
+              <button
+                onClick={() =>
+                  setArchitectCourse({ id: course._id, name: course.title })
+                }
+                className="w-full flex items-center justify-center gap-2 py-3 bg-amber-500/10 hover:bg-amber-500 text-amber-500 hover:text-black border border-amber-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300"
+              >
+                <Network size={14} />
+                Architect Plan
+              </button>
             </div>
           </div>
         ))}
@@ -371,7 +431,7 @@ export default function AdminCourses() {
         </div>
       )}
 
-      {/* 📱 RESPONSIVE MODAL: Creation Protocol */}
+      {/* 📱 RESPONSIVE MODAL: Legacy Course Creation Protocol */}
       {showModal && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-xl flex items-center justify-center p-4 z-50 overflow-y-auto">
           <div className="bg-[#0F1724]/90 border border-white/10 p-6 md:p-10 rounded-[24px] max-w-lg w-[95vw] md:w-full space-y-6 shadow-[0_20px_50px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.04)] relative overflow-hidden my-auto">
@@ -432,7 +492,6 @@ export default function AdminCourses() {
               </div>
             </div>
 
-            {/* 📱 RESPONSIVE: Stacked asset selections on mobile */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <p className="text-[10px] font-black uppercase tracking-widest text-[#8A94A6] text-center">
@@ -562,6 +621,36 @@ export default function AdminCourses() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* 🚀 THE FIX: Render Protocol Command Center Modals */}
+      {showStepModal && (
+        <CreateStepModal
+          onClose={() => setShowStepModal(false)}
+          onSuccess={() => {
+            /* Optionally reload steps elsewhere if needed */
+          }}
+        />
+      )}
+
+      {showTemplateModal && (
+        <CreateTemplateModal
+          onClose={() => setShowTemplateModal(false)}
+          onSuccess={() => {
+            /* Optionally reload templates */
+          }}
+        />
+      )}
+
+      {architectCourse && (
+        <CourseArchitectModal
+          courseId={architectCourse.id}
+          courseName={architectCourse.name}
+          onClose={() => setArchitectCourse(null)}
+          onSuccess={() => {
+            /* Let the toast handle success message */
+          }}
+        />
       )}
     </div>
   );

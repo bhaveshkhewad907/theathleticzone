@@ -58,3 +58,17 @@ export const requireRole = (...allowedRoles: (string | string[])[]) => {
     next();
   };
 };
+
+// 🛡️ Role-Based Access Control
+export const restrictTo = (...roles: string[]) => {
+  return (req: any, res: any, next: any) => {
+    if (!req.user || !roles.includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "You do not have the required clearance to perform this action.",
+      });
+    }
+    next();
+  };
+};
