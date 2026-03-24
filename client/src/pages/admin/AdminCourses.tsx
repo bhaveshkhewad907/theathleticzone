@@ -178,7 +178,7 @@ export default function AdminCourses() {
 
   return (
     <>
-      <div className="space-y-6 md:space-y-10 p-2 md:p-4 animate-in fade-in duration-700">
+      <div className="relative min-h-screen space-y-6 md:space-y-10 p-2 md:p-4 animate-in fade-in duration-700">
         {/* 🚀 UPGRADED: Protocol Command Center Header */}
         <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center bg-[#121821] p-6 md:p-8 rounded-3xl border border-white/5 relative overflow-hidden gap-6 shadow-2xl">
           <div className="relative z-10">

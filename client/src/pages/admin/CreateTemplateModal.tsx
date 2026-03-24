@@ -80,8 +80,8 @@ export default function CreateTemplateModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="bg-[#0F1724] border border-white/10 rounded-[24px] w-full max-w-5xl h-[85vh] overflow-hidden shadow-2xl flex flex-col">
+    <div className="absolute inset-0 z-[50] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm rounded-3xl">
+      <div className="bg-[#0F1724] border border-white/10 rounded-[24px] w-[85%] h-[85%] overflow-hidden shadow-2xl flex flex-col">
         {/* Header */}
         <div className="flex justify-between items-center p-6 border-b border-white/5 shrink-0">
           <div>
