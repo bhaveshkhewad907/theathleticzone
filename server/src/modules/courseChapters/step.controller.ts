@@ -75,3 +75,22 @@ export const getSteps: RequestHandler = async (req, res, next) => {
     next(error);
   }
 };
+
+// PUT: Update an existing step's video asset
+export const updateStep: RequestHandler = async (req, res, next) => {
+  try {
+    const { stepId } = req.params;
+    const { videoUrl } = req.body;
+
+    // Find the original step and update its video link
+    const updatedStep = await Step.findByIdAndUpdate(
+      stepId,
+      { videoUrl },
+      { new: true }, // Returns the updated document
+    );
+
+    res.status(200).json({ success: true, data: updatedStep });
+  } catch (error) {
+    next(error);
+  }
+};

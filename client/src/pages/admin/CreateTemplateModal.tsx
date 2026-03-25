@@ -1,7 +1,16 @@
 import { useState, useEffect } from "react";
-import { X, Plus, GripVertical, Trash2, Save, Video } from "lucide-react";
+import {
+  X,
+  Plus,
+  GripVertical,
+  Trash2,
+  Save,
+  Video,
+  Edit2,
+} from "lucide-react";
 import api from "../../services/api";
 import toast from "react-hot-toast";
+import EditStepModal from "./EditStepModal";
 
 interface Step {
   _id: string;
@@ -22,6 +31,7 @@ export default function CreateTemplateModal({
   const [selectedSteps, setSelectedSteps] = useState<Step[]>([]);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [editingStep, setEditingStep] = useState<Step | null>(null);
   const [loading, setLoading] = useState(false);
 
   // Load the Content Vault on mount
@@ -124,12 +134,21 @@ export default function CreateTemplateModal({
                       </p>
                     </div>
                   </div>
-                  <button
-                    onClick={() => addStep(step)}
-                    className="h-8 w-8 rounded-full bg-white/5 flex items-center justify-center text-white/50 hover:bg-amber-500 hover:text-black transition-all"
-                  >
-                    <Plus size={16} />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setEditingStep(step)}
+                      className="h-8 w-8 rounded-full bg-white/5 flex items-center justify-center text-white/50 hover:bg-amber-500 hover:text-black transition-all"
+                      title="Replace Video"
+                    >
+                      <Edit2 size={14} />
+                    </button>
+                    <button
+                      onClick={() => addStep(step)}
+                      className="h-8 w-8 rounded-full bg-white/5 flex items-center justify-center text-white/50 hover:bg-amber-500 hover:text-black transition-all"
+                    >
+                      <Plus size={16} />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -217,6 +236,18 @@ export default function CreateTemplateModal({
           </div>
         </div>
       </div>
+      {editingStep && (
+        <EditStepModal
+          step={editingStep}
+          onClose={() => setEditingStep(null)}
+          onSuccess={() => {
+            setEditingStep(null);
+            // We use a quick page reload to fetch the fresh Cloudflare URL
+            // so the coach instantly sees the new video.
+            window.location.reload();
+          }}
+        />
+      )}
     </div>
   );
 }

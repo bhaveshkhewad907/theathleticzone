@@ -71,7 +71,7 @@ export default function MyCourses() {
           setIsAuthorizing(null);
           return;
         }
-      } catch (err) {
+      } catch {
         // A 404 here just means no plan exists. Move on to Legacy fallback.
       }
 

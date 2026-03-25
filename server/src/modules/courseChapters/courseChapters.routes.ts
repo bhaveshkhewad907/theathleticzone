@@ -1,5 +1,10 @@
 import express from "express";
-import { generateUploadUrl, createStep, getSteps } from "./step.controller";
+import {
+  generateUploadUrl,
+  createStep,
+  getSteps,
+  updateStep,
+} from "./step.controller";
 import {
   getCoursePlan,
   updateProgress,
@@ -39,5 +44,6 @@ router.get("/steps", restrictTo("ADMIN", "COACH"), getSteps); // 🚀 NEW
 router.post("/templates", restrictTo("ADMIN", "COACH"), createTemplate); // 🚀 NEW
 router.get("/templates", restrictTo("ADMIN", "COACH"), getTemplates);
 router.post("/plan", restrictTo("ADMIN", "COACH"), saveCoursePlan);
+router.put("/steps/:stepId", restrictTo("ADMIN"), updateStep);
 
 export default router;
