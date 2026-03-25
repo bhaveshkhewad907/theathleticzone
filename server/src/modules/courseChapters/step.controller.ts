@@ -12,6 +12,7 @@ const s3Client = new S3Client({
     accessKeyId: process.env.R2_ACCESS_KEY_ID as string,
     secretAccessKey: process.env.R2_SECRET_ACCESS_KEY as string,
   },
+  forcePathStyle: true,
 });
 
 // 1. Give the frontend a secure URL to upload the video directly to R2
