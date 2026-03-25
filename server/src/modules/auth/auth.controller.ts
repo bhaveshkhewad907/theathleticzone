@@ -114,17 +114,21 @@ export const login = async (
 
     const isProduction = process.env.NODE_ENV === "production";
 
-    res.cookie("refreshToken", refreshToken, {
+    // 🚀 THE NEW BULLETPROOF COOKIE OPTIONS
+    const cookieOptions = {
       httpOnly: true,
       secure: isProduction,
-      sameSite: isProduction ? "none" : "lax",
+      sameSite: "lax" as const,
+      domain: isProduction ? ".theathleticzone.in" : undefined,
+    };
+
+    res.cookie("refreshToken", refreshToken, {
+      ...cookieOptions,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     res.cookie("accessToken", accessToken, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? "none" : "lax",
+      ...cookieOptions,
       maxAge: 15 * 60 * 1000,
     });
 
@@ -159,17 +163,21 @@ export const refresh = async (
     const { accessToken, newRefreshToken } = await refreshSession(refreshToken);
     const isProduction = process.env.NODE_ENV === "production";
 
-    res.cookie("refreshToken", newRefreshToken, {
+    // 🚀 THE NEW BULLETPROOF COOKIE OPTIONS
+    const cookieOptions = {
       httpOnly: true,
       secure: isProduction,
-      sameSite: isProduction ? "none" : "lax",
+      sameSite: "lax" as const,
+      domain: isProduction ? ".theathleticzone.in" : undefined,
+    };
+
+    res.cookie("refreshToken", newRefreshToken, {
+      ...cookieOptions,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     res.cookie("accessToken", accessToken, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? "none" : "lax",
+      ...cookieOptions,
       maxAge: 15 * 60 * 1000,
     });
 
@@ -177,20 +185,17 @@ export const refresh = async (
   } catch (error) {
     const isProduction = process.env.NODE_ENV === "production";
 
-    // 🚀 THE FIX: Fully match cookie flags for deletion
-    res.clearCookie("refreshToken", {
+    // 🚀 CRITICAL: We also must use the exact same domain rules when CLEARING cookies!
+    const clearCookieOptions = {
       httpOnly: true,
       secure: isProduction,
-      sameSite: isProduction ? "none" : "lax",
+      sameSite: "lax" as const,
+      domain: isProduction ? ".theathleticzone.in" : undefined,
       path: "/",
-    });
+    };
 
-    res.clearCookie("accessToken", {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? "none" : "lax",
-      path: "/",
-    });
+    res.clearCookie("refreshToken", clearCookieOptions);
+    res.clearCookie("accessToken", clearCookieOptions);
 
     next(error);
   }
@@ -205,12 +210,12 @@ export const logout = async (
     const refreshToken = req.cookies.refreshToken;
     const isProduction = process.env.NODE_ENV === "production";
 
-    // 🚀 THE FIX: Fully match cookie flags for deletion
+    // 🚀 CRITICAL: We must use the exact same domain to successfully delete it!
     const clearCookieOptions = {
       httpOnly: true,
       secure: isProduction,
-      // 🚀 THE FIX: Explicitly cast the output so TS knows it's safe
-      sameSite: (isProduction ? "none" : "lax") as "none" | "lax",
+      sameSite: "lax" as const,
+      domain: isProduction ? ".theathleticzone.in" : undefined, // 🚀 THE MAGIC LINE
       path: "/",
     };
 
@@ -299,17 +304,20 @@ export const acceptCoachInvite: RequestHandler = async (req, res, next) => {
 
     const isProduction = process.env.NODE_ENV === "production";
 
-    res.cookie("refreshToken", refreshToken, {
+    const cookieOptions = {
       httpOnly: true,
       secure: isProduction,
-      sameSite: isProduction ? "none" : "lax",
+      sameSite: "lax" as const,
+      domain: isProduction ? ".theathleticzone.in" : undefined,
+    };
+
+    res.cookie("refreshToken", refreshToken, {
+      ...cookieOptions,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     res.cookie("accessToken", accessToken, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? "none" : "lax",
+      ...cookieOptions,
       maxAge: 15 * 60 * 1000,
     });
 
@@ -422,17 +430,21 @@ export const googleCallback = async (
     const { accessToken, refreshToken } = req.user as any;
     const isProduction = process.env.NODE_ENV === "production";
 
-    res.cookie("refreshToken", refreshToken, {
+    // 🚀 THE NEW BULLETPROOF COOKIE OPTIONS
+    const cookieOptions = {
       httpOnly: true,
       secure: isProduction,
-      sameSite: isProduction ? "none" : "lax",
+      sameSite: "lax" as const, // Lax is perfect now that it's a first-party cookie
+      domain: isProduction ? ".theathleticzone.in" : undefined, // 🚀 THE MAGIC LINE
+    };
+
+    res.cookie("refreshToken", refreshToken, {
+      ...cookieOptions,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     res.cookie("accessToken", accessToken, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? "none" : "lax",
+      ...cookieOptions,
       maxAge: 15 * 60 * 1000,
     });
 
