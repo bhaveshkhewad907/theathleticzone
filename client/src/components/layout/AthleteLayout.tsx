@@ -30,7 +30,7 @@ export default function AthleteLayout() {
       path: "/athlete/subscriptions",
       icon: CreditCard,
     },
-    { label: "Training Vault", path: "/athlete/my-courses", icon: PlayCircle },
+    { label: "My Courses", path: "/athlete/my-courses", icon: PlayCircle },
     { label: "Live Training", path: "/athlete/live-plans", icon: Radio },
     { label: "Marketplace", path: "/athlete/courses", icon: ShoppingBag },
     { label: "Personal Profile", path: "/athlete/profile", icon: User },
@@ -125,7 +125,7 @@ export default function AthleteLayout() {
             className="flex items-center gap-3 px-4 py-3 mt-12 text-red-500/40 hover:text-red-500 hover:bg-red-500/5 rounded-xl transition-all w-full text-[11px] font-black uppercase tracking-widest active:scale-95"
           >
             <LogOut size={18} />
-            Terminate Session
+            Logout
           </button>
         </nav>
       </aside>

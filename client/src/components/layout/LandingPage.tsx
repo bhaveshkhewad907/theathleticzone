@@ -331,7 +331,7 @@ export default function LandingPage() {
               to="/register"
               className="text-[11px] font-black uppercase tracking-widest text-[#8A94A6] hover:text-white transition-colors hidden sm:block"
             >
-              Initialize Profile
+              Register
             </Link>
 
             {/* 📱 MOBILE & DESKTOP: Primary Login Button */}
@@ -339,7 +339,7 @@ export default function LandingPage() {
               to="/login"
               className="px-5 py-3 md:px-8 md:py-4 bg-amber-500 text-black text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] rounded-[12px] md:rounded-[14px] hover:bg-amber-400 transition-all shadow-[0_10px_20px_rgba(245,158,11,0.2)] active:scale-95 flex items-center gap-1 md:gap-2 whitespace-nowrap"
             >
-              Access Portal <ChevronRight size={14} strokeWidth={3} />
+              Login <ChevronRight size={14} strokeWidth={3} />
             </Link>
           </div>
         </div>
@@ -355,7 +355,7 @@ export default function LandingPage() {
             className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full bg-black/40 border border-white/[0.05] text-[10px] font-black text-amber-500 uppercase tracking-[0.3em] shadow-inner backdrop-blur-md"
           >
             <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse shadow-[0_0_10px_rgba(245,158,11,0.8)]" />
-            V.2.0 Intelligence Hub Online
+            V.1.0 Intelligence Hub Online
           </motion.div>
 
           <motion.h1
@@ -469,7 +469,7 @@ export default function LandingPage() {
                   {/* Subtle hint that it's clickable */}
                   <div className="flex items-center gap-2 text-amber-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                     <span className="text-[10px] font-black uppercase tracking-widest">
-                      Access Protocol
+                      See more
                     </span>
                     <ChevronRight size={14} strokeWidth={3} />
                   </div>
@@ -675,7 +675,7 @@ export default function LandingPage() {
               <Shield size={14} /> Elite Personnel
             </div>
             <h2 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter text-white">
-              Command <span className="text-amber-500">Roster</span>
+              Our <span className="text-amber-500">Coaches</span>
             </h2>
           </motion.div>
 
@@ -828,7 +828,7 @@ export default function LandingPage() {
                 size={32}
               />
               <h2 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter text-white drop-shadow-lg">
-                Verified <span className="text-amber-500">Clearances</span>
+                Genuine<span className="text-amber-500">Feedbacks</span>
               </h2>
             </motion.div>
 
@@ -924,7 +924,7 @@ export default function LandingPage() {
           >
             <div>
               <h2 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter text-white mb-4 drop-shadow-lg">
-                Base <span className="text-amber-500">Command</span>
+                The <span className="text-amber-500">Address</span>
               </h2>
               <p className="text-[10px] font-black text-[#8A94A6] uppercase tracking-[0.3em] drop-shadow-md">
                 Initialize visual contact before deployment.
