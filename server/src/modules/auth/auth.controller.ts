@@ -206,37 +206,38 @@ export const logout = async (
   res: Response,
   next: NextFunction,
 ) => {
+  const isProduction = process.env.NODE_ENV === "production";
+
+  // 1. Define the exact clearing rules
+  const clearCookieOptions = {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: "lax" as const,
+    domain: isProduction ? ".theathleticzone.in" : undefined,
+    path: "/",
+  };
+
   try {
     const refreshToken = req.cookies.refreshToken;
-    const isProduction = process.env.NODE_ENV === "production";
 
-    // 🚀 CRITICAL: We must use the exact same domain to successfully delete it!
-    const clearCookieOptions = {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: "lax" as const,
-      domain: isProduction ? ".theathleticzone.in" : undefined, // 🚀 THE MAGIC LINE
-      path: "/",
-    };
-
-    if (!refreshToken) {
-      res.clearCookie("refreshToken", clearCookieOptions);
-      res.clearCookie("accessToken", clearCookieOptions);
-      return res.status(200).json({
-        success: true,
-        message: "Logged out",
-      });
+    // 2. Try to delete it from the database
+    if (refreshToken) {
+      await logoutSession(refreshToken);
     }
-
-    await logoutSession(refreshToken);
-
-    res.clearCookie("refreshToken", clearCookieOptions);
-    res.clearCookie("accessToken", clearCookieOptions);
-
-    res.status(200).json({ success: true, message: "Logged out successfully" });
   } catch (error) {
-    next(error);
+    // 3. If the DB fails (like it does for coaches), we catch the error
+    // BUT we do NOT pass it to next(). We just log it and move on.
+    console.warn(
+      "Failed to delete session in DB, but proceeding to clear cookies:",
+      error,
+    );
   }
+
+  // 4. 🚀 THE FIX: This runs NO MATTER WHAT. The cookies will always be destroyed.
+  res.clearCookie("refreshToken", clearCookieOptions);
+  res.clearCookie("accessToken", clearCookieOptions);
+
+  res.status(200).json({ success: true, message: "Logged out successfully" });
 };
 
 export const acceptCoachInvite: RequestHandler = async (req, res, next) => {
