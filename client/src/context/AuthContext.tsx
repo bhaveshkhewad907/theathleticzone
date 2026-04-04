@@ -90,49 +90,128 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0F1724] relative overflow-hidden flex flex-col items-center justify-center">
-        {/* Ambient Background Glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-amber-500/10 blur-[100px] rounded-full pointer-events-none animate-pulse" />
+      <div className="min-h-screen bg-[#0F1724] relative overflow-hidden flex flex-col items-center justify-center font-sans">
+        {/* Ambient Stadium Glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-amber-500/15 blur-[120px] rounded-full pointer-events-none animate-pulse" />
 
-        {/* Tactical Grid Overlay */}
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none opacity-50" />
+        {/* Athletic Mesh / Jersey Fabric Texture Overlay */}
+        <div className="absolute inset-0 bg-[repeating-linear-gradient(-45deg,rgba(255,255,255,0.015)_0px,rgba(255,255,255,0.015)_2px,transparent_2px,transparent_8px)] pointer-events-none opacity-80" />
 
         <div className="relative z-10 flex flex-col items-center gap-10">
-          {/* The Core Reactor (3-Tier Spinner) */}
-          <div className="relative w-28 h-28 flex items-center justify-center">
-            {/* Outer Orbit - Dashed */}
-            <div className="absolute inset-0 border-[1px] border-dashed border-amber-500/30 rounded-full animate-[spin_8s_linear_infinite]" />
+          {/* The "Stadium Track" Loader */}
+          <div className="relative w-32 h-32 flex items-center justify-center">
+            {/* Outer Track Line */}
+            <div className="absolute inset-0 border-4 border-[#1E293B] rounded-full" />
 
-            {/* Middle Power Ring - Accelerating */}
-            <div className="absolute inset-2 border-[2px] border-white/5 border-t-amber-500 border-b-amber-500 rounded-full animate-[spin_2s_ease-in-out_infinite]" />
+            {/* The "Runner" - Fast, asymmetrical spin simulating a sprinter on a track */}
+            <div className="absolute inset-[-4px] rounded-full border-4 border-transparent border-t-amber-500 border-r-amber-500 animate-[spin_1s_cubic-bezier(0.67,0.05,0.15,0.95)_infinite] drop-shadow-[0_0_10px_rgba(245,158,11,0.6)]" />
 
-            {/* Inner Focus Ring - Reversing */}
-            <div className="absolute inset-6 border-[1px] border-amber-500/60 border-r-transparent border-l-transparent rounded-full animate-[spin_1.5s_linear_infinite_reverse]" />
+            {/* Inner Pace Ring - Dashed like track lanes */}
+            <div className="absolute inset-3 border-[2px] border-dashed border-slate-700/60 rounded-full animate-[spin_4s_linear_infinite_reverse]" />
 
-            {/* Center Monogram */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-amber-500 font-black text-2xl tracking-tighter drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]">
+            {/* Center Hub - AZ Logo */}
+            <div className="absolute inset-0 flex items-center justify-center bg-[#0F1724] rounded-full m-4 shadow-[inset_0_0_20px_rgba(0,0,0,0.8)] border border-slate-800">
+              <span className="text-white font-black text-3xl italic tracking-tighter drop-shadow-[0_2px_10px_rgba(245,158,11,0.5)]">
                 AZ
               </span>
+            </div>
+
+            {/* Floating Sports Icons */}
+            {/* Speed/Energy */}
+            <div
+              className="absolute -top-2 -left-2 bg-slate-800 p-1.5 rounded-full border border-slate-600 animate-bounce shadow-lg"
+              style={{ animationDelay: "0ms" }}
+            >
+              <svg
+                className="w-4 h-4 text-amber-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M13 10V3L4 14h7v7l9-11h-7z"
+                />
+              </svg>
+            </div>
+
+            {/* Strength/Fitness */}
+            <div
+              className="absolute -bottom-2 -left-2 bg-slate-800 p-1.5 rounded-full border border-slate-600 animate-bounce shadow-lg"
+              style={{ animationDelay: "200ms" }}
+            >
+              <svg
+                className="w-4 h-4 text-amber-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2.5}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3 10h18M3 14h18m-9-8v12m-6-4v-4m12 4v-4"
+                />
+              </svg>
+            </div>
+
+            {/* Time/Records */}
+            <div
+              className="absolute top-1/2 -right-4 -translate-y-1/2 bg-slate-800 p-1.5 rounded-full border border-slate-600 animate-bounce shadow-lg"
+              style={{ animationDelay: "400ms" }}
+            >
+              <svg
+                className="w-4 h-4 text-amber-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 2v2m4 0l1 1"
+                />
+              </svg>
             </div>
           </div>
 
           {/* Typography & Status Indicator */}
-          <div className="flex flex-col items-center gap-5 animate-fade-up">
-            <h2 className="text-white text-sm md:text-base font-black uppercase tracking-[0.5em] text-center ml-[0.5em] drop-shadow-md">
+          <div className="flex flex-col items-center gap-4 animate-fade-up">
+            <h2 className="text-white text-base md:text-lg font-black uppercase italic tracking-[0.4em] text-center ml-[0.4em] drop-shadow-md">
               The Athletic Zone
             </h2>
 
-            {/* Dynamic Status Pill */}
-            <div className="flex items-center gap-3 px-5 py-2.5 bg-black/40 backdrop-blur-md border border-white/5 rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
-              {/* Ping Dot */}
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.8)]"></span>
-              </span>
-              <span className="text-amber-500/70 text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em]">
-                Establishing Secure Link
-              </span>
+            {/* Dynamic Status Pill - Skewed for "Forward Momentum" */}
+            <div className="px-6 py-2.5 bg-amber-500/10 backdrop-blur-md border-b-2 border-amber-500 skew-x-[-12deg] shadow-[0_10px_20px_rgba(0,0,0,0.3)]">
+              {/* Un-skew the inner content so it remains readable */}
+              <div className="skew-x-[12deg] flex items-center gap-3">
+                {/* Active warm-up dots */}
+                <div className="flex items-center gap-1">
+                  <span
+                    className="w-1.5 h-4 bg-amber-500 animate-[pulse_1s_ease-in-out_infinite]"
+                    style={{ animationDelay: "0ms" }}
+                  />
+                  <span
+                    className="w-1.5 h-4 bg-amber-500/60 animate-[pulse_1s_ease-in-out_infinite]"
+                    style={{ animationDelay: "150ms" }}
+                  />
+                  <span
+                    className="w-1.5 h-4 bg-amber-500/30 animate-[pulse_1s_ease-in-out_infinite]"
+                    style={{ animationDelay: "300ms" }}
+                  />
+                </div>
+                <span className="text-amber-500 text-[10px] md:text-xs font-black uppercase italic tracking-[0.2em]">
+                  Warming Up...
+                </span>
+              </div>
             </div>
           </div>
         </div>
