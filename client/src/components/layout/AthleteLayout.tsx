@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Outlet, NavLink, useLocation, useNavigate } from "react-router-dom";
-import AuthContext from "../../context/AuthContext";
+import AuthContext, { type AuthUser } from "../../context/AuthContext";
 import AuraBackground from "../../components/layout/AuraBackground";
 import Footer from "./Footer";
 
@@ -22,11 +22,11 @@ export default function AthleteLayout() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const userStatus = (auth?.user as any)?.platformState?.status;
+  const userStatus = (auth?.user as AuthUser)?.platformState?.status;
 
-  // 🚀 THE GATEKEEPER: Check the user's status when the layout loads
+  // 🚀 THE BULLETPROOF GATEKEEPER: Catches explicit status AND undefined database entries
   useEffect(() => {
-    if (userStatus === "NEEDS_ASSESSMENT") {
+    if (!userStatus || userStatus === "NEEDS_ASSESSMENT") {
       navigate("/assessment", { replace: true });
     }
   }, [userStatus, navigate]);
