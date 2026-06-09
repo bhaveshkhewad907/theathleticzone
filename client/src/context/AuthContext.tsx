@@ -2,7 +2,6 @@ import { createContext, useState, useEffect, useRef } from "react";
 import type { ReactNode } from "react";
 import api from "../services/api";
 import { subscribeLogout, unsubscribeLogout } from "./authEvents";
-import toast from "react-hot-toast";
 
 export interface AuthUser {
   id: string;
@@ -65,18 +64,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           id: userData._id || userData.id,
         });
 
-        if (
-          userData.role === "ATHLETE" &&
-          (!userData.sports || userData.sports.length === 0) &&
-          !userData.sport
-        ) {
-          if (!window.location.pathname.includes("/athlete/profile")) {
-            toast.error(
-              "Deployment incomplete. Please select your sport sector.",
-            );
-            window.location.href = "/athlete/profile?onboarding=true";
-          }
-        }
+        // 🚀 THE FIX: We completely deleted the old 'sports' array check that was
+        // violently redirecting the user to the profile page!
+        // Now, we just set the Auth state and let AthleteLayout route them to the Assessment.
       } catch {
         setAuth(null);
       } finally {
