@@ -28,7 +28,7 @@ export const create = async (
       throw new ApiError(400, parsed.error.issues[0].message);
     }
 
-    // 🚀 FIX: Removed the old videoKey mapping. Just pass the structured data directly.
+    // 🚀 FIX: Removed the old videoKey hack, just pass the parsed data directly
     const course = await createCourse(parsed.data as any);
 
     res.status(201).json({ success: true, data: course });
@@ -49,7 +49,7 @@ export const update = async (
       throw new ApiError(400, parsed.error.issues[0].message);
     }
 
-    // 🚀 FIX: Removed the old videoKey mapping.
+    // 🚀 FIX: Removed the old videoKey hack
     const course = await updateCourse(
       req.params.id as string,
       parsed.data as any,
@@ -132,7 +132,7 @@ export const reactivate = async (
   }
 };
 
-// 🛡️ Secure Access Gate for R2 Videos (UPDATED FOR SPRINT PLATFORM)
+// 🛡️ Secure Access Gate for R2 Videos (UPDATED)
 export const getSecureCourseAccess = async (
   req: any,
   res: Response,
@@ -142,40 +142,38 @@ export const getSecureCourseAccess = async (
     const userId = req.user.id;
     const courseId = req.params.id;
 
-    // 🚀 NEW: The frontend must pass the specific video URL/Key it wants to watch as a query parameter
+    // 🚀 FIX: Pull the exact requested video key from the query, not from the top level course model!
     const requestedVideoKey = req.query.videoKey as string;
 
     if (!requestedVideoKey) {
       throw new ApiError(400, "You must provide a videoKey to stream.");
     }
 
-    // 1. Verify Legal Access using the NEW Subscription Model
-    const user = await User.findById(userId);
-
-    const isSubscribed = user?.subscription?.isActive;
-    const isAssignedToThisCourse =
-      String(user?.platformState?.activeCourseId) === String(courseId);
-
-    if (!isSubscribed || !isAssignedToThisCourse) {
-      throw new ApiError(
-        403,
-        "Access Denied: You are not actively enrolled in this course.",
-      );
-    }
-
     const course = await Course.findById(courseId);
     if (!course) {
-      throw new ApiError(404, "Course data no longer exists.");
+      throw new ApiError(404, "Course data no longer exists on the server.");
     }
 
-    // 2. Generate the secure URL for the specific requested video
+    let progress = await CourseProgress.findOne({
+      user: userId,
+      course: courseId,
+    });
+
+    if (!progress) {
+      progress = await CourseProgress.create({
+        user: userId,
+        course: courseId,
+      });
+    }
+
     const secureUrl = await generateSecureVideoUrl(requestedVideoKey);
 
     res.status(200).json({
       success: true,
       data: {
         secureVideoUrl: secureUrl,
-        // We will handle specific drill progress tracking later in the frontend phase
+        progress: progress.progressPercentage,
+        resumeAtSeconds: progress.lastWatchedSeconds,
       },
     });
   } catch (error) {
@@ -211,23 +209,21 @@ export const saveCourseProgress = async (
   }
 };
 
-// 🚀 NEW: Sprint Platform - Fetch Athlete's Active Course
+// 🚀 Sprint Platform - Fetch Athlete's Active Course
 export const getAthleteCurrentCourse = async (
-  req: any, // Using 'any' to match your existing req type in this file
+  req: any,
   res: Response,
   next: NextFunction,
 ) => {
   try {
     const userId = req.user.id;
 
-    // 1. Find the user to check their platform state
     const user = await User.findById(userId);
 
     if (!user) {
       throw new ApiError(404, "User not found");
     }
 
-    // 2. Security Check: Are they allowed to view a course?
     if (user.platformState?.status === "NEEDS_ASSESSMENT") {
       return res.status(403).json({
         success: false,
@@ -244,7 +240,6 @@ export const getAthleteCurrentCourse = async (
       });
     }
 
-    // 3. Fetch the assigned course
     if (!user.platformState?.activeCourseId) {
       throw new ApiError(400, "No active course assigned by the admin yet.");
     }
@@ -253,8 +248,9 @@ export const getAthleteCurrentCourse = async (
       user.platformState.activeCourseId,
     );
 
-    // Optional: Fetch the 'Next' course just to show the title/thumbnail as a teaser
+    // 🚀 FIX: Strongly typed as 'any' so TS doesn't panic when we reassign it from null
     let nextCourseTeaser: any = null;
+
     if (user.platformState?.nextCourseId) {
       nextCourseTeaser = await Course.findById(
         user.platformState.nextCourseId,

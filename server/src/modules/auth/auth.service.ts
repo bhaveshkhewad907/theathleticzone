@@ -43,7 +43,6 @@ export const registerAthlete = async ({
     password: hashedPassword,
     role: "ATHLETE",
     provider: "LOCAL",
-    sports: [sportId],
   });
 
   return user;
