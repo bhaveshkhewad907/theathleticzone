@@ -18,6 +18,7 @@ import reviewRoutes from "./review/review.routes";
 import liveConfigRoutes from "./liveConfig/liveSessionConfig.routes";
 import { razorpayWebhook } from "./webhooks/webhook.controller";
 import courseChapterRoutes from "./courseChapters/courseChapters.routes";
+import assessmentRoutes from "./assessment/assessment.routes"; // Adjust path if necessary
 
 const router = Router();
 
@@ -39,5 +40,5 @@ router.use("/reviews", reviewRoutes);
 router.use("/live-config", liveConfigRoutes);
 router.post("/webhooks/razorpay", razorpayWebhook);
 router.use("/chapters", courseChapterRoutes);
-
+router.use("/assessments", assessmentRoutes);
 export default router;
