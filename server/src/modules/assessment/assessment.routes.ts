@@ -4,7 +4,7 @@ import {
   getPendingAssessments,
   reviewAssessment,
 } from "./assessment.controller";
-// 🚀 FIX: Swapped 'protect' for 'requireAuth' to match your middleware file
+// 🚀 THE FIX: Import 'requireAuth' instead of 'protect'
 import { requireAuth, restrictTo } from "../../middlewares/auth.middleware";
 
 const router = Router();

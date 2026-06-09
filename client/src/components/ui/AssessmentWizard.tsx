@@ -38,15 +38,28 @@ export default function AssessmentWizard() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      // Hit the endpoint we just created in the backend!
-      await api.post("/assessments/submit", formData);
-      toast.success("Assessment Submitted Successfully!");
+      // Send the exact payload the backend expects
+      await api.post("/assessments/submit", {
+        mobility: formData.mobility,
+        power: formData.power,
+        sprinting: formData.sprinting,
+        strength: formData.strength,
+      });
 
-      // Force a reload or navigate to the Dashboard so the AuthContext
-      // sees the new "UNDER_REVIEW" status and locks the app.
+      toast.success("Assessment Submitted Successfully!");
+      // 🚀 Force a clean reload so AuthContext grabs the new UNDER_REVIEW status
       window.location.href = "/athlete";
-    } catch {
-      toast.error("Failed to submit. Please try again.");
+    } catch (err) {
+      // 🚀 THE FIX: Define the exact shape of the error instead of using 'any'
+      const error = err as {
+        response?: { data?: { message?: string } };
+        message?: string;
+      };
+
+      console.error("Submit Error:", error.response?.data || error.message);
+      toast.error(
+        error.response?.data?.message || "Failed to submit. Check console.",
+      );
       setIsSubmitting(false);
     }
   };
