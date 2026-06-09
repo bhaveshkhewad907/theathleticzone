@@ -12,6 +12,11 @@ export interface AuthUser {
   sports?: string[] | { _id: string; name: string }[];
   isProfileLocked?: boolean;
   profileImage?: string | null;
+  platformState?: {
+    status: "NEEDS_ASSESSMENT" | "UNDER_REVIEW" | "ACTIVE_TRAINING";
+    activeCourseId?: string;
+    nextCourseId?: string;
+  };
 }
 
 interface AuthState {

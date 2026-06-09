@@ -145,6 +145,7 @@ export const login = async (
         email: user.email,
         role: user.role,
         profileImage: user.profileImage || null,
+        platformState: user.platformState,
       },
     });
   } catch (error) {
