@@ -14,6 +14,7 @@ import CoursePurchase from "./coursePurchase.model";
 import CourseProgress from "./courseProgress.model";
 import Course from "./course.model";
 import { generateSecureVideoUrl } from "../../services/r2.service";
+import User from "../user/user.model";
 
 export const create = async (
   req: Request,
@@ -27,13 +28,8 @@ export const create = async (
       throw new ApiError(400, parsed.error.issues[0].message);
     }
 
-    // 🚀 FIX: Bridge the gap between Zod (videoUrl) and Mongoose (videoKey)
-    const coursePayload = {
-      ...parsed.data,
-      videoKey: parsed.data.videoUrl, // Maps the frontend URL to the DB Key!
-    };
-
-    const course = await createCourse(coursePayload as any);
+    // 🚀 FIX: Removed the old videoKey mapping. Just pass the structured data directly.
+    const course = await createCourse(parsed.data as any);
 
     res.status(201).json({ success: true, data: course });
   } catch (error) {
@@ -53,15 +49,10 @@ export const update = async (
       throw new ApiError(400, parsed.error.issues[0].message);
     }
 
-    // 🚀 FIX: Bridge the gap for updates too
-    const coursePayload = {
-      ...parsed.data,
-      ...(parsed.data.videoUrl && { videoKey: parsed.data.videoUrl }),
-    };
-
+    // 🚀 FIX: Removed the old videoKey mapping.
     const course = await updateCourse(
       req.params.id as string,
-      coursePayload as any,
+      parsed.data as any,
     );
 
     res.status(200).json({ success: true, data: course });
@@ -141,7 +132,7 @@ export const reactivate = async (
   }
 };
 
-// 🛡️ Secure Access Gate for R2 Videos
+// 🛡️ Secure Access Gate for R2 Videos (UPDATED FOR SPRINT PLATFORM)
 export const getSecureCourseAccess = async (
   req: any,
   res: Response,
@@ -151,45 +142,40 @@ export const getSecureCourseAccess = async (
     const userId = req.user.id;
     const courseId = req.params.id;
 
-    // 1. Verify Legal Ownership First
-    const purchase = await CoursePurchase.findOne({
-      user: userId,
-      course: courseId,
-      status: "PURCHASED",
-    });
+    // 🚀 NEW: The frontend must pass the specific video URL/Key it wants to watch as a query parameter
+    const requestedVideoKey = req.query.videoKey as string;
 
-    if (!purchase) {
-      throw new ApiError(403, "Access Denied: You do not own this course.");
+    if (!requestedVideoKey) {
+      throw new ApiError(400, "You must provide a videoKey to stream.");
+    }
+
+    // 1. Verify Legal Access using the NEW Subscription Model
+    const user = await User.findById(userId);
+
+    const isSubscribed = user?.subscription?.isActive;
+    const isAssignedToThisCourse =
+      String(user?.platformState?.activeCourseId) === String(courseId);
+
+    if (!isSubscribed || !isAssignedToThisCourse) {
+      throw new ApiError(
+        403,
+        "Access Denied: You are not actively enrolled in this course.",
+      );
     }
 
     const course = await Course.findById(courseId);
-
-    // 🚀 THE FIX: Removed `course.isDeleted` from this check.
-    // If the course exists in the database AT ALL, and they bought it, let them watch it!
     if (!course) {
-      throw new ApiError(404, "Course data no longer exists on the server.");
+      throw new ApiError(404, "Course data no longer exists.");
     }
 
-    let progress = await CourseProgress.findOne({
-      user: userId,
-      course: courseId,
-    });
-
-    if (!progress) {
-      progress = await CourseProgress.create({
-        user: userId,
-        course: courseId,
-      });
-    }
-
-    const secureUrl = await generateSecureVideoUrl(course.videoKey);
+    // 2. Generate the secure URL for the specific requested video
+    const secureUrl = await generateSecureVideoUrl(requestedVideoKey);
 
     res.status(200).json({
       success: true,
       data: {
         secureVideoUrl: secureUrl,
-        progress: progress.progressPercentage,
-        resumeAtSeconds: progress.lastWatchedSeconds,
+        // We will handle specific drill progress tracking later in the frontend phase
       },
     });
   } catch (error) {
@@ -220,6 +206,68 @@ export const saveCourseProgress = async (
     );
 
     res.status(200).json({ success: true, data: progress });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// 🚀 NEW: Sprint Platform - Fetch Athlete's Active Course
+export const getAthleteCurrentCourse = async (
+  req: any, // Using 'any' to match your existing req type in this file
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const userId = req.user.id;
+
+    // 1. Find the user to check their platform state
+    const user = await User.findById(userId);
+
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+
+    // 2. Security Check: Are they allowed to view a course?
+    if (user.platformState?.status === "NEEDS_ASSESSMENT") {
+      return res.status(403).json({
+        success: false,
+        state: "NEEDS_ASSESSMENT",
+        message: "You must complete your assessment to unlock your dashboard.",
+      });
+    }
+
+    if (user.platformState?.status === "UNDER_REVIEW") {
+      return res.status(403).json({
+        success: false,
+        state: "UNDER_REVIEW",
+        message: "Your assessment is currently under review by a coach.",
+      });
+    }
+
+    // 3. Fetch the assigned course
+    if (!user.platformState?.activeCourseId) {
+      throw new ApiError(400, "No active course assigned by the admin yet.");
+    }
+
+    const activeCourse = await Course.findById(
+      user.platformState.activeCourseId,
+    );
+
+    // Optional: Fetch the 'Next' course just to show the title/thumbnail as a teaser
+    let nextCourseTeaser: any = null;
+    if (user.platformState?.nextCourseId) {
+      nextCourseTeaser = await Course.findById(
+        user.platformState.nextCourseId,
+      ).select("meta.title meta.coverImageUrl");
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        activeCourse,
+        nextCourseTeaser,
+      },
+    });
   } catch (error) {
     next(error);
   }

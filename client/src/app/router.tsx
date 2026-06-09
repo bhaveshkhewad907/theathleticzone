@@ -9,8 +9,9 @@ import AthleteLayout from "../components/layout/AthleteLayout";
 import AdminLayout from "../components/layout/AdminPanelLayout";
 import CoachLayout from "../components/layout/CoachLayout";
 import { Loadable } from "../components/ui/Loadable";
+import AssessmentWizard from "../components/ui/AssessmentWizard";
 
-// 2. Lazy Load All Pages (Splits the code into tiny chunks)
+// 2. Lazy Load All Pages
 const LoginPage = lazy(() => import("../pages/auth/LoginPage"));
 const RegisterPage = lazy(() => import("../pages/auth/RegisterPage"));
 const ForgotPassword = lazy(() => import("../pages/auth/ForgotPassword"));
@@ -95,6 +96,16 @@ const router = createBrowserRouter([
   {
     path: "/refund-policy",
     element: Loadable(RefundPolicy),
+  },
+
+  // 🚀 NEW: ATHLETE ONBOARDING WIZARD
+  {
+    path: "/assessment",
+    element: (
+      <ProtectedRoute allowedRoles={["ATHLETE"]}>
+        <AssessmentWizard />
+      </ProtectedRoute>
+    ),
   },
 
   // ==========================

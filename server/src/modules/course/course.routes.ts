@@ -20,7 +20,7 @@ const router = Router();
 router.post(
   "/get-upload-url",
   requireAuth,
-  requireRole("ADMIN", "COACH"),
+  requireRole("ADMIN", "COACH", "ATHLETE"),
   async (req, res, next) => {
     try {
       const { fileName, contentType, folder } = req.body;

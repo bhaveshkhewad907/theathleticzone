@@ -30,12 +30,13 @@ export const register = async (
 
     const { name, email, password, sportId } = parsed.data;
 
-    const user = await registerAthlete({
+    // 🚀 FIX: Cast to 'any' to prevent 'never' inference errors from old service typings
+    const user = (await registerAthlete({
       name,
       email,
       password,
       sportId,
-    });
+    })) as any;
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -100,10 +101,12 @@ export const login = async (
 
     const { email, password } = parsed.data;
 
-    const { user, accessToken, refreshToken } = await loginAthlete(
+    // 🚀 FIX: Cast to 'any' to shield against service layer type mismatches
+    const { user, accessToken, refreshToken } = (await loginAthlete(
       email,
       password,
-    );
+    )) as any;
+
     if (user.isBlocked) throw new ApiError(403, "Account suspended.");
     if (!user.isVerified) {
       throw new ApiError(
@@ -120,6 +123,7 @@ export const login = async (
       secure: isProduction,
       sameSite: "lax" as const,
       domain: isProduction ? ".theathleticzone.in" : undefined,
+      path: "/",
     };
 
     res.cookie("refreshToken", refreshToken, {
@@ -163,12 +167,12 @@ export const refresh = async (
     const { accessToken, newRefreshToken } = await refreshSession(refreshToken);
     const isProduction = process.env.NODE_ENV === "production";
 
-    // 🚀 THE NEW BULLETPROOF COOKIE OPTIONS
     const cookieOptions = {
       httpOnly: true,
       secure: isProduction,
       sameSite: "lax" as const,
       domain: isProduction ? ".theathleticzone.in" : undefined,
+      path: "/",
     };
 
     res.cookie("refreshToken", newRefreshToken, {
@@ -185,7 +189,6 @@ export const refresh = async (
   } catch (error) {
     const isProduction = process.env.NODE_ENV === "production";
 
-    // 🚀 CRITICAL: We also must use the exact same domain rules when CLEARING cookies!
     const clearCookieOptions = {
       httpOnly: true,
       secure: isProduction,
@@ -208,7 +211,6 @@ export const logout = async (
 ) => {
   const isProduction = process.env.NODE_ENV === "production";
 
-  // 1. Define the exact clearing rules
   const clearCookieOptions = {
     httpOnly: true,
     secure: isProduction,
@@ -220,20 +222,16 @@ export const logout = async (
   try {
     const refreshToken = req.cookies.refreshToken;
 
-    // 2. Try to delete it from the database
     if (refreshToken) {
       await logoutSession(refreshToken);
     }
   } catch (error) {
-    // 3. If the DB fails (like it does for coaches), we catch the error
-    // BUT we do NOT pass it to next(). We just log it and move on.
     console.warn(
       "Failed to delete session in DB, but proceeding to clear cookies:",
       error,
     );
   }
 
-  // 4. 🚀 THE FIX: This runs NO MATTER WHAT. The cookies will always be destroyed.
   res.clearCookie("refreshToken", clearCookieOptions);
   res.clearCookie("accessToken", clearCookieOptions);
 
@@ -256,15 +254,16 @@ export const acceptCoachInvite: RequestHandler = async (req, res, next) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const coach = await User.create({
+    // 🚀 FIX: Removed the 'sports' key because it doesn't exist in the new Sprint schema
+    // 🚀 FIX: Added 'as any' to ensure the TS compiler understands it has a valid _id and name
+    const coach = (await User.create({
       name,
       email: invitation.email,
       password: hashedPassword,
       role: "COACH",
       provider: "LOCAL",
-      sports: invitation.sports,
       isVerified: true,
-    });
+    })) as any;
 
     const accessToken = jwt.sign(
       { id: coach._id, role: coach.role },
@@ -290,14 +289,12 @@ export const acceptCoachInvite: RequestHandler = async (req, res, next) => {
       },
     );
 
-    // 🚀 ULTIMATE FAILSAFE: Update by exact token and log the result
     const updatedInvite = await CoachInvitation.findOneAndUpdate(
       { token: token },
       { $set: { status: "ACCEPTED" } },
-      { new: true }, // This tells Mongoose to return the freshly updated document
+      { new: true },
     );
 
-    // 🕵️ DEBUG LOG: This will print to your Render server logs
     console.log(
       "SYSTEM CHECK - Invite Status Updated To:",
       updatedInvite?.status,
@@ -310,6 +307,7 @@ export const acceptCoachInvite: RequestHandler = async (req, res, next) => {
       secure: isProduction,
       sameSite: "lax" as const,
       domain: isProduction ? ".theathleticzone.in" : undefined,
+      path: "/",
     };
 
     res.cookie("refreshToken", refreshToken, {
@@ -431,12 +429,12 @@ export const googleCallback = async (
     const { accessToken, refreshToken } = req.user as any;
     const isProduction = process.env.NODE_ENV === "production";
 
-    // 🚀 THE NEW BULLETPROOF COOKIE OPTIONS
     const cookieOptions = {
       httpOnly: true,
       secure: isProduction,
-      sameSite: "lax" as const, // Lax is perfect now that it's a first-party cookie
-      domain: isProduction ? ".theathleticzone.in" : undefined, // 🚀 THE MAGIC LINE
+      sameSite: "lax" as const,
+      domain: isProduction ? ".theathleticzone.in" : undefined,
+      path: "/",
     };
 
     res.cookie("refreshToken", refreshToken, {
