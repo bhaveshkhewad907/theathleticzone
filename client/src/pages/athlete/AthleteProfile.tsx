@@ -231,6 +231,9 @@ export default function AthleteProfile() {
         "Biometrics synchronized successfully. Deployment authorized. 🚀",
       );
       setIsProfileLocked(true);
+
+      // 🚀 THE CRITICAL FIX: Instantly push them to the assessment wizard!
+      window.location.href = "/assessment";
     } catch (error) {
       console.error("Profile sync failed:", error);
       toast.error("Synchronization failed. Check core connection.");

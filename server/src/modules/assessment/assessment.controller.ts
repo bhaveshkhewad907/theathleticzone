@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import Assessment from "./assessment.model";
 import User from "../user/user.model";
 
@@ -7,35 +7,35 @@ import User from "../user/user.model";
  * @desc    Athlete submits their 9-point combine data
  * @access  Private (Athlete Only)
  */
-export const submitAssessment = async (req: Request, res: Response) => {
+export const submitAssessment = async (
+  req: any,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
-    // Assuming your auth middleware attaches the user ID to req.user
-    const userId = (req as any).user.id;
+    const userId = req.user.id;
     const { mobility, power, sprinting, strength } = req.body;
 
-    // 1. Create the new Assessment document
-    const newAssessment = await Assessment.create({
-      userId,
-      status: "PENDING_ADMIN_REVIEW",
-      metrics: { mobility, power, sprinting, strength },
-    });
+    // 1. Save their test results to the database
+    const assessment = await Assessment.create({
+      athlete: userId,
+      mobility,
+      power,
+      sprinting,
+      strength,
+      status: "PENDING", // This means pending coach review
+    } as any);
 
-    // 2. Update the User's state to lock their dashboard
+    // 2. 🚀 CRITICAL FIX: Flip the User's master switch to UNDER_REVIEW
     await User.findByIdAndUpdate(userId, {
-      $set: { "platformState.status": "UNDER_REVIEW" },
-      $push: { assessmentHistory: newAssessment._id },
+      $set: {
+        "platformState.status": "UNDER_REVIEW",
+      },
     });
 
-    res.status(201).json({
-      success: true,
-      message: "Assessment submitted successfully. Awaiting coach review.",
-      data: newAssessment,
-    });
-  } catch (error: any) {
-    console.error("Submit Assessment Error:", error);
-    res
-      .status(500)
-      .json({ success: false, message: "Failed to submit assessment" });
+    res.status(201).json({ success: true, data: assessment });
+  } catch (error) {
+    next(error);
   }
 };
 

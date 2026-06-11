@@ -24,12 +24,39 @@ export default function AthleteLayout() {
 
   const userStatus = (auth?.user as AuthUser)?.platformState?.status;
 
-  // 🚀 THE BULLETPROOF GATEKEEPER: Catches explicit status AND undefined database entries
-  useEffect(() => {
-    if (!userStatus || userStatus === "NEEDS_ASSESSMENT") {
-      navigate("/assessment", { replace: true });
+  // 🚀 NEW: Check if they have filled out basic bio-data yet
+  const personalInfo = (
+    auth?.user as AuthUser & {
+      personalInfo?: { age?: number; height?: number; weight?: number };
     }
-  }, [userStatus, navigate]);
+  )?.personalInfo;
+
+  const hasProfileData =
+    personalInfo?.age || personalInfo?.height || personalInfo?.weight;
+
+  // 🚀 THE UPGRADED GATEKEEPER: Profile -> Assessment -> Dashboard
+  useEffect(() => {
+    // 1. If they are already under review or actively training, let the layout handle it
+    if (userStatus === "UNDER_REVIEW" || userStatus === "ACTIVE_TRAINING")
+      return;
+
+    // 2. Allow them to stay on the profile page if they are currently filling it out!
+    if (location.pathname === "/athlete/profile") return;
+
+    // 3. If they haven't filled out their profile yet, force them there first.
+    if (!hasProfileData) {
+      navigate("/athlete/profile?onboarding=true", { replace: true });
+      return;
+    }
+
+    // 4. If they HAVE a profile, but status is still NEEDS_ASSESSMENT, force them to the wizard.
+    if (!userStatus || userStatus === "NEEDS_ASSESSMENT") {
+      // Prevent a weird infinite redirect if they are already on the assessment page
+      if (location.pathname !== "/assessment") {
+        navigate("/assessment", { replace: true });
+      }
+    }
+  }, [userStatus, hasProfileData, location.pathname, navigate]);
 
   if (!auth) return null;
 
