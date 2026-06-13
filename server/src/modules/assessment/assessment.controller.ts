@@ -16,17 +16,20 @@ export const submitAssessment = async (
     const userId = req.user.id;
     const { mobility, power, sprinting, strength } = req.body;
 
-    // 1. Save their test results to the database
+    // 1. Save results mapped to the EXACT schema requirements
     const assessment = await Assessment.create({
-      athlete: userId,
-      mobility,
-      power,
-      sprinting,
-      strength,
-      status: "PENDING", // This means pending coach review
+      userId: userId, // 🚀 FIX: Schema wants 'userId', not 'athlete'
+      metrics: {
+        // 🚀 FIX: Schema wants data wrapped in a 'metrics' object
+        mobility,
+        power,
+        sprinting,
+        strength,
+      },
+      status: "UNDER_REVIEW", // 🚀 FIX: Schema rejected 'PENDING'
     } as any);
 
-    // 2. 🚀 CRITICAL FIX: Flip the User's master switch to UNDER_REVIEW
+    // 2. Flip the User's master switch to UNDER_REVIEW
     await User.findByIdAndUpdate(userId, {
       $set: {
         "platformState.status": "UNDER_REVIEW",
