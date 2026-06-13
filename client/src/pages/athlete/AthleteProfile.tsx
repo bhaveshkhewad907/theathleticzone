@@ -104,7 +104,8 @@ export default function AthleteProfile() {
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
-    if (searchParams.get("onboarding") === "true") {
+    // 🚀 FIX: Added '!isProfileLocked' so it stops yelling at you once you finish!
+    if (searchParams.get("onboarding") === "true" && !isProfileLocked) {
       const timer = setTimeout(() => {
         toast("Deployment incomplete. Sector initialization required.", {
           icon: "🚨",
@@ -118,7 +119,7 @@ export default function AthleteProfile() {
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [location]);
+  }, [location, isProfileLocked]); // 🚀 Added isProfileLocked to dependencies
 
   useEffect(() => {
     const fetchData = async () => {
