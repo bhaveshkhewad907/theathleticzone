@@ -129,9 +129,20 @@ export default function AdminCourses() {
       resetForm();
       fetchCourses();
       toast.success("Module Container published successfully! 🚀");
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to publish container. Verify network integrity.");
+    } catch (err) {
+      // 🚀 THE FIX: Strictly type the error to satisfy TypeScript/ESLint
+      const error = err as {
+        response?: { data?: { message?: string } };
+        message?: string;
+      };
+
+      console.error("Deployment Error:", error.response?.data || error.message);
+
+      // Extract the exact backend message, or fallback to a default
+      toast.error(
+        error.response?.data?.message ||
+          "Failed to publish container. Verify network integrity.",
+      );
     } finally {
       setIsUploading(false);
       setUploadProgress(0);
