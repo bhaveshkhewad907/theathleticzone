@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 
 interface CreateStepModalProps {
   onClose: () => void;
-  onSuccess: () => void; // Call this to refresh your list of steps
+  onSuccess: () => void;
 }
 
 export default function CreateStepModal({
@@ -25,16 +25,16 @@ export default function CreateStepModal({
 
     setIsUploading(true);
     try {
-      // 1. Ask Backend for a VIP VIP Upload Pass (Pre-signed URL)
-      const extension = file.name.split(".").pop();
-      const urlRes = await api.post("/chapters/steps/upload-url", {
+      // 1. 🚀 THE FIX: Use our proven, unified Cloudflare R2 upload route
+      const urlRes = await api.post("/courses/get-upload-url", {
+        fileName: file.name,
         contentType: file.type,
-        extension,
+        folder: "videos", // Drops it cleanly into the videos bucket
       });
 
       const { uploadUrl, publicUrl } = urlRes.data.data;
 
-      // 2. Upload DIRECTLY to Cloudflare R2 (Bypasses your Node.js server!)
+      // 2. Upload DIRECTLY to Cloudflare R2
       await axios.put(uploadUrl, file, {
         headers: { "Content-Type": file.type },
         onUploadProgress: (progressEvent) => {
@@ -45,7 +45,7 @@ export default function CreateStepModal({
         },
       });
 
-      // 3. Save the actual Step data to your database
+      // 3. Save the Step data to the Content Vault database
       await api.post("/chapters/steps", {
         title,
         type,
@@ -55,9 +55,19 @@ export default function CreateStepModal({
       toast.success("Training Step added to Vault!");
       onSuccess();
       onClose();
-    } catch (error) {
-      console.error(error);
-      toast.error("Upload failed. Please try again.");
+    } catch (err) {
+      // 🚀 THE FIX: Strictly type the error instead of using 'any'
+      const error = err as {
+        response?: { data?: { message?: string } };
+        message?: string;
+      };
+
+      console.error("Detailed Upload Error:", error.response || error.message);
+
+      toast.error(
+        error.response?.data?.message ||
+          "Upload failed. Check Browser Console.",
+      );
     } finally {
       setIsUploading(false);
       setUploadProgress(0);
