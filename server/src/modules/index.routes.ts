@@ -12,6 +12,7 @@ import systemRoutes from "./system/system.routes";
 import reviewRoutes from "./review/review.routes";
 import { razorpayWebhook } from "./webhooks/webhook.controller";
 import assessmentRoutes from "./assessment/assessment.routes";
+import courseChaptersRoutes from "./courseChapters/courseChapters.routes";
 
 const router = Router();
 
@@ -27,5 +28,6 @@ router.use("/system", systemRoutes);
 router.use("/reviews", reviewRoutes);
 router.post("/webhooks/razorpay", razorpayWebhook);
 router.use("/assessments", assessmentRoutes);
+router.use("/chapters", courseChaptersRoutes);
 
 export default router;
