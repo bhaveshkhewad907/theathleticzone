@@ -19,10 +19,15 @@ import CourseArchitectModal from "./CourseArchitectModal";
 
 interface Course {
   _id: string;
-  title: string;
   price: number;
   isActive: boolean;
-  thumbnailUrl: string;
+  meta: {
+    title: string;
+    description: string;
+    tier: string;
+    targetDeficit: string;
+    coverImageUrl: string;
+  };
 }
 
 export default function AdminCourses() {
@@ -244,8 +249,11 @@ export default function AdminCourses() {
             >
               <div className="relative aspect-video rounded-2xl overflow-hidden mb-4">
                 <img
-                  src={course.thumbnailUrl?.replace("http://", "https://")}
-                  alt={course.title}
+                  src={course.meta?.coverImageUrl?.replace(
+                    "http://",
+                    "https://",
+                  )}
+                  alt={course.meta?.title || "Course Thumbnail"}
                   className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${!course.isActive && "grayscale opacity-50"}`}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F14] to-transparent opacity-60" />
@@ -255,7 +263,7 @@ export default function AdminCourses() {
               </div>
 
               <h3 className="font-bold text-white tracking-tight px-2 truncate text-base md:text-lg uppercase italic">
-                {course.title}
+                {course.meta?.title}
               </h3>
 
               <div className="mt-auto pt-4 flex flex-col gap-4">
@@ -281,7 +289,7 @@ export default function AdminCourses() {
                             isOpen: true,
                             type: "DEACTIVATE",
                             courseId: course._id,
-                            courseTitle: course.title,
+                            courseTitle: course.meta?.title,
                           })
                         }
                         className="p-2 rounded-xl bg-[#0B0F14] border border-white/5 text-amber-500/50 hover:text-amber-500 hover:border-amber-500/30 transition-all"
@@ -296,7 +304,7 @@ export default function AdminCourses() {
                             isOpen: true,
                             type: "REACTIVATE",
                             courseId: course._id,
-                            courseTitle: course.title,
+                            courseTitle: course.meta?.title,
                           })
                         }
                         className="p-2 rounded-xl bg-[#0B0F14] border border-white/5 text-green-500/50 hover:text-green-500 hover:border-green-500/30 transition-all shadow-[0_0_15px_rgba(34,197,94,0)] hover:shadow-[0_0_15px_rgba(34,197,94,0.2)]"
@@ -312,7 +320,7 @@ export default function AdminCourses() {
                           isOpen: true,
                           type: "DELETE",
                           courseId: course._id,
-                          courseTitle: course.title,
+                          courseTitle: course.meta?.title,
                         })
                       }
                       className="p-2 rounded-xl bg-[#0B0F14] border border-white/5 text-red-500/50 hover:text-red-500 hover:border-red-500/30 transition-all"
@@ -325,7 +333,10 @@ export default function AdminCourses() {
 
                 <button
                   onClick={() =>
-                    setArchitectCourse({ id: course._id, name: course.title })
+                    setArchitectCourse({
+                      id: course._id,
+                      name: course.meta?.title,
+                    })
                   }
                   className="w-full flex items-center justify-center gap-2 py-3 bg-amber-500/10 hover:bg-amber-500 text-amber-500 hover:text-black border border-amber-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300"
                 >
