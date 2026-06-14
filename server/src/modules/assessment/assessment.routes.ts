@@ -1,31 +1,26 @@
 import { Router } from "express";
+import { requireAuth, requireRole } from "../../middlewares/auth.middleware";
 import {
   submitAssessment,
-  getPendingAssessments,
-  reviewAssessment,
+  getMyAssessments,
+  getAllAssessmentsAdmin,
 } from "./assessment.controller";
-// 🚀 THE FIX: Import 'requireAuth' instead of 'protect'
-import { requireAuth, restrictTo } from "../../middlewares/auth.middleware";
 
 const router = Router();
 
-// 1. Athlete Route: Submit the 4-page assessment
-router.post("/submit", requireAuth, restrictTo("ATHLETE"), submitAssessment);
+// ==========================
+// ATHLETE ROUTES
+// ==========================
+// Submit a new assessment (Triggers the State Machine)
+router.post("/", requireAuth, requireRole("ATHLETE"), submitAssessment);
 
-// 2. Admin/Coach Route: Fetch the inbox of pending assessments
-router.get(
-  "/pending",
-  requireAuth,
-  restrictTo("ADMIN", "COACH"),
-  getPendingAssessments,
-);
+// View personal assessment history
+router.get("/me", requireAuth, requireRole("ATHLETE"), getMyAssessments);
 
-// 3. Admin/Coach Route: Submit the review and assign the courses
-router.post(
-  "/:id/review",
-  requireAuth,
-  restrictTo("ADMIN", "COACH"),
-  reviewAssessment,
-);
+// ==========================
+// ADMIN ROUTES
+// ==========================
+// View all assessments across the platform
+router.get("/admin", requireAuth, requireRole("ADMIN"), getAllAssessmentsAdmin);
 
 export default router;

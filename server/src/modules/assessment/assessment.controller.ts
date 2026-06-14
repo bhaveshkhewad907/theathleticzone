@@ -1,12 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import Assessment from "./assessment.model";
 import User from "../user/user.model";
+import ApiError from "../../utils/apiError";
+import { runRecommendationEngine } from "./recommendation.service"; // 🚀 Import the Engine
 
-/**
- * @route   POST /api/assessments/submit
- * @desc    Athlete submits their 9-point combine data
- * @access  Private (Athlete Only)
- */
 export const submitAssessment = async (
   req: any,
   res: Response,
@@ -14,117 +11,64 @@ export const submitAssessment = async (
 ) => {
   try {
     const userId = req.user.id;
-    const { mobility, power, sprinting, strength } = req.body;
+    const { physical, metrics } = req.body;
 
-    // 1. Save results mapped to the EXACT schema requirements
+    // 1. 🤖 RUN THE ALGORITHM
+    const engineResult = await runRecommendationEngine(physical, metrics);
+
+    // 2. Save the Assessment with the Engine's verdict
     const assessment = await Assessment.create({
-      userId: userId, // 🚀 FIX: Schema expects 'userId', not 'athlete'
-      metrics: {
-        // 🚀 FIX: Schema expects data wrapped in 'metrics'
-        mobility,
-        power,
-        sprinting,
-        strength,
-      },
-      status: "PENDING_ADMIN_REVIEW", // 🚀 FIX: Exact string from your model enum
-    } as any); // 🚀 FIX: Corrected syntax error (was `} as);`)
-
-    // 2. 🚀 CRITICAL FIX: Flip the User's master switch to UNDER_REVIEW
-    await User.findByIdAndUpdate(userId, {
-      $set: {
-        "platformState.status": "UNDER_REVIEW",
-      },
+      userId,
+      physical,
+      metrics,
+      engineResult, // Logs exactly why they got assigned this course
     });
 
-    res.status(201).json({ success: true, data: assessment });
+    // 3. Update the User's State Machine
+    await User.findByIdAndUpdate(userId, {
+      $set: {
+        "platformState.status": "ACTIVE_TRAINING",
+        "platformState.activeCourseId": engineResult.assignedCourseId, // Automatically assigns the course
+      },
+      $push: { assessmentHistory: assessment._id },
+    });
+
+    res.status(201).json({
+      success: true,
+      message: `Assessment complete! Assigned to: ${engineResult.assignedLevel} ${engineResult.identifiedDeficit} Track.`,
+      data: assessment,
+    });
   } catch (error) {
     next(error);
   }
 };
 
-/**
- * @route   GET /api/assessments/pending
- * @desc    Get all pending assessments for the Admin Dashboard
- * @access  Private (Admin/Coach Only)
- */
-export const getPendingAssessments = async (req: Request, res: Response) => {
+export const getMyAssessments = async (
+  req: any,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
-    // Fetch oldest first (First In, First Out) and populate the athlete's core info
-    const pendingAssessments = await Assessment.find({
-      status: "PENDING_ADMIN_REVIEW",
-    })
-      .sort({ createdAt: 1 })
-      .populate("userId", "name personalInfo profileImage email");
-
-    res.status(200).json({
-      success: true,
-      count: pendingAssessments.length,
-      data: pendingAssessments,
+    const assessments = await Assessment.find({ userId: req.user.id }).sort({
+      createdAt: -1,
     });
-  } catch (error: any) {
-    console.error("Fetch Pending Assessments Error:", error);
-    res
-      .status(500)
-      .json({ success: false, message: "Failed to fetch pending queue" });
+    res.status(200).json({ success: true, data: assessments });
+  } catch (error) {
+    next(error);
   }
 };
 
-/**
- * @route   POST /api/assessments/:id/review
- * @desc    Coach approves assessment and assigns Phase 1 & Phase 2 courses
- * @access  Private (Admin/Coach Only)
- */
-export const reviewAssessment = async (req: Request, res: Response) => {
+export const getAllAssessmentsAdmin = async (
+  _req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
-    const assessmentId = req.params.id;
-    const coachId = (req as any).user.id;
-    const { assignedDeficit, assignedCourseId, nextCourseId, coachNotes } =
-      req.body;
-
-    // 1. Find the assessment
-    const assessment = await Assessment.findById(assessmentId);
-    if (!assessment) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Assessment not found" });
-    }
-
-    if (assessment.status === "COMPLETED") {
-      return res
-        .status(400)
-        .json({ success: false, message: "Assessment is already reviewed" });
-    }
-
-    // 2. Update the Assessment document with Coach's decision
-    assessment.status = "COMPLETED";
-    assessment.adminReview = {
-      reviewedBy: coachId,
-      reviewedAt: new Date(),
-      assignedDeficit,
-      assignedCourseId,
-      nextCourseId,
-      coachNotes,
-    };
-    await assessment.save();
-
-    // 3. Update the Athlete's profile to unlock their dashboard
-    await User.findByIdAndUpdate(assessment.userId, {
-      $set: {
-        "platformState.status": "ACTIVE_TRAINING",
-        "platformState.activeCourseId": assignedCourseId,
-        "platformState.nextCourseId": nextCourseId,
-      },
-    });
-
-    res.status(200).json({
-      success: true,
-      message: "Athlete has been successfully assigned to their protocol.",
-      data: assessment,
-    });
-  } catch (error: any) {
-    console.error("Review Assessment Error:", error);
-    res
-      .status(500)
-      .json({ success: false, message: "Failed to process review" });
+    const assessments = await Assessment.find()
+      .populate("userId", "name email")
+      .sort({ createdAt: -1 });
+    res.status(200).json({ success: true, data: assessments });
+  } catch (error) {
+    next(error);
   }
 };

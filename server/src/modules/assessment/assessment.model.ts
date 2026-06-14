@@ -2,8 +2,16 @@ import mongoose, { Schema, Document } from "mongoose";
 
 export interface IAssessment extends Document {
   userId: mongoose.Types.ObjectId;
-  status: "PENDING" | "COMPLETED" | "REJECTED";
 
+  // 🚀 Absorbed from legacy AthleteProfile/User
+  physical: {
+    age: number;
+    heightCm: number;
+    bodyweightKg: number;
+    trainingAgeYears: number;
+  };
+
+  // 🏃‍♂️ Core Sprint Metrics
   metrics: {
     mobility: {
       kneeToWallCm: number;
@@ -22,13 +30,18 @@ export interface IAssessment extends Document {
     };
   };
 
-  adminReview?: {
-    reviewedBy: mongoose.Types.ObjectId;
-    reviewedAt: Date;
-    assignedDeficit: string;
+  // 🤖 The Automated Recommendation Engine Output
+  engineResult: {
     assignedCourseId: mongoose.Types.ObjectId;
-    nextCourseId: mongoose.Types.ObjectId;
-    coachNotes?: string;
+    assignedLevel: string; // e.g., "Beginner Level 2"
+    identifiedDeficit: string; // e.g., "Power"
+  };
+
+  // 🛡️ Optional Admin Override (Phase 6 Requirement)
+  adminOverride?: {
+    overriddenBy: mongoose.Types.ObjectId;
+    reason: string;
+    newCourseId: mongoose.Types.ObjectId;
   };
 
   createdAt: Date;
@@ -42,10 +55,12 @@ const assessmentSchema = new Schema<IAssessment>(
       ref: "User",
       required: true,
     },
-    status: {
-      type: String,
-      enum: ["PENDING", "COMPLETED", "REJECTED"],
-      default: "PENDING",
+
+    physical: {
+      age: { type: Number, required: true },
+      heightCm: { type: Number, required: true },
+      bodyweightKg: { type: Number, required: true },
+      trainingAgeYears: { type: Number, required: true },
     },
 
     metrics: {
@@ -63,28 +78,30 @@ const assessmentSchema = new Schema<IAssessment>(
       },
       sprinting: {
         sprint30mSeconds: { type: Number, required: true },
-        sprintVideoUrl: { type: String }, // Optional, in case upload fails but metrics exist
+        sprintVideoUrl: { type: String }, // Optional, if upload fails
       },
       strength: {
         backSquatMaxKg: { type: Number, required: true },
       },
     },
 
-    adminReview: {
-      reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-      reviewedAt: { type: Date },
-      assignedDeficit: { type: String },
+    engineResult: {
       assignedCourseId: { type: mongoose.Schema.Types.ObjectId, ref: "Course" },
-      nextCourseId: { type: mongoose.Schema.Types.ObjectId, ref: "Course" },
-      coachNotes: { type: String },
+      assignedLevel: { type: String },
+      identifiedDeficit: { type: String },
+    },
+
+    adminOverride: {
+      overriddenBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+      reason: { type: String },
+      newCourseId: { type: mongoose.Schema.Types.ObjectId, ref: "Course" },
     },
   },
   { timestamps: true },
 );
 
-// Indexes to help the Admin Dashboard load "Pending" assessments instantly
-assessmentSchema.index({ status: 1, createdAt: -1 });
-assessmentSchema.index({ userId: 1 });
+// Index to quickly fetch an athlete's assessment history chronologically
+assessmentSchema.index({ userId: 1, createdAt: -1 });
 
 const Assessment = mongoose.model<IAssessment>(
   "Assessment",

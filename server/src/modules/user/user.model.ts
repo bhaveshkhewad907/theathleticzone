@@ -1,13 +1,12 @@
 import mongoose, { Document, Schema } from "mongoose";
 
 export interface IUser extends Document {
-  // Existing Auth Fields
   name: string;
   email: string;
   password?: string;
   passwordResetOTP: string | null;
   passwordResetExpires: Date | null;
-  role: "ADMIN" | "COACH" | "ATHLETE";
+  role: "ADMIN" | "ATHLETE";
   isVerified: boolean;
   verificationOTP?: string | null;
   verificationExpires?: Date | null;
@@ -18,15 +17,10 @@ export interface IUser extends Document {
     expiresAt: Date;
   }[];
   isBlocked: boolean;
-  invitationToken?: string;
-  invitationExpires?: Date;
 
-  // 🚀 NEW: Sprint Platform Fields
   personalInfo: {
     gender?: "Male" | "Female" | "Other";
     dateOfBirth?: Date;
-    bodyweightKg?: number;
-    trainingAgeYears?: number;
   };
   subscription: {
     isActive: boolean;
@@ -34,9 +28,8 @@ export interface IUser extends Document {
     renewalDate?: Date;
   };
   platformState: {
-    status: "NEEDS_ASSESSMENT" | "UNDER_REVIEW" | "ACTIVE_TRAINING";
+    status: "NEEDS_ASSESSMENT" | "ACTIVE_TRAINING";
     activeCourseId?: mongoose.Types.ObjectId;
-    nextCourseId?: mongoose.Types.ObjectId;
   };
   assessmentHistory: mongoose.Types.ObjectId[];
   createdAt: Date;
@@ -52,7 +45,7 @@ const userSchema = new Schema<IUser>(
     passwordResetExpires: { type: Date, default: null },
     role: {
       type: String,
-      enum: ["ADMIN", "COACH", "ATHLETE"],
+      enum: ["ADMIN", "ATHLETE"],
       default: "ATHLETE",
     },
     isVerified: { type: Boolean, default: false },
@@ -62,15 +55,10 @@ const userSchema = new Schema<IUser>(
     provider: { type: String, enum: ["LOCAL", "GOOGLE"], default: "LOCAL" },
     refreshTokens: [{ token: String, expiresAt: Date }],
     isBlocked: { type: Boolean, default: false },
-    invitationToken: { type: String },
-    invitationExpires: { type: Date },
 
-    // 🚀 NEW: Embedded Sub-Documents
     personalInfo: {
       gender: { type: String, enum: ["Male", "Female", "Other"] },
       dateOfBirth: { type: Date },
-      bodyweightKg: { type: Number },
-      trainingAgeYears: { type: Number },
     },
     subscription: {
       isActive: { type: Boolean, default: false },
@@ -80,11 +68,10 @@ const userSchema = new Schema<IUser>(
     platformState: {
       status: {
         type: String,
-        enum: ["NEEDS_ASSESSMENT", "UNDER_REVIEW", "ACTIVE_TRAINING"],
+        enum: ["NEEDS_ASSESSMENT", "ACTIVE_TRAINING"],
         default: "NEEDS_ASSESSMENT",
       },
       activeCourseId: { type: mongoose.Schema.Types.ObjectId, ref: "Course" },
-      nextCourseId: { type: mongoose.Schema.Types.ObjectId, ref: "Course" },
     },
     assessmentHistory: [
       { type: mongoose.Schema.Types.ObjectId, ref: "Assessment" },
@@ -93,22 +80,13 @@ const userSchema = new Schema<IUser>(
   { timestamps: true },
 );
 
-// Explicit indexes for performance
 userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ role: 1 });
 userSchema.index({ "platformState.status": 1 });
 
-// Remove sensitive fields automatically before sending to frontend
 userSchema.set("toJSON", {
   transform: function (_doc, ret: any) {
-    const {
-      password,
-      refreshTokens,
-      invitationToken,
-      invitationExpires,
-      __v,
-      ...cleaned
-    } = ret;
+    const { password, refreshTokens, __v, ...cleaned } = ret;
     return cleaned;
   },
 });

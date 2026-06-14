@@ -1,28 +1,26 @@
 import cron from "node-cron";
-import { processSessionLifecycle } from "./sessionCompletion.job";
-import { processSubscriptionExpirations } from "../modules/liveSubscription/liveSubscription.service";
 import { logger } from "../utils/logger";
 
 export const initCronJobs = () => {
-  cron.schedule("*/5 * * * *", async () => {
+  // 🚀 Runs every night at midnight (server time)
+  cron.schedule("0 0 * * *", async () => {
     const startTime = performance.now();
-    logger.info("Initializing Background Sweep", {
+    logger.info("Initializing Daily Background Sweep", {
       event: "CRON_START",
       service: "CronHub",
     });
 
     try {
-      const sessionReport = await processSessionLifecycle();
-      const subReport = await processSubscriptionExpirations();
+      // TODO (Phase 9): Add logic here to check if 6-week courses have ended
+      // to automatically flip athlete statuses back to "NEEDS_ASSESSMENT"
 
       const executionTimeMs = Math.round(performance.now() - startTime);
 
-      logger.info("Background Sweep Completed", {
+      logger.info("Daily Background Sweep Completed", {
         event: "CRON_SUCCESS",
         service: "CronHub",
         executionTimeMs,
-        sessionTransitions: sessionReport,
-        subscriptionsExpired: subReport.modifiedCount,
+        status: "Engine ready for Phase 9 progression loops.",
       });
     } catch (error: any) {
       logger.error("Background Sweep Failed", {

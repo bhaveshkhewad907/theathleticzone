@@ -1,5 +1,10 @@
 // src/utils/razorpay.ts
-
+declare global {
+  interface Window {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    Razorpay: any;
+  }
+}
 export const loadRazorpayScript = (): Promise<boolean> => {
   return new Promise((resolve) => {
     // Singleton Pattern: If it's already loaded, don't load it again!

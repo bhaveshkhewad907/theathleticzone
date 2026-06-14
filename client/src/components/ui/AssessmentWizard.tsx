@@ -2,7 +2,8 @@ import { useState } from "react";
 import api from "../../services/api"; // Your Axios instance
 import toast from "react-hot-toast";
 
-// Import our Step Components (We will build these next)
+// Import our Step Components
+import PhysicalStep from "../../pages/steps/PhysicalStep"; // 🚀 NEW STEP
 import MobilityStep from "../../pages/steps/MobilityStep";
 import PowerStep from "../../pages/steps/PowerStep";
 import SprintStep from "../../pages/steps/SprintStep";
@@ -12,8 +13,9 @@ export default function AssessmentWizard() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // The Master State Object
+  // 🚀 UPDATED: The Master State Object now matches the new Schema
   const [formData, setFormData] = useState({
+    physical: { age: "", heightCm: "", bodyweightKg: "", trainingAgeYears: "" },
     mobility: { kneeToWallCm: "", deepSquatHold: "" },
     power: { broadJumpMeters: "", verticalJumpCm: "" },
     sprinting: { sprint30mSeconds: "", sprintVideoUrl: "" },
@@ -38,19 +40,39 @@ export default function AssessmentWizard() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      // Send the exact payload the backend expects
-      await api.post("/assessments/submit", {
-        mobility: formData.mobility,
-        power: formData.power,
-        sprinting: formData.sprinting,
-        strength: formData.strength,
-      });
+      // 🚀 FORMAT: Restructure the payload to match the backend { physical, metrics } grouping
+      const payload = {
+        physical: {
+          age: Number(formData.physical.age),
+          heightCm: Number(formData.physical.heightCm),
+          bodyweightKg: Number(formData.physical.bodyweightKg),
+          trainingAgeYears: Number(formData.physical.trainingAgeYears),
+        },
+        metrics: {
+          mobility: {
+            kneeToWallCm: Number(formData.mobility.kneeToWallCm),
+            deepSquatHold: formData.mobility.deepSquatHold,
+          },
+          power: {
+            broadJumpMeters: Number(formData.power.broadJumpMeters),
+            verticalJumpCm: Number(formData.power.verticalJumpCm),
+          },
+          sprinting: {
+            sprint30mSeconds: Number(formData.sprinting.sprint30mSeconds),
+            sprintVideoUrl: formData.sprinting.sprintVideoUrl || undefined,
+          },
+          strength: {
+            backSquatMaxKg: Number(formData.strength.backSquatMaxKg),
+          },
+        },
+      };
 
-      toast.success("Assessment Submitted Successfully!");
-      // 🚀 Force a clean reload so AuthContext grabs the new UNDER_REVIEW status
+      await api.post("/assessments", payload);
+
+      toast.success("Assessment Processed Successfully!");
+      // Force a clean reload so AuthContext grabs the new ACTIVE_TRAINING status
       window.location.href = "/athlete";
     } catch (err) {
-      // 🚀 THE FIX: Define the exact shape of the error instead of using 'any'
       const error = err as {
         response?: { data?: { message?: string } };
         message?: string;
@@ -67,16 +89,16 @@ export default function AssessmentWizard() {
   return (
     <div className="min-h-screen bg-[#0B0F14] text-white flex flex-col pt-12 md:pt-24 px-4 pb-24">
       <div className="max-w-xl mx-auto w-full">
-        {/* Progress Bar */}
+        {/* Progress Bar (Now out of 5 steps) */}
         <div className="mb-8">
           <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-amber-500 mb-3">
-            <span>Phase {currentStep} of 4</span>
-            <span>{currentStep * 25}% Complete</span>
+            <span>Phase {currentStep} of 5</span>
+            <span>{currentStep * 20}% Complete</span>
           </div>
           <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden">
             <div
               className="h-full bg-amber-500 transition-all duration-500 ease-out"
-              style={{ width: `${currentStep * 25}%` }}
+              style={{ width: `${currentStep * 20}%` }}
             />
           </div>
         </div>
@@ -84,15 +106,18 @@ export default function AssessmentWizard() {
         {/* Dynamic Step Rendering */}
         <div className="bg-white/5 border border-white/10 p-6 md:p-8 rounded-3xl shadow-2xl backdrop-blur-xl">
           {currentStep === 1 && (
-            <MobilityStep data={formData.mobility} updateData={updateData} />
+            <PhysicalStep data={formData.physical} updateData={updateData} />
           )}
           {currentStep === 2 && (
-            <PowerStep data={formData.power} updateData={updateData} />
+            <MobilityStep data={formData.mobility} updateData={updateData} />
           )}
           {currentStep === 3 && (
-            <SprintStep data={formData.sprinting} updateData={updateData} />
+            <PowerStep data={formData.power} updateData={updateData} />
           )}
           {currentStep === 4 && (
+            <SprintStep data={formData.sprinting} updateData={updateData} />
+          )}
+          {currentStep === 5 && (
             <StrengthStep data={formData.strength} updateData={updateData} />
           )}
         </div>
@@ -108,7 +133,7 @@ export default function AssessmentWizard() {
             </button>
           )}
 
-          {currentStep < 4 ? (
+          {currentStep < 5 ? (
             <button
               onClick={handleNext}
               className="flex-1 bg-amber-500 text-black px-6 py-4 rounded-xl font-black uppercase tracking-wider text-sm hover:bg-amber-400 active:scale-95 transition-all shadow-[0_0_20px_rgba(245,158,11,0.3)]"
@@ -121,7 +146,7 @@ export default function AssessmentWizard() {
               disabled={isSubmitting}
               className="flex-1 bg-green-500 text-black px-6 py-4 rounded-xl font-black uppercase tracking-wider text-sm hover:bg-green-400 active:scale-95 transition-all shadow-[0_0_20px_rgba(34,197,94,0.3)] disabled:opacity-50"
             >
-              {isSubmitting ? "Submitting..." : "Submit to Coach"}
+              {isSubmitting ? "Calculating..." : "Calculate Assessment"}
             </button>
           )}
         </div>

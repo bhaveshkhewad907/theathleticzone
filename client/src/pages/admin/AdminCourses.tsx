@@ -13,7 +13,6 @@ import {
   Network,
 } from "lucide-react";
 
-// 🚀 IMPORTS: Protocol Command Center Modals
 import CreateStepModal from "./CreateStepModal";
 import CreateTemplateModal from "./CreateTemplateModal";
 import CourseArchitectModal from "./CourseArchitectModal";
@@ -33,7 +32,6 @@ export default function AdminCourses() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
 
-  // 🚀 STATE: Protocol Builder Modals
   const [showStepModal, setShowStepModal] = useState(false);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [architectCourse, setArchitectCourse] = useState<{
@@ -41,8 +39,11 @@ export default function AdminCourses() {
     name: string;
   } | null>(null);
 
+  // 🚀 NEW: Added strict state requirements for the Recommendation Engine
   const [formData, setFormData] = useState({
-    title: "",
+    level: "Beginner",
+    deficit: "Strength",
+    customTitle: "",
     description: "",
     price: "",
   });
@@ -115,13 +116,15 @@ export default function AdminCourses() {
       setUploadProgress(0);
       const videoData = await uploadToR2(videoFile, "videos");
 
-      // 🚀 Zod-Compliant Payload
+      // 🚀 FORMAT: Auto-fuse the Level and Deficit to guarantee Engine matching!
+      const finalTitle = `${formData.level} ${formData.deficit} Track: ${formData.customTitle}`;
+
       await api.post("/courses", {
-        title: formData.title,
+        title: finalTitle,
         description: formData.description,
         price: Number(formData.price),
         thumbnailUrl: thumbData.publicUrl,
-        videoUrl: videoData.fileKey, // Strictly mapped to what the backend expects
+        videoUrl: videoData.fileKey,
       });
 
       setShowModal(false);
@@ -170,7 +173,13 @@ export default function AdminCourses() {
   };
 
   const resetForm = () => {
-    setFormData({ title: "", description: "", price: "" });
+    setFormData({
+      level: "Beginner",
+      deficit: "Strength",
+      customTitle: "",
+      description: "",
+      price: "",
+    });
     setThumbnailFile(null);
     setVideoFile(null);
     setThumbPreview(null);
@@ -179,7 +188,6 @@ export default function AdminCourses() {
   return (
     <>
       <div className="relative min-h-screen space-y-6 md:space-y-10 p-2 md:p-4 animate-in fade-in duration-700">
-        {/* 🚀 UPGRADED: Protocol Command Center Header */}
         <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center bg-[#121821] p-6 md:p-8 rounded-3xl border border-white/5 relative overflow-hidden gap-6 shadow-2xl">
           <div className="relative z-10">
             <h1 className="text-3xl md:text-4xl font-black italic tracking-tighter uppercase text-white">
@@ -191,7 +199,6 @@ export default function AdminCourses() {
           </div>
 
           <div className="relative z-10 flex flex-wrap items-center gap-3 w-full xl:w-auto">
-            {/* Tier 1: Vault */}
             <button
               onClick={() => setShowStepModal(true)}
               className="flex-1 xl:flex-none flex items-center justify-center gap-2 px-5 py-4 bg-black/40 border border-white/10 hover:border-amber-500/50 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-inner hover:bg-black/60"
@@ -200,7 +207,6 @@ export default function AdminCourses() {
               Content Vault
             </button>
 
-            {/* Tier 2: Template Builder */}
             <button
               onClick={() => setShowTemplateModal(true)}
               className="flex-1 xl:flex-none flex items-center justify-center gap-2 px-5 py-4 bg-black/40 border border-white/10 hover:border-amber-500/50 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-inner hover:bg-black/60"
@@ -209,7 +215,6 @@ export default function AdminCourses() {
               Protocol Builder
             </button>
 
-            {/* Legacy Drop Course */}
             <button
               onClick={() => setShowModal(true)}
               className="w-full xl:w-auto bg-amber-500 text-black px-8 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-amber-400 transition-all active:scale-95 shadow-xl shadow-amber-500/10"
@@ -219,7 +224,6 @@ export default function AdminCourses() {
           </div>
         </div>
 
-        {/* Grid of Courses */}
         <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {courses.map((course) => (
             <div
@@ -243,7 +247,6 @@ export default function AdminCourses() {
               </h3>
 
               <div className="mt-auto pt-4 flex flex-col gap-4">
-                {/* Status & Quick Actions */}
                 <div className="flex justify-between items-center px-2">
                   <div className="flex items-center gap-2">
                     <div
@@ -308,7 +311,6 @@ export default function AdminCourses() {
                   </div>
                 </div>
 
-                {/* 🚀 UPGRADED: Architect Plan Button (Tier 3) */}
                 <button
                   onClick={() =>
                     setArchitectCourse({ id: course._id, name: course.title })
@@ -324,7 +326,6 @@ export default function AdminCourses() {
         </div>
       </div>
 
-      {/* 📱 RESPONSIVE MODAL: Action Confirmation */}
       {actionModal.isOpen && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-xl flex items-center justify-center p-4 z-[60] animate-in fade-in">
           <div className="bg-[#121821] border border-white/10 p-6 md:p-8 rounded-[2rem] max-w-sm w-[95vw] md:w-full shadow-2xl relative overflow-hidden">
@@ -433,7 +434,6 @@ export default function AdminCourses() {
         </div>
       )}
 
-      {/* 📱 RESPONSIVE MODAL: Legacy Course Creation Protocol */}
       {showModal && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-xl flex items-center justify-center p-4 z-50 overflow-y-auto">
           <div className="bg-[#0F1724]/90 border border-white/10 p-6 md:p-10 rounded-[24px] max-w-lg w-[95vw] md:w-full space-y-6 shadow-[0_20px_50px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.04)] relative overflow-hidden my-auto">
@@ -449,17 +449,58 @@ export default function AdminCourses() {
             </div>
 
             <div className="space-y-4">
+              {/* 🚀 NEW: Target Level Dropdown */}
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8A94A6] ml-2">
-                  Sector Designation
+                  Target Level
+                </label>
+                <select
+                  className="w-full bg-black/40 border border-white/[0.05] p-4 rounded-[12px] text-sm text-[#E5E7EB] focus:border-amber-500/50 outline-none transition-all appearance-none"
+                  value={formData.level}
+                  onChange={(e) =>
+                    setFormData({ ...formData, level: e.target.value })
+                  }
+                >
+                  <option value="Beginner">
+                    Level 1 - Foundation (Beginner)
+                  </option>
+                  <option value="Intermediate">
+                    Level 2 - Performance (Intermediate)
+                  </option>
+                  <option value="Advanced">Level 3 - Elite (Advanced)</option>
+                </select>
+              </div>
+
+              {/* 🚀 NEW: Target Deficit Dropdown */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8A94A6] ml-2">
+                  Target Deficit
+                </label>
+                <select
+                  className="w-full bg-black/40 border border-white/[0.05] p-4 rounded-[12px] text-sm text-[#E5E7EB] focus:border-amber-500/50 outline-none transition-all appearance-none"
+                  value={formData.deficit}
+                  onChange={(e) =>
+                    setFormData({ ...formData, deficit: e.target.value })
+                  }
+                >
+                  <option value="Strength">Strength Deficit</option>
+                  <option value="Power">Power Deficit</option>
+                  <option value="Mobility">Mobility Deficit</option>
+                  <option value="Technique">Technique Deficit</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8A94A6] ml-2">
+                  Module Descriptor (Appended)
                 </label>
                 <input
                   type="text"
                   placeholder="e.g., Tactical Movement Alpha"
                   className="w-full bg-black/40 border border-white/[0.05] p-4 rounded-[12px] text-sm text-[#E5E7EB] focus:border-amber-500/50 outline-none transition-all placeholder:text-white/5 font-medium"
-                  value={formData.title}
+                  value={formData.customTitle}
                   onChange={(e) =>
-                    setFormData({ ...formData, title: e.target.value })
+                    setFormData({ ...formData, customTitle: e.target.value })
                   }
                 />
               </div>
@@ -614,7 +655,10 @@ export default function AdminCourses() {
               <button
                 onClick={handleSubmit}
                 disabled={
-                  isUploading || !formData.title || !videoFile || !thumbnailFile
+                  isUploading ||
+                  !formData.customTitle ||
+                  !videoFile ||
+                  !thumbnailFile
                 }
                 className="w-full sm:flex-[2] bg-amber-500 py-4 rounded-[12px] text-[10px] font-black uppercase tracking-[0.2em] text-black disabled:opacity-20 hover:bg-amber-400 transition-all shadow-[0_10px_20px_rgba(245,158,11,0.2)] active:scale-95"
               >
@@ -625,22 +669,17 @@ export default function AdminCourses() {
         </div>
       )}
 
-      {/* 🚀 THE FIX: Render Protocol Command Center Modals */}
       {showStepModal && (
         <CreateStepModal
           onClose={() => setShowStepModal(false)}
-          onSuccess={() => {
-            /* Optionally reload steps elsewhere if needed */
-          }}
+          onSuccess={() => {}}
         />
       )}
 
       {showTemplateModal && (
         <CreateTemplateModal
           onClose={() => setShowTemplateModal(false)}
-          onSuccess={() => {
-            /* Optionally reload templates */
-          }}
+          onSuccess={() => {}}
         />
       )}
 
@@ -649,9 +688,7 @@ export default function AdminCourses() {
           courseId={architectCourse.id}
           courseName={architectCourse.name}
           onClose={() => setArchitectCourse(null)}
-          onSuccess={() => {
-            /* Let the toast handle success message */
-          }}
+          onSuccess={() => {}}
         />
       )}
     </>

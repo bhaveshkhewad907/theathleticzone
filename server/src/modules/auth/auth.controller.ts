@@ -1,19 +1,18 @@
 import { Request, Response, NextFunction, RequestHandler } from "express";
-import { registerAthlete } from "./auth.service";
-import { registerSchema } from "./auth.validation";
+import {
+  registerAthlete,
+  loginAthlete,
+  refreshSession,
+  logoutSession,
+} from "./auth.service";
+import { registerSchema, loginSchema } from "./auth.validation";
 import ApiError from "../../utils/apiError";
-import { loginSchema } from "./auth.validation";
-import { loginAthlete } from "./auth.service";
-import { refreshSession } from "./auth.service";
-import { logoutSession } from "./auth.service";
-import bcrypt from "bcrypt";
-import CoachInvitation from "../admin/coachInvitation.model";
 import User from "../user/user.model";
-import jwt from "jsonwebtoken";
 import {
   sendPasswordResetEmail,
   sendVerificationEmail,
 } from "../../services/email.service";
+import bcrypt from "bcryptjs";
 
 export const register = async (
   req: Request,
@@ -28,15 +27,9 @@ export const register = async (
       throw new ApiError(400, firstError);
     }
 
-    const { name, email, password, sportId } = parsed.data;
+    const { name, email, password } = parsed.data;
 
-    // 🚀 FIX: Cast to 'any' to prevent 'never' inference errors from old service typings
-    const user = (await registerAthlete({
-      name,
-      email,
-      password,
-      sportId,
-    })) as any;
+    const user = (await registerAthlete({ name, email, password })) as any;
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -48,8 +41,7 @@ export const register = async (
 
     res.status(201).json({
       success: true,
-      message:
-        "Tactical account initialized. Security code dispatched to your email.",
+      message: "Account initialized. Security code dispatched to your email.",
       data: {
         id: user._id,
         email: user.email,
@@ -101,7 +93,6 @@ export const login = async (
 
     const { email, password } = parsed.data;
 
-    // 🚀 FIX: Cast to 'any' to shield against service layer type mismatches
     const { user, accessToken, refreshToken } = (await loginAthlete(
       email,
       password,
@@ -117,7 +108,6 @@ export const login = async (
 
     const isProduction = process.env.NODE_ENV === "production";
 
-    // 🚀 THE NEW BULLETPROOF COOKIE OPTIONS
     const cookieOptions = {
       httpOnly: true,
       secure: isProduction,
@@ -130,7 +120,6 @@ export const login = async (
       ...cookieOptions,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
-
     res.cookie("accessToken", accessToken, {
       ...cookieOptions,
       maxAge: 15 * 60 * 1000,
@@ -180,7 +169,6 @@ export const refresh = async (
       ...cookieOptions,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
-
     res.cookie("accessToken", accessToken, {
       ...cookieOptions,
       maxAge: 15 * 60 * 1000,
@@ -189,7 +177,6 @@ export const refresh = async (
     res.status(200).json({ success: true, message: "Session refreshed" });
   } catch (error) {
     const isProduction = process.env.NODE_ENV === "production";
-
     const clearCookieOptions = {
       httpOnly: true,
       secure: isProduction,
@@ -200,7 +187,6 @@ export const refresh = async (
 
     res.clearCookie("refreshToken", clearCookieOptions);
     res.clearCookie("accessToken", clearCookieOptions);
-
     next(error);
   }
 };
@@ -211,7 +197,6 @@ export const logout = async (
   next: NextFunction,
 ) => {
   const isProduction = process.env.NODE_ENV === "production";
-
   const clearCookieOptions = {
     httpOnly: true,
     secure: isProduction,
@@ -222,7 +207,6 @@ export const logout = async (
 
   try {
     const refreshToken = req.cookies.refreshToken;
-
     if (refreshToken) {
       await logoutSession(refreshToken);
     }
@@ -239,131 +223,6 @@ export const logout = async (
   res.status(200).json({ success: true, message: "Logged out successfully" });
 };
 
-export const acceptCoachInvite: RequestHandler = async (req, res, next) => {
-  try {
-    const { token, name, password } = req.body;
-
-    if (!token || !name || !password) {
-      throw new ApiError(400, "All fields are required");
-    }
-
-    const invitation = await CoachInvitation.findOne({ token });
-
-    if (!invitation || invitation.expiresAt < new Date()) {
-      throw new ApiError(400, "Invalid or expired invitation");
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // 🚀 FIX: Removed the 'sports' key because it doesn't exist in the new Sprint schema
-    // 🚀 FIX: Added 'as any' to ensure the TS compiler understands it has a valid _id and name
-    const coach = (await User.create({
-      name,
-      email: invitation.email,
-      password: hashedPassword,
-      role: "COACH",
-      provider: "LOCAL",
-      isVerified: true,
-    })) as any;
-
-    const accessToken = jwt.sign(
-      { id: coach._id, role: coach.role },
-      process.env.JWT_ACCESS_SECRET as string,
-      { expiresIn: "15m" },
-    );
-
-    const refreshToken = jwt.sign(
-      { id: coach._id },
-      process.env.JWT_REFRESH_SECRET as string,
-      { expiresIn: "7d" },
-    );
-
-    await User.updateOne(
-      { _id: coach._id },
-      {
-        $push: {
-          refreshTokens: {
-            token: await bcrypt.hash(refreshToken, 12),
-            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-          },
-        },
-      },
-    );
-
-    const updatedInvite = await CoachInvitation.findOneAndUpdate(
-      { token: token },
-      { $set: { status: "ACCEPTED" } },
-      { new: true },
-    );
-
-    console.log(
-      "SYSTEM CHECK - Invite Status Updated To:",
-      updatedInvite?.status,
-    );
-
-    const isProduction = process.env.NODE_ENV === "production";
-
-    const cookieOptions = {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: "lax" as const,
-      domain: isProduction ? ".theathleticzone.in" : undefined,
-      path: "/",
-    };
-
-    res.cookie("refreshToken", refreshToken, {
-      ...cookieOptions,
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
-
-    res.cookie("accessToken", accessToken, {
-      ...cookieOptions,
-      maxAge: 15 * 60 * 1000,
-    });
-
-    res.status(201).json({
-      success: true,
-      message: "Account created and authorized.",
-      data: {
-        id: coach._id,
-        name: coach.name,
-        email: coach.email,
-        role: coach.role,
-        profileImage: coach.profileImage || null,
-      },
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const validateCoachInvite: RequestHandler = async (req, res, next) => {
-  try {
-    const { token } = req.query;
-
-    if (!token) {
-      throw new ApiError(400, "Token is required");
-    }
-
-    const invitation = await CoachInvitation.findOne({ token });
-
-    if (!invitation) {
-      throw new ApiError(400, "Invalid invitation");
-    }
-
-    if (invitation.expiresAt < new Date()) {
-      throw new ApiError(400, "Invitation expired");
-    }
-
-    res.status(200).json({
-      success: true,
-      email: invitation.email,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
 export const forgotPassword: RequestHandler = async (req, res, next) => {
   try {
     const { email } = req.body;
@@ -377,7 +236,6 @@ export const forgotPassword: RequestHandler = async (req, res, next) => {
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
     user.passwordResetOTP = otp;
     user.passwordResetExpires = new Date(Date.now() + 10 * 60 * 1000);
     await user.save();
@@ -442,7 +300,6 @@ export const googleCallback = async (
       ...cookieOptions,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
-
     res.cookie("accessToken", accessToken, {
       ...cookieOptions,
       maxAge: 15 * 60 * 1000,

@@ -23,14 +23,10 @@ export const create = async (
 ) => {
   try {
     const parsed = createCourseSchema.safeParse(req.body);
-
     if (!parsed.success) {
       throw new ApiError(400, parsed.error.issues[0].message);
     }
-
-    // 🚀 FIX: Removed the old videoKey hack, just pass the parsed data directly
     const course = await createCourse(parsed.data as any);
-
     res.status(201).json({ success: true, data: course });
   } catch (error) {
     next(error);
@@ -44,17 +40,13 @@ export const update = async (
 ) => {
   try {
     const parsed = updateCourseSchema.safeParse(req.body);
-
     if (!parsed.success) {
       throw new ApiError(400, parsed.error.issues[0].message);
     }
-
-    // 🚀 FIX: Removed the old videoKey hack
     const course = await updateCourse(
       req.params.id as string,
       parsed.data as any,
     );
-
     res.status(200).json({ success: true, data: course });
   } catch (error) {
     next(error);
@@ -109,7 +101,6 @@ export const softDelete = async (
   try {
     const courseId = req.params.id as string;
     await deleteCourseSoft(courseId);
-
     res.status(200).json({
       success: true,
       message: "Course removed securely. Purchase history preserved.",
@@ -132,7 +123,7 @@ export const reactivate = async (
   }
 };
 
-// 🛡️ Secure Access Gate for R2 Videos (UPDATED)
+// 🛡️ Secure Access Gate for R2 Videos
 export const getSecureCourseAccess = async (
   req: any,
   res: Response,
@@ -141,8 +132,6 @@ export const getSecureCourseAccess = async (
   try {
     const userId = req.user.id;
     const courseId = req.params.id;
-
-    // 🚀 FIX: Pull the exact requested video key from the query, not from the top level course model!
     const requestedVideoKey = req.query.videoKey as string;
 
     if (!requestedVideoKey) {
@@ -217,13 +206,13 @@ export const getAthleteCurrentCourse = async (
 ) => {
   try {
     const userId = req.user.id;
-
     const user = await User.findById(userId);
 
     if (!user) {
       throw new ApiError(404, "User not found");
     }
 
+    // 1. Enforce the State Machine Lockout
     if (user.platformState?.status === "NEEDS_ASSESSMENT") {
       return res.status(403).json({
         success: false,
@@ -232,36 +221,19 @@ export const getAthleteCurrentCourse = async (
       });
     }
 
-    if (user.platformState?.status === "UNDER_REVIEW") {
-      return res.status(403).json({
-        success: false,
-        state: "UNDER_REVIEW",
-        message: "Your assessment is currently under review by a coach.",
-      });
-    }
-
+    // 2. Ensure they have a course
     if (!user.platformState?.activeCourseId) {
-      throw new ApiError(400, "No active course assigned by the admin yet.");
+      throw new ApiError(400, "No active course assigned by the engine yet.");
     }
 
     const activeCourse = await Course.findById(
       user.platformState.activeCourseId,
     );
 
-    // 🚀 FIX: Strongly typed as 'any' so TS doesn't panic when we reassign it from null
-    let nextCourseTeaser: any = null;
-
-    if (user.platformState?.nextCourseId) {
-      nextCourseTeaser = await Course.findById(
-        user.platformState.nextCourseId,
-      ).select("meta.title meta.coverImageUrl");
-    }
-
     res.status(200).json({
       success: true,
       data: {
         activeCourse,
-        nextCourseTeaser,
       },
     });
   } catch (error) {

@@ -7,8 +7,8 @@ import {
   getPublic,
   reactivate,
   softDelete,
-  getSecureCourseAccess, // 🚀 NEW: Import the secure access controller
-  saveCourseProgress, // 🚀 NEW: Import the progress telemetry controller
+  getSecureCourseAccess,
+  saveCourseProgress,
 } from "./course.controller";
 import { requireAuth, requireRole } from "../../middlewares/auth.middleware";
 import { generatePresignedUrl } from "./course.upload.service";
@@ -20,7 +20,7 @@ const router = Router();
 router.post(
   "/get-upload-url",
   requireAuth,
-  requireRole("ADMIN", "COACH", "ATHLETE"),
+  requireRole("ADMIN", "ATHLETE"),
   async (req, res, next) => {
     try {
       const { fileName, contentType, folder } = req.body;
@@ -38,8 +38,7 @@ router.post(
   },
 );
 
-// 🚀 NEW: SECURE ATHLETE ACCESS & TELEMETRY ROUTES
-// These allow authorized athletes to get the R2 video stream and save their watch time
+// 🚀 SECURE ATHLETE ACCESS & TELEMETRY ROUTES
 router.get("/:id/secure-access", requireAuth, getSecureCourseAccess);
 router.post("/:id/progress", requireAuth, saveCourseProgress);
 
