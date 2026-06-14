@@ -2,7 +2,7 @@ import mongoose, { Schema, Document } from "mongoose";
 
 export interface IAssessment extends Document {
   userId: mongoose.Types.ObjectId;
-  status: "PENDING_ADMIN_REVIEW" | "REVIEWED";
+  status: "PENDING" | "COMPLETED" | "REJECTED";
 
   metrics: {
     mobility: {
@@ -44,8 +44,8 @@ const assessmentSchema = new Schema<IAssessment>(
     },
     status: {
       type: String,
-      enum: ["PENDING_ADMIN_REVIEW", "REVIEWED"],
-      default: "PENDING_ADMIN_REVIEW",
+      enum: ["PENDING", "COMPLETED", "REJECTED"],
+      default: "PENDING",
     },
 
     metrics: {

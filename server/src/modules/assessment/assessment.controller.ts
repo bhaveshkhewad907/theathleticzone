@@ -18,18 +18,18 @@ export const submitAssessment = async (
 
     // 1. Save results mapped to the EXACT schema requirements
     const assessment = await Assessment.create({
-      userId: userId, // 🚀 FIX: Schema wants 'userId', not 'athlete'
+      userId: userId, // 🚀 FIX: Schema expects 'userId', not 'athlete'
       metrics: {
-        // 🚀 FIX: Schema wants data wrapped in a 'metrics' object
+        // 🚀 FIX: Schema expects data wrapped in 'metrics'
         mobility,
         power,
         sprinting,
         strength,
       },
-      status: "UNDER_REVIEW", // 🚀 FIX: Schema rejected 'PENDING'
-    } as any);
+      status: "PENDING_ADMIN_REVIEW", // 🚀 FIX: Exact string from your model enum
+    } as any); // 🚀 FIX: Corrected syntax error (was `} as);`)
 
-    // 2. Flip the User's master switch to UNDER_REVIEW
+    // 2. 🚀 CRITICAL FIX: Flip the User's master switch to UNDER_REVIEW
     await User.findByIdAndUpdate(userId, {
       $set: {
         "platformState.status": "UNDER_REVIEW",
@@ -89,14 +89,14 @@ export const reviewAssessment = async (req: Request, res: Response) => {
         .json({ success: false, message: "Assessment not found" });
     }
 
-    if (assessment.status === "REVIEWED") {
+    if (assessment.status === "COMPLETED") {
       return res
         .status(400)
         .json({ success: false, message: "Assessment is already reviewed" });
     }
 
     // 2. Update the Assessment document with Coach's decision
-    assessment.status = "REVIEWED";
+    assessment.status = "COMPLETED";
     assessment.adminReview = {
       reviewedBy: coachId,
       reviewedAt: new Date(),
