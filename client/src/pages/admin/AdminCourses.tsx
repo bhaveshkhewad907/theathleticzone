@@ -119,12 +119,16 @@ export default function AdminCourses() {
 
       // 🚀 THE FIX: We no longer send a videoUrl to the backend!
       await api.post("/courses", {
-        title: finalTitle,
-        description: formData.description,
+        meta: {
+          title: finalTitle,
+          description: formData.description,
+          tier: formData.level, // Fills the META.TIER requirement
+          targetDeficit: formData.deficit, // Fills the META.TARGETDEFICIT requirement
+          coverImageUrl: thumbUrl, // Fills the META.COVERIMAGEURL requirement
+        },
         price: Number(formData.price),
-        thumbnailUrl: thumbUrl,
+        isActive: true, // Optional: Default to true if you want it live immediately
       });
-
       setShowModal(false);
       resetForm();
       fetchCourses();
