@@ -22,7 +22,6 @@ interface Course {
   title: string;
   price: number;
   isActive: boolean;
-  videoUrl: string;
   thumbnailUrl: string;
 }
 
@@ -39,7 +38,6 @@ export default function AdminCourses() {
     name: string;
   } | null>(null);
 
-  // 🚀 NEW: Added strict state requirements for the Recommendation Engine
   const [formData, setFormData] = useState({
     level: "Beginner",
     deficit: "Strength",
@@ -49,7 +47,6 @@ export default function AdminCourses() {
   });
 
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
-  const [videoFile, setVideoFile] = useState<File | null>(null);
   const [thumbPreview, setThumbPreview] = useState<string | null>(null);
 
   const [actionModal, setActionModal] = useState<{
@@ -81,14 +78,15 @@ export default function AdminCourses() {
     }
   };
 
-  const uploadToR2 = async (file: File, folder: "videos" | "thumbnails") => {
+  // Simplified: Now strictly handles thumbnails only
+  const uploadThumbnailToR2 = async (file: File) => {
     const { data } = await api.post("/courses/get-upload-url", {
       fileName: file.name,
       contentType: file.type,
-      folder: folder,
+      folder: "thumbnails",
     });
 
-    const { uploadUrl, publicUrl, fileKey } = data.data;
+    const { uploadUrl, publicUrl } = data.data;
 
     await axios.put(uploadUrl, file, {
       headers: { "Content-Type": file.type },
@@ -100,40 +98,40 @@ export default function AdminCourses() {
       },
     });
 
-    return { publicUrl, fileKey: fileKey || `${folder}/${file.name}` };
+    return publicUrl;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!thumbnailFile || !videoFile) {
-      return toast.error("Please select both a thumbnail and a video");
+
+    // 🚀 THE FIX: We no longer require or validate a videoFile
+    if (!thumbnailFile) {
+      return toast.error("Please provide a visual cover (thumbnail).");
     }
 
     try {
       setIsUploading(true);
 
-      const thumbData = await uploadToR2(thumbnailFile, "thumbnails");
-      setUploadProgress(0);
-      const videoData = await uploadToR2(videoFile, "videos");
+      const thumbUrl = await uploadThumbnailToR2(thumbnailFile);
+      setUploadProgress(100);
 
-      // 🚀 FORMAT: Auto-fuse the Level and Deficit to guarantee Engine matching!
       const finalTitle = `${formData.level} ${formData.deficit} Track: ${formData.customTitle}`;
 
+      // 🚀 THE FIX: We no longer send a videoUrl to the backend!
       await api.post("/courses", {
         title: finalTitle,
         description: formData.description,
         price: Number(formData.price),
-        thumbnailUrl: thumbData.publicUrl,
-        videoUrl: videoData.fileKey,
+        thumbnailUrl: thumbUrl,
       });
 
       setShowModal(false);
       resetForm();
       fetchCourses();
-      toast.success("Course published successfully! 🚀");
+      toast.success("Module Container published successfully! 🚀");
     } catch (error) {
       console.error(error);
-      toast.error("Failed to publish course. Verify network integrity.");
+      toast.error("Failed to publish container. Verify network integrity.");
     } finally {
       setIsUploading(false);
       setUploadProgress(0);
@@ -181,7 +179,6 @@ export default function AdminCourses() {
       price: "",
     });
     setThumbnailFile(null);
-    setVideoFile(null);
     setThumbPreview(null);
   };
 
@@ -219,7 +216,7 @@ export default function AdminCourses() {
               onClick={() => setShowModal(true)}
               className="w-full xl:w-auto bg-amber-500 text-black px-8 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-amber-400 transition-all active:scale-95 shadow-xl shadow-amber-500/10"
             >
-              Deploy New Course
+              Deploy New Course Container
             </button>
           </div>
         </div>
@@ -444,12 +441,11 @@ export default function AdminCourses() {
                 Course <span className="text-amber-500">Deployment</span>
               </h2>
               <p className="text-[8px] md:text-[9px] text-[#8A94A6] font-black uppercase tracking-[0.3em] opacity-60">
-                Intelligence Asset Protocol V.2.0.4
+                Container Initialization Protocol
               </p>
             </div>
 
             <div className="space-y-4">
-              {/* 🚀 NEW: Target Level Dropdown */}
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8A94A6] ml-2">
                   Target Level
@@ -471,7 +467,6 @@ export default function AdminCourses() {
                 </select>
               </div>
 
-              {/* 🚀 NEW: Target Deficit Dropdown */}
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8A94A6] ml-2">
                   Target Deficit
@@ -535,91 +530,45 @@ export default function AdminCourses() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <p className="text-[10px] font-black uppercase tracking-widest text-[#8A94A6] text-center">
-                  Visual Cover
-                </p>
-                <div className="relative h-24 sm:h-32 border-2 border-dashed border-white/5 rounded-[16px] bg-black/40 overflow-hidden group transition-all hover:border-amber-500/30">
-                  {thumbPreview ? (
-                    <>
-                      <img
-                        src={thumbPreview}
-                        alt="Preview"
-                        className="w-full h-full object-cover opacity-70"
-                      />
-                      <button
-                        onClick={() => {
-                          setThumbnailFile(null);
-                          setThumbPreview("");
-                        }}
-                        className="absolute top-2 right-2 bg-red-500/20 hover:bg-red-500 text-red-500 hover:text-white p-1 rounded-md text-[8px] font-black uppercase transition-all backdrop-blur-md"
-                      >
-                        Reset
-                      </button>
-                    </>
-                  ) : (
-                    <label className="flex flex-col items-center justify-center w-full h-full cursor-pointer">
-                      <div className="h-6 w-6 sm:h-8 sm:w-8 rounded-full bg-white/5 flex items-center justify-center mb-2 group-hover:bg-amber-500/20 transition-all">
-                        <span className="text-amber-500 text-sm sm:text-lg">
-                          +
-                        </span>
-                      </div>
-                      <span className="text-[8px] font-black uppercase tracking-widest text-white/20">
-                        Upload Image
-                      </span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleThumbChange}
-                        className="hidden"
-                      />
-                    </label>
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <p className="text-[10px] font-black uppercase tracking-widest text-[#8A94A6] text-center">
-                  Primary Stream
-                </p>
-                <div className="relative h-24 sm:h-32 border-2 border-dashed border-white/5 rounded-[16px] bg-black/40 overflow-hidden group transition-all hover:border-amber-500/30">
-                  {videoFile ? (
-                    <div className="flex flex-col items-center justify-center h-full p-2 sm:p-4 text-center">
-                      <div className="h-6 w-6 sm:h-8 sm:w-8 rounded-full bg-green-500/20 flex items-center justify-center mb-2 shadow-[0_0_15px_rgba(34,197,94,0.2)]">
-                        <span className="text-green-500 text-xs">✓</span>
-                      </div>
-                      <p className="text-[8px] text-amber-500 font-black uppercase truncate w-full">
-                        {videoFile.name}
-                      </p>
-                      <button
-                        onClick={() => setVideoFile(null)}
-                        className="mt-2 text-[8px] font-black text-red-500/40 hover:text-red-500 uppercase tracking-widest transition-colors"
-                      >
-                        Remove Asset
-                      </button>
+            {/* 🚀 THE FIX: Single Full-Width Thumbnail Upload Block */}
+            <div className="space-y-2">
+              <p className="text-[10px] font-black uppercase tracking-widest text-[#8A94A6] text-center">
+                Visual Cover
+              </p>
+              <div className="relative h-32 md:h-40 w-full border-2 border-dashed border-white/5 rounded-[16px] bg-black/40 overflow-hidden group transition-all hover:border-amber-500/30">
+                {thumbPreview ? (
+                  <>
+                    <img
+                      src={thumbPreview}
+                      alt="Preview"
+                      className="w-full h-full object-cover opacity-70"
+                    />
+                    <button
+                      onClick={() => {
+                        setThumbnailFile(null);
+                        setThumbPreview("");
+                      }}
+                      className="absolute top-2 right-2 bg-red-500/20 hover:bg-red-500 text-red-500 hover:text-white px-3 py-1.5 rounded-md text-[8px] font-black uppercase transition-all backdrop-blur-md"
+                    >
+                      Reset Cover
+                    </button>
+                  </>
+                ) : (
+                  <label className="flex flex-col items-center justify-center w-full h-full cursor-pointer">
+                    <div className="h-10 w-10 rounded-full bg-white/5 flex items-center justify-center mb-3 group-hover:bg-amber-500/20 transition-all">
+                      <span className="text-amber-500 text-xl">+</span>
                     </div>
-                  ) : (
-                    <label className="flex flex-col items-center justify-center w-full h-full cursor-pointer">
-                      <div className="h-6 w-6 sm:h-8 sm:w-8 rounded-full bg-white/5 flex items-center justify-center mb-2 group-hover:bg-amber-500/20 transition-all">
-                        <span className="text-amber-500 text-sm sm:text-lg">
-                          +
-                        </span>
-                      </div>
-                      <span className="text-[8px] font-black uppercase tracking-widest text-white/20">
-                        Select MP4/MOV
-                      </span>
-                      <input
-                        type="file"
-                        accept="video/*"
-                        onChange={(e) =>
-                          setVideoFile(e.target.files?.[0] || null)
-                        }
-                        className="hidden"
-                      />
-                    </label>
-                  )}
-                </div>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-white/40">
+                      Upload Display Thumbnail
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleThumbChange}
+                      className="hidden"
+                    />
+                  </label>
+                )}
               </div>
             </div>
 
@@ -628,7 +577,7 @@ export default function AdminCourses() {
                 <div className="flex justify-between text-[9px] text-amber-500 font-black tracking-[0.2em] uppercase">
                   <span className="flex items-center gap-2">
                     <div className="h-1 w-1 rounded-full bg-amber-500 animate-ping" />
-                    Active Link: R2 Node
+                    Transmitting to R2 Node
                   </span>
                   <span>{uploadProgress}%</span>
                 </div>
@@ -654,11 +603,9 @@ export default function AdminCourses() {
               </button>
               <button
                 onClick={handleSubmit}
+                // 🚀 THE FIX: Only thumbnail and title are required now!
                 disabled={
-                  isUploading ||
-                  !formData.customTitle ||
-                  !videoFile ||
-                  !thumbnailFile
+                  isUploading || !formData.customTitle || !thumbnailFile
                 }
                 className="w-full sm:flex-[2] bg-amber-500 py-4 rounded-[12px] text-[10px] font-black uppercase tracking-[0.2em] text-black disabled:opacity-20 hover:bg-amber-400 transition-all shadow-[0_10px_20px_rgba(245,158,11,0.2)] active:scale-95"
               >
