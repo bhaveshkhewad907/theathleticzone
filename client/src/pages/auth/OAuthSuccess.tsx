@@ -14,14 +14,14 @@ export default function OAuthSuccess() {
     }
 
     try {
-      // ✅ Store access token only
+      // Store access token
       localStorage.setItem("accessToken", token);
 
-      // ✅ Clean URL (remove token from address bar)
+      // Clean URL (remove token from address bar)
       window.history.replaceState({}, "", "/");
 
-      // ✅ Let AuthContext handle user + redirect
-      navigate("/", { replace: true });
+      // 🚀 THE FIX: Let AuthContext handle user, but explicitly push to athlete dashboard
+      navigate("/athlete", { replace: true });
     } catch {
       navigate("/login", { replace: true });
     }
