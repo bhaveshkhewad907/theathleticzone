@@ -65,9 +65,11 @@ export default function AssessmentWizard() {
 
       await api.post("/assessments", payload);
       toast.success("Assessment Processed! Course Assigned.");
-      window.location.href = "/athlete";
+
+      // 🚀 THE FIX: Since we are ALREADY on the dashboard, we just force a refresh
+      // to pull the new AuthContext and Course data seamlessly.
+      window.location.reload();
     } catch (err) {
-      // 🚀 THE FIX: Safely assert the error type inside the block instead of using 'any'
       const error = err as { response?: { data?: { message?: string } } };
       toast.error(error.response?.data?.message || "Failed to submit.");
       setIsSubmitting(false);

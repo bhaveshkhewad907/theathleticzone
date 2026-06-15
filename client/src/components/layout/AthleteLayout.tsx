@@ -2,18 +2,19 @@ import { useState, useContext } from "react";
 import { Menu, LogOut, LayoutDashboard, User, Shield } from "lucide-react";
 import { motion } from "framer-motion";
 import { Outlet, NavLink, useLocation } from "react-router-dom";
-import AuthContext, { type AuthUser } from "../../context/AuthContext";
+import AuthContext from "../../context/AuthContext";
 import AuraBackground from "../../components/layout/AuraBackground";
-import Footer from "./Footer";
+import Footer from "../../components/layout/Footer";
 
 export default function AthleteLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const auth = useContext(AuthContext);
   const location = useLocation();
 
-  const userStatus = (auth?.user as AuthUser)?.platformState?.status;
-
   if (!auth) return null;
+
+  // 🚀 THE FIX: ALL routing logic/redirects have been deleted.
+  // The layout simply acts as a visual wrapper now.
 
   const navItems = [
     { label: "Performance Hub", path: "/athlete", icon: LayoutDashboard },
@@ -41,8 +42,7 @@ export default function AthleteLayout() {
       )}
 
       <aside
-        className={`fixed z-50 inset-y-0 left-0 w-72 bg-black/20 backdrop-blur-2xl border-r border-white/5 shadow-[10px_0_30px_rgba(0,0,0,0.5)] transform transition-all duration-500 ease-in-out
-        ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0 md:static md:block`}
+        className={`fixed z-50 inset-y-0 left-0 w-72 bg-black/20 backdrop-blur-2xl border-r border-white/5 shadow-[10px_0_30px_rgba(0,0,0,0.5)] transform transition-all duration-500 ease-in-out ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0 md:static md:block`}
       >
         <div className="p-8 mb-4">
           <div className="flex items-center gap-3">
@@ -52,9 +52,6 @@ export default function AthleteLayout() {
             <div>
               <h2 className="text-sm font-black tracking-tighter uppercase italic leading-none">
                 The Athletic Zone
-              </h2>
-              <h2 className="text-[10px] font-bold tracking-[0.3em] uppercase text-amber-500/80 mt-1">
-                • Athlete
               </h2>
             </div>
           </div>
@@ -71,11 +68,7 @@ export default function AthleteLayout() {
               end={item.path === "/athlete"}
               onClick={() => setSidebarOpen(false)}
               className={({ isActive }) =>
-                `group relative px-4 py-3 rounded-xl transition-all duration-300 flex items-center gap-3 overflow-hidden ${
-                  isActive
-                    ? "bg-white/[0.05] border border-white/10 text-white"
-                    : "hover:bg-white/[0.03] border border-transparent text-white/40"
-                }`
+                `group relative px-4 py-3 rounded-xl transition-all duration-300 flex items-center gap-3 overflow-hidden ${isActive ? "bg-white/[0.05] border border-white/10 text-white" : "hover:bg-white/[0.03] border border-transparent text-white/40"}`
               }
             >
               {({ isActive }) => (
@@ -98,13 +91,11 @@ export default function AthleteLayout() {
               )}
             </NavLink>
           ))}
-
           <button
             onClick={auth.logout}
             className="flex items-center gap-3 px-4 py-3 mt-12 text-red-500/40 hover:text-red-500 hover:bg-red-500/5 rounded-xl transition-all w-full text-[11px] font-black uppercase tracking-widest active:scale-95"
           >
-            <LogOut size={18} />
-            Logout
+            <LogOut size={18} /> Logout
           </button>
         </nav>
       </aside>
@@ -114,16 +105,10 @@ export default function AthleteLayout() {
           <div className="hidden md:flex items-center justify-between px-8 py-6">
             <div className="flex items-center gap-6">
               <div>
-                <div className="flex items-center gap-3">
-                  <div className="relative flex h-2.5 w-2.5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.8)]"></span>
-                  </div>
-                  <h1 className="text-xl font-black tracking-tighter uppercase italic leading-none drop-shadow-lg">
-                    System <span className="text-amber-500">Active</span>
-                  </h1>
-                </div>
-                <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest mt-1 ml-5">
+                <h1 className="text-xl font-black tracking-tighter uppercase italic leading-none drop-shadow-lg">
+                  System <span className="text-amber-500">Active</span>
+                </h1>
+                <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest mt-1">
                   Authorized Athlete: {auth.user?.name || "Unverified"}
                 </p>
               </div>
@@ -131,10 +116,8 @@ export default function AthleteLayout() {
 
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 px-4 py-1.5 text-[10px] font-black rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20 tracking-widest uppercase shadow-[0_0_15px_rgba(245,158,11,0.1)]">
-                <Shield size={12} />
-                CLEARANCE: {auth.user?.role || "PENDING"}
+                <Shield size={12} /> CLEARANCE: {auth.user?.role || "PENDING"}
               </div>
-
               <div className="w-10 h-10 rounded-xl bg-[#0B0F14] border border-amber-500/20 overflow-hidden flex items-center justify-center text-sm font-black text-amber-500 shadow-xl">
                 {userProfileImage ? (
                   <img
@@ -157,13 +140,9 @@ export default function AthleteLayout() {
               >
                 <Menu size={24} />
               </button>
-
-              <div className="flex items-center gap-2">
-                <h1 className="text-lg font-black tracking-tighter uppercase italic leading-none drop-shadow-lg">
-                  System <span className="text-amber-500">Active</span>
-                </h1>
-              </div>
-
+              <h1 className="text-lg font-black tracking-tighter uppercase italic leading-none drop-shadow-lg">
+                System <span className="text-amber-500">Active</span>
+              </h1>
               <div className="w-9 h-9 rounded-xl bg-[#0B0F14] border border-amber-500/20 overflow-hidden flex items-center justify-center text-sm font-black text-amber-500 shadow-xl">
                 {userProfileImage ? (
                   <img
@@ -180,33 +159,15 @@ export default function AthleteLayout() {
         </header>
 
         <main className="flex-1 overflow-y-auto relative p-4 md:p-12 pb-24 scroll-smooth">
-          {userStatus === "UNDER_REVIEW" ? (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="max-w-2xl mx-auto mt-20 flex flex-col items-center text-center p-12 bg-white/5 border border-amber-500/20 rounded-3xl backdrop-blur-md"
-            >
-              <div className="w-16 h-16 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mb-6 shadow-[0_0_20px_rgba(245,158,11,0.5)]" />
-              <h2 className="text-3xl font-black uppercase italic tracking-tighter mb-4 text-white">
-                Tape Under Review
-              </h2>
-              <p className="text-white/60">
-                Your assessment data and sprint tape have been submitted
-                successfully. Our Head Coach is currently analyzing your
-                mechanics to assign your custom protocol.
-              </p>
-            </motion.div>
-          ) : (
-            <motion.div
-              key={location.pathname}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
-              className="max-w-7xl mx-auto"
-            >
-              <Outlet />
-            </motion.div>
-          )}
+          <motion.div
+            key={location.pathname}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="max-w-7xl mx-auto"
+          >
+            <Outlet />
+          </motion.div>
           <Footer />
         </main>
       </div>
