@@ -1,7 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import api from "../../services/api";
 import toast from "react-hot-toast";
 import { Zap, ShieldCheck, Tag } from "lucide-react";
+// 🚀 NEW: Import your existing Razorpay utility
+import { loadRazorpayScript } from "../../utils/razorpay";
 
 export default function ProgramPaywall({
   onSuccess,
@@ -18,12 +20,6 @@ export default function ProgramPaywall({
     SPRINT50: 50,
     ELITE10: 10,
   };
-
-  useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    document.body.appendChild(script);
-  }, []);
 
   const handleApplyCoupon = () => {
     const code = coupon.toUpperCase();
@@ -42,6 +38,15 @@ export default function ProgramPaywall({
   const handleCheckout = async () => {
     setIsProcessing(true);
     try {
+      // 1. Ensure Razorpay SDK is loaded safely using your utility
+      const isLoaded = await loadRazorpayScript();
+      if (!isLoaded) {
+        toast.error("Network Error: Failed to load Razorpay SDK.");
+        setIsProcessing(false);
+        return;
+      }
+
+      // 2. Get Order ID from Backend
       const { data } = await api.post("/entry/create-order", {
         couponCode: activeCoupon,
       });
@@ -59,6 +64,7 @@ export default function ProgramPaywall({
           razorpay_signature: string;
         }) {
           try {
+            // 3. Verify Payment on Backend
             await api.post("/entry/verify", {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
@@ -67,8 +73,12 @@ export default function ProgramPaywall({
             });
             toast.success("Payment Successful! Assessment Unlocked.");
             onSuccess();
-          } catch {
-            toast.error("Payment verification failed. Contact support.");
+          } catch (err) {
+            const error = err as { response?: { data?: { message?: string } } };
+            toast.error(
+              error?.response?.data?.message ||
+                "Payment verification failed. Contact support.",
+            );
           }
         },
         theme: { color: "#F59E0B" },
@@ -81,8 +91,15 @@ export default function ProgramPaywall({
       ).Razorpay;
       const rzp = new RazorpayConstructor(options);
       rzp.open();
-    } catch {
-      toast.error("Failed to initialize checkout gateway.");
+    } catch (err) {
+      // 🚀 THE DIAGNOSTIC FIX: Safely type the error without using 'any'
+      const error = err as { response?: { data?: { message?: string } } };
+
+      console.error("Checkout Gateway Error:", error?.response?.data || err);
+      toast.error(
+        error?.response?.data?.message ||
+          "Internal Error: Check browser console.",
+      );
     } finally {
       setIsProcessing(false);
     }
