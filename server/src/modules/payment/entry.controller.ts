@@ -33,9 +33,9 @@ export const createEntryOrder = async (req: any, res: Response) => {
     const options = {
       amount: Math.round(price * 100), // Razorpay expects paise
       currency: "INR",
-      receipt: `entry_${req.user.id}_${Date.now()}`,
+      // 🚀 THE FIX: Shortened the receipt ID to stay well under Razorpay's 40-character limit
+      receipt: `entry_${Date.now()}`,
     };
-
     const order = await instance.orders.create(options);
     res.status(200).json({ success: true, order, price, appliedCoupon });
   } catch (error) {
