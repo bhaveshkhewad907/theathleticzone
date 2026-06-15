@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import AuthContext from "../../context/AuthContext";
 
 interface ProtectedRouteProps {
-  allowedRoles?: ("ADMIN" | "ATHLETE")[];
+  allowedRoles?: ("ADMIN" | "COACH" | "ATHLETE")[];
   children: ReactNode;
 }
 
@@ -23,14 +23,13 @@ const ProtectedRoute = ({ allowedRoles, children }: ProtectedRouteProps) => {
   // 2. Strict Role Check
   if (
     allowedRoles &&
-    !allowedRoles.includes(user.role as "ADMIN" | "ATHLETE")
+    !allowedRoles.includes(user.role as "ADMIN" | "COACH" | "ATHLETE")
   ) {
     return <Navigate to="/login" replace />;
   }
 
-  // 🚀 THE FIX: We completely removed the State Machine Lockout from here!
-  // The router should JUST check permissions. The layout handles the popups.
-
+  // 🚀 THE FIX: The State Machine Lockout has been completely removed.
+  // The system will now let the athlete proceed to whatever route they requested!
   return <>{children}</>;
 };
 

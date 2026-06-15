@@ -1,7 +1,7 @@
-import { useState, useContext, useEffect } from "react";
+import { useState, useContext } from "react";
 import { Menu, LogOut, LayoutDashboard, User, Shield } from "lucide-react";
 import { motion } from "framer-motion";
-import { Outlet, NavLink, useLocation, useNavigate } from "react-router-dom";
+import { Outlet, NavLink, useLocation } from "react-router-dom";
 import AuthContext, { type AuthUser } from "../../context/AuthContext";
 import AuraBackground from "../../components/layout/AuraBackground";
 import Footer from "./Footer";
@@ -10,28 +10,13 @@ export default function AthleteLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const auth = useContext(AuthContext);
   const location = useLocation();
-  const navigate = useNavigate();
-
-  const userStatus = (auth?.user as AuthUser)?.platformState?.status;
-  const personalInfo = (
-    auth?.user as AuthUser & {
-      personalInfo?: { age?: number; height?: number; weight?: number };
-    }
-  )?.personalInfo;
-  const hasProfileData =
-    personalInfo?.age || personalInfo?.height || personalInfo?.weight;
-
-  useEffect(() => {
-    if (userStatus === "UNDER_REVIEW" || userStatus === "ACTIVE_TRAINING")
-      return;
-    if (location.pathname === "/athlete/profile") return;
-    if (!hasProfileData) {
-      navigate("/athlete/profile?onboarding=true", { replace: true });
-      return;
-    }
-  }, [userStatus, hasProfileData, location.pathname, navigate]);
 
   if (!auth) return null;
+
+  const userStatus = (auth?.user as AuthUser)?.platformState?.status;
+
+  // 🚀 THE FIX: Removed the useEffect that was forcing redirects.
+  // The Layout now simply renders whatever the router tells it to!
 
   const navItems = [
     { label: "Dashboard", path: "/athlete", icon: LayoutDashboard },
