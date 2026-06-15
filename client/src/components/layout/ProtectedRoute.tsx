@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import AuthContext from "../../context/AuthContext";
 
 interface ProtectedRouteProps {
-  allowedRoles?: ("ADMIN" | "COACH" | "ATHLETE")[];
+  allowedRoles?: ("ADMIN" | "ATHLETE")[];
   children: ReactNode;
 }
 
@@ -23,13 +23,14 @@ const ProtectedRoute = ({ allowedRoles, children }: ProtectedRouteProps) => {
   // 2. Strict Role Check
   if (
     allowedRoles &&
-    !allowedRoles.includes(user.role as "ADMIN" | "COACH" | "ATHLETE")
+    !allowedRoles.includes(user.role as "ADMIN" | "ATHLETE")
   ) {
     return <Navigate to="/login" replace />;
   }
 
-  // 🚀 THE FIX: The State Machine Lockout has been completely removed.
-  // The system will now let the athlete proceed to whatever route they requested!
+  // 🚀 ALL FORCED REDIRECTS HAVE BEEN DELETED FROM HERE.
+  // The user goes exactly where the router tells them to go.
+
   return <>{children}</>;
 };
 

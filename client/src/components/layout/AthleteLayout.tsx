@@ -11,16 +11,13 @@ export default function AthleteLayout() {
   const auth = useContext(AuthContext);
   const location = useLocation();
 
-  if (!auth) return null;
-
   const userStatus = (auth?.user as AuthUser)?.platformState?.status;
 
-  // 🚀 THE FIX: Removed the useEffect that was forcing redirects.
-  // The Layout now simply renders whatever the router tells it to!
+  if (!auth) return null;
 
   const navItems = [
-    { label: "Dashboard", path: "/athlete", icon: LayoutDashboard },
-    { label: "My Profile", path: "/athlete/profile", icon: User },
+    { label: "Performance Hub", path: "/athlete", icon: LayoutDashboard },
+    { label: "Personal Profile", path: "/athlete/profile", icon: User },
   ];
 
   const userProfileImage = (auth.user as unknown as { profileImage?: string })
@@ -44,7 +41,8 @@ export default function AthleteLayout() {
       )}
 
       <aside
-        className={`fixed z-50 inset-y-0 left-0 w-72 bg-black/20 backdrop-blur-2xl border-r border-white/5 shadow-[10px_0_30px_rgba(0,0,0,0.5)] transform transition-all duration-500 ease-in-out ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0 md:static md:block`}
+        className={`fixed z-50 inset-y-0 left-0 w-72 bg-black/20 backdrop-blur-2xl border-r border-white/5 shadow-[10px_0_30px_rgba(0,0,0,0.5)] transform transition-all duration-500 ease-in-out
+        ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0 md:static md:block`}
       >
         <div className="p-8 mb-4">
           <div className="flex items-center gap-3">
@@ -55,13 +53,16 @@ export default function AthleteLayout() {
               <h2 className="text-sm font-black tracking-tighter uppercase italic leading-none">
                 The Athletic Zone
               </h2>
+              <h2 className="text-[10px] font-bold tracking-[0.3em] uppercase text-amber-500/80 mt-1">
+                • Athlete
+              </h2>
             </div>
           </div>
         </div>
 
         <nav className="p-6 space-y-2">
           <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/20 mb-6 ml-3">
-            Main Menu
+            Training Sectors
           </p>
           {navItems.map((item) => (
             <NavLink
@@ -70,7 +71,11 @@ export default function AthleteLayout() {
               end={item.path === "/athlete"}
               onClick={() => setSidebarOpen(false)}
               className={({ isActive }) =>
-                `group relative px-4 py-3 rounded-xl transition-all duration-300 flex items-center gap-3 overflow-hidden ${isActive ? "bg-white/[0.05] border border-white/10 text-white" : "hover:bg-white/[0.03] border border-transparent text-white/40"}`
+                `group relative px-4 py-3 rounded-xl transition-all duration-300 flex items-center gap-3 overflow-hidden ${
+                  isActive
+                    ? "bg-white/[0.05] border border-white/10 text-white"
+                    : "hover:bg-white/[0.03] border border-transparent text-white/40"
+                }`
               }
             >
               {({ isActive }) => (
@@ -93,11 +98,13 @@ export default function AthleteLayout() {
               )}
             </NavLink>
           ))}
+
           <button
             onClick={auth.logout}
             className="flex items-center gap-3 px-4 py-3 mt-12 text-red-500/40 hover:text-red-500 hover:bg-red-500/5 rounded-xl transition-all w-full text-[11px] font-black uppercase tracking-widest active:scale-95"
           >
-            <LogOut size={18} /> Logout
+            <LogOut size={18} />
+            Logout
           </button>
         </nav>
       </aside>
@@ -107,19 +114,27 @@ export default function AthleteLayout() {
           <div className="hidden md:flex items-center justify-between px-8 py-6">
             <div className="flex items-center gap-6">
               <div>
-                <h1 className="text-xl font-black tracking-tighter uppercase italic leading-none drop-shadow-lg">
-                  Athlete <span className="text-amber-500">Portal</span>
-                </h1>
-                <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest mt-1">
-                  Welcome back, {auth.user?.name || "Athlete"}
+                <div className="flex items-center gap-3">
+                  <div className="relative flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.8)]"></span>
+                  </div>
+                  <h1 className="text-xl font-black tracking-tighter uppercase italic leading-none drop-shadow-lg">
+                    System <span className="text-amber-500">Active</span>
+                  </h1>
+                </div>
+                <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest mt-1 ml-5">
+                  Authorized Athlete: {auth.user?.name || "Unverified"}
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 px-4 py-1.5 text-[10px] font-black rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20 tracking-widest uppercase shadow-[0_0_15px_rgba(245,158,11,0.1)]">
-                <Shield size={12} /> {auth.user?.role || "ATHLETE"}
+                <Shield size={12} />
+                CLEARANCE: {auth.user?.role || "PENDING"}
               </div>
+
               <div className="w-10 h-10 rounded-xl bg-[#0B0F14] border border-amber-500/20 overflow-hidden flex items-center justify-center text-sm font-black text-amber-500 shadow-xl">
                 {userProfileImage ? (
                   <img
@@ -142,9 +157,13 @@ export default function AthleteLayout() {
               >
                 <Menu size={24} />
               </button>
-              <h1 className="text-lg font-black tracking-tighter uppercase italic leading-none drop-shadow-lg">
-                Athlete <span className="text-amber-500">Portal</span>
-              </h1>
+
+              <div className="flex items-center gap-2">
+                <h1 className="text-lg font-black tracking-tighter uppercase italic leading-none drop-shadow-lg">
+                  System <span className="text-amber-500">Active</span>
+                </h1>
+              </div>
+
               <div className="w-9 h-9 rounded-xl bg-[#0B0F14] border border-amber-500/20 overflow-hidden flex items-center justify-center text-sm font-black text-amber-500 shadow-xl">
                 {userProfileImage ? (
                   <img
@@ -169,16 +188,12 @@ export default function AthleteLayout() {
             >
               <div className="w-16 h-16 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mb-6 shadow-[0_0_20px_rgba(245,158,11,0.5)]" />
               <h2 className="text-3xl font-black uppercase italic tracking-tighter mb-4 text-white">
-                Assessment Processing
+                Tape Under Review
               </h2>
               <p className="text-white/60">
-                Your physical assessment data has been submitted successfully.
-                The system is calculating your metrics and assigning your custom
-                training program.
-                <br />
-                <br />
-                Your dashboard will automatically unlock when your program is
-                ready.
+                Your assessment data and sprint tape have been submitted
+                successfully. Our Head Coach is currently analyzing your
+                mechanics to assign your custom protocol.
               </p>
             </motion.div>
           ) : (
