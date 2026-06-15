@@ -1,19 +1,54 @@
-import { useState } from "react";
-import api from "../../services/api"; // Your Axios instance
+import { useState, useEffect } from "react";
+import api from "../../services/api";
 import toast from "react-hot-toast";
 
+// Import the paywall from the exact same directory smoothly
+import ProgramPaywall from "../../pages/assessment/ProgramPaywall";
+
 // Import our Step Components
-import PhysicalStep from "../../pages/steps/PhysicalStep"; // 🚀 NEW STEP
+import PhysicalStep from "../../pages/steps/PhysicalStep";
 import MobilityStep from "../../pages/steps/MobilityStep";
 import PowerStep from "../../pages/steps/PowerStep";
 import SprintStep from "../../pages/steps/SprintStep";
 import StrengthStep from "../../pages/steps/StrengthStep";
 
+// Define explicit types to avoid any implicit 'any' compiler flags
+interface ApiResponse {
+  data?: {
+    data?: {
+      platformState?: {
+        hasPaidEntryFee?: boolean;
+      };
+    };
+  };
+}
+
 export default function AssessmentWizard() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 🚀 UPDATED: The Master State Object now matches the new Schema
+  // Self-contained state machine values to guarantee zero compile errors
+  const [hasPaid, setHasPaid] = useState<boolean | null>(null);
+  const [loadingPaymentCheck, setLoadingPaymentCheck] = useState(true);
+
+  // Fetch status directly from backend to avoid untyped AuthContext crashes
+  useEffect(() => {
+    api
+      .get("/auth/me")
+      .then((res: ApiResponse) => {
+        const paidStatus =
+          res.data?.data?.platformState?.hasPaidEntryFee || false;
+        setHasPaid(paidStatus);
+      })
+      .catch(() => {
+        setHasPaid(false);
+      })
+      .finally(() => {
+        setLoadingPaymentCheck(false);
+      });
+  }, []);
+
+  // Master State Object
   const [formData, setFormData] = useState({
     physical: { age: "", heightCm: "", bodyweightKg: "", trainingAgeYears: "" },
     mobility: { kneeToWallCm: "", deepSquatHold: "" },
@@ -40,7 +75,6 @@ export default function AssessmentWizard() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      // 🚀 FORMAT: Restructure the payload to match the backend { physical, metrics } grouping
       const payload = {
         physical: {
           age: Number(formData.physical.age),
@@ -70,7 +104,6 @@ export default function AssessmentWizard() {
       await api.post("/assessments", payload);
 
       toast.success("Assessment Processed Successfully!");
-      // Force a clean reload so AuthContext grabs the new ACTIVE_TRAINING status
       window.location.href = "/athlete";
     } catch (err) {
       const error = err as {
@@ -86,10 +119,25 @@ export default function AssessmentWizard() {
     }
   };
 
+  // 1. Initial micro-spinner while determining verification status
+  if (loadingPaymentCheck) {
+    return (
+      <div className="min-h-screen bg-[#0B0F14] flex items-center justify-center">
+        <div className="h-8 w-8 rounded-full border-2 border-amber-500 border-t-transparent animate-spin" />
+      </div>
+    );
+  }
+
+  // 2. THE INTERCEPTOR: If backend state proves they haven't paid, mount the Paywall Gate
+  if (!hasPaid) {
+    return <ProgramPaywall onSuccess={() => setHasPaid(true)} />;
+  }
+
+  // 3. Otherwise, smoothly step down to open the dynamic evaluation phases
   return (
     <div className="min-h-screen bg-[#0B0F14] text-white flex flex-col pt-12 md:pt-24 px-4 pb-24">
       <div className="max-w-xl mx-auto w-full">
-        {/* Progress Bar (Now out of 5 steps) */}
+        {/* Progress Bar */}
         <div className="mb-8">
           <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-amber-500 mb-3">
             <span>Phase {currentStep} of 5</span>

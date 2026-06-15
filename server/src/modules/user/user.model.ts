@@ -30,7 +30,10 @@ export interface IUser extends Document {
   platformState: {
     status: "NEEDS_ASSESSMENT" | "ACTIVE_TRAINING";
     activeCourseId?: mongoose.Types.ObjectId;
+    hasPaidEntryFee: boolean;
+    usedCoupon: string | null;
   };
+
   assessmentHistory: mongoose.Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
@@ -72,6 +75,8 @@ const userSchema = new Schema<IUser>(
         default: "NEEDS_ASSESSMENT",
       },
       activeCourseId: { type: mongoose.Schema.Types.ObjectId, ref: "Course" },
+      hasPaidEntryFee: { type: Boolean, default: false },
+      usedCoupon: { type: String, default: null },
     },
     assessmentHistory: [
       { type: mongoose.Schema.Types.ObjectId, ref: "Assessment" },

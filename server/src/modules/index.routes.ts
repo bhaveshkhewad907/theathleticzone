@@ -13,6 +13,7 @@ import reviewRoutes from "./review/review.routes";
 import { razorpayWebhook } from "./webhooks/webhook.controller";
 import assessmentRoutes from "./assessment/assessment.routes";
 import courseChaptersRoutes from "./courseChapters/courseChapters.routes";
+import entryRoutes from "./payment/entry.routes";
 
 const router = Router();
 
@@ -29,5 +30,6 @@ router.use("/reviews", reviewRoutes);
 router.post("/webhooks/razorpay", razorpayWebhook);
 router.use("/assessments", assessmentRoutes);
 router.use("/chapters", courseChaptersRoutes);
+router.use("/entry", entryRoutes);
 
 export default router;

@@ -1,17 +1,6 @@
 import { useState, useContext } from "react";
 import { Outlet, NavLink, useLocation } from "react-router-dom";
-import {
-  Menu,
-  X,
-  LogOut,
-  LayoutDashboard,
-  Users,
-  CalendarDays,
-  Database,
-  ShieldCheck,
-  ScrollText,
-  Activity,
-} from "lucide-react";
+import { Menu, X, LogOut, LayoutDashboard, Database } from "lucide-react";
 import AuthContext from "../../context/AuthContext";
 import { motion } from "framer-motion";
 
@@ -31,7 +20,7 @@ export default function AdminLayout() {
           backgroundImage: `url('https://media.theathleticzone.in/auth-bg-images/admin-bg.jpg')`,
         }}
       >
-        {/* Deep Gradient Overlay (Darkens the image so text is readable) */}
+        {/* Deep Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-[#0F1724]/50 via-[#0B0F14]/20 to-[#0F1724]/50 mix-blend-multiply" />
 
         {/* Ambient Radial Spotlights */}
@@ -87,61 +76,23 @@ export default function AdminLayout() {
           </div>
         </div>
 
-        {/* Navigation Section */}
+        {/* 🚀 THE FIX: Streamlined Navigation Section */}
         <div className="flex-1 space-y-8 overflow-y-auto scrollbar-hide">
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/30 mb-6 ml-3">
-              Operations Hub
+              Command Center
             </p>
             <nav className="flex flex-col gap-2">
               <MenuLink
                 to="/admin"
-                label="Performance Dashboard"
+                label="Dashboard Metrics"
                 icon={LayoutDashboard}
                 setSidebarOpen={setSidebarOpen}
               />
               <MenuLink
-                to="/admin/groups"
-                label="Grouping Engine"
-                icon={Users}
-                setSidebarOpen={setSidebarOpen}
-              />
-              <MenuLink
-                to="/admin/sessions"
-                label="Operations Ledger"
-                icon={CalendarDays}
-                setSidebarOpen={setSidebarOpen}
-              />
-              <MenuLink
-                to="/admin/manage-sports"
-                label="Sector Registry"
-                icon={Activity}
-                setSidebarOpen={setSidebarOpen}
-              />
-            </nav>
-          </div>
-
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/30 mb-6 ml-3">
-              Growth & Talent
-            </p>
-            <nav className="flex flex-col gap-2">
-              <MenuLink
                 to="/admin/courses"
-                label="Content Vault"
+                label="Protocol Vault"
                 icon={Database}
-                setSidebarOpen={setSidebarOpen}
-              />
-              <MenuLink
-                to="/admin/invite-coach"
-                label="Access Control"
-                icon={ShieldCheck}
-                setSidebarOpen={setSidebarOpen}
-              />
-              <MenuLink
-                to="/admin/invitations"
-                label="Invite Registry"
-                icon={ScrollText}
                 setSidebarOpen={setSidebarOpen}
               />
             </nav>
@@ -152,7 +103,7 @@ export default function AdminLayout() {
             className="flex items-center gap-3 px-4 py-3 mt-8 text-red-500/50 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all w-full text-[11px] font-black uppercase tracking-widest border border-transparent hover:border-red-500/20 active:scale-95"
           >
             <LogOut size={18} />
-            Terminate Session
+            Secure Logout
           </button>
         </div>
 
@@ -166,7 +117,7 @@ export default function AdminLayout() {
               <div className="h-1.5 w-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)] animate-pulse" />
             </div>
             <p className="text-[10px] font-bold text-white/80 tracking-widest">
-              V.2.0.4-RELEASE
+              V.3.0.0-INTELLIGENCE
             </p>
           </div>
         </div>
