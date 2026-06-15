@@ -13,23 +13,26 @@ export default function AthleteLayout() {
   const navigate = useNavigate();
 
   const userStatus = (auth?.user as AuthUser)?.platformState?.status;
+  const personalInfo = (
+    auth?.user as AuthUser & {
+      personalInfo?: { age?: number; height?: number; weight?: number };
+    }
+  )?.personalInfo;
+  const hasProfileData =
+    personalInfo?.age || personalInfo?.height || personalInfo?.weight;
 
   useEffect(() => {
-    // 1. If they are already under review or actively training, let them stay on the dashboard.
     if (userStatus === "UNDER_REVIEW" || userStatus === "ACTIVE_TRAINING")
       return;
-
-    // 2. If they need an assessment, send them STRAIGHT to the Paywall/Assessment! No profile step!
-    if (!userStatus || userStatus === "NEEDS_ASSESSMENT") {
-      if (location.pathname !== "/assessment") {
-        navigate("/assessment", { replace: true });
-      }
+    if (location.pathname === "/athlete/profile") return;
+    if (!hasProfileData) {
+      navigate("/athlete/profile?onboarding=true", { replace: true });
+      return;
     }
-  }, [userStatus, location.pathname, navigate]);
+  }, [userStatus, hasProfileData, location.pathname, navigate]);
 
   if (!auth) return null;
 
-  // 🚀 SUPER SIMPLE NAVIGATION: Only the absolute essentials
   const navItems = [
     { label: "Dashboard", path: "/athlete", icon: LayoutDashboard },
     { label: "My Profile", path: "/athlete/profile", icon: User },

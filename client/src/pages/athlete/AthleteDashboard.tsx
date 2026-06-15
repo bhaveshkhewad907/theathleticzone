@@ -14,8 +14,8 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
-// 🚀 IMPORTS: The Protocol Engine
 import StructuredCoursePlayer from "./StructuredCoursePlayer";
+import ProgramPaywall from "../assessment/ProgramPaywall";
 
 interface AthleteProfileData {
   sports?: (string | { _id: string; name: string })[];
@@ -32,8 +32,18 @@ interface AssignedCourse {
   thumbnailUrl: string;
 }
 
+interface UserStateData {
+  platformState?: {
+    status?: string;
+    hasPaidEntryFee?: boolean;
+  };
+}
+
 export default function AthleteDashboard() {
   const auth = useContext(AuthContext);
+  const userStatus = (auth?.user as UserStateData)?.platformState?.status;
+  const hasPaid = (auth?.user as UserStateData)?.platformState?.hasPaidEntryFee;
+
   const [profile, setProfile] = useState<AthleteProfileData | null>(null);
   const [activeCourse, setActiveCourse] = useState<AssignedCourse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -47,14 +57,13 @@ export default function AthleteDashboard() {
       try {
         const [profileRes, courseRes, sportsRes] = await Promise.all([
           api.get("/athlete-profile"),
-          api.get("/course-purchase/my"), // Gets the course assigned to them
+          api.get("/course-purchase/my"),
           api.get("/sports"),
         ]);
 
         setProfile(profileRes.data.data);
         setSportsRegistry(sportsRes.data.data);
 
-        // If they have an assigned course, load the first one into the dashboard
         if (courseRes.data.data && courseRes.data.data.length > 0) {
           setActiveCourse(courseRes.data.data[0].course);
         }
@@ -89,12 +98,41 @@ export default function AthleteDashboard() {
 
   return (
     <Fragment>
+      {userStatus === "NEEDS_ASSESSMENT" && !hasPaid && (
+        <ProgramPaywall
+          onSuccess={() => (window.location.href = "/assessment")}
+        />
+      )}
+
+      {userStatus === "NEEDS_ASSESSMENT" && hasPaid && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#0B0F14]/90 backdrop-blur-xl">
+          <div className="max-w-lg w-full bg-[#121821] border border-amber-500/20 p-10 rounded-[2rem] text-center shadow-[0_0_50px_rgba(245,158,11,0.15)] animate-in zoom-in-95 duration-500">
+            <ShieldCheck
+              size={56}
+              className="text-amber-500 mx-auto mb-6 drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]"
+            />
+            <h2 className="text-3xl font-black text-white italic uppercase tracking-tighter mb-4">
+              Payment Verified
+            </h2>
+            <p className="text-[#8A94A6] text-sm mb-8 font-medium leading-relaxed">
+              Your platform access is secured. The final step is to complete
+              your physical assessment so the engine can instantly assign your
+              custom training protocol.
+            </p>
+            <button
+              onClick={() => (window.location.href = "/assessment")}
+              className="w-full py-5 bg-amber-500 text-black font-black uppercase tracking-widest rounded-xl hover:bg-amber-400 active:scale-95 transition-all shadow-[0_10px_20px_rgba(245,158,11,0.2)]"
+            >
+              Initialize Assessment
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="relative min-h-full">
-        {/* Ambient Lighting */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(245,158,11,0.05),transparent_60%)] pointer-events-none" />
 
         <div className="relative z-10 space-y-10 animate-in fade-in duration-700 max-w-5xl mx-auto">
-          {/* 🏆 Header Section */}
           <div className="relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between bg-[#0F1724]/60 backdrop-blur-md border border-white/[0.05] p-8 rounded-[16px] shadow-[0_10px_30px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.04)] gap-6">
             <div className="absolute inset-0 bg-gradient-to-r from-black/40 to-transparent pointer-events-none" />
             <div className="relative z-10">
@@ -108,7 +146,6 @@ export default function AthleteDashboard() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* LEFT: Athlete Stats */}
             <div className="lg:col-span-1 space-y-8">
               <div className="bg-[#0F1724]/80 backdrop-blur-md border border-white/[0.05] rounded-[16px] p-8 shadow-[0_10px_30px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.04)]">
                 <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#8A94A6] mb-8 flex items-center gap-2">
@@ -140,14 +177,12 @@ export default function AthleteDashboard() {
               </div>
             </div>
 
-            {/* RIGHT: Assigned Program */}
             <div className="lg:col-span-2 flex flex-col">
               <div className="relative bg-[#0F1724]/60 backdrop-blur-md border border-white/[0.05] rounded-[16px] p-2 flex flex-col shadow-[0_10px_30px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.04)] h-full overflow-hidden transition-all hover:border-amber-500/30">
                 {activeCourse ? (
                   <div className="flex flex-col h-full relative">
                     <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] to-transparent pointer-events-none" />
 
-                    {/* Course Image */}
                     <div className="relative aspect-video rounded-[12px] overflow-hidden bg-black/60 shadow-inner group">
                       <img
                         src={activeCourse.thumbnailUrl}
@@ -161,7 +196,6 @@ export default function AthleteDashboard() {
                       </div>
                     </div>
 
-                    {/* Course Info & Action */}
                     <div className="p-6 flex flex-col flex-1 relative z-10">
                       <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter mb-2">
                         {activeCourse.title}
@@ -198,9 +232,6 @@ export default function AthleteDashboard() {
         </div>
       </div>
 
-      {/* ============================================================== */}
-      {/* 🚀 THE PLAYER MODAL (Opens right over the dashboard)           */}
-      {/* ============================================================== */}
       <AnimatePresence>
         {isPlayerOpen && activeCourse && (
           <motion.div
@@ -209,7 +240,6 @@ export default function AthleteDashboard() {
             exit={{ opacity: 0, y: 50 }}
             className="fixed inset-0 z-[100] bg-[#0B0F14] overflow-y-auto"
           >
-            {/* Header Toolbar */}
             <div className="sticky top-0 z-50 p-4 md:p-6 border-b border-white/5 bg-[#0B0F14]/80 backdrop-blur-xl flex justify-between items-center shadow-lg">
               <div className="flex items-center gap-3">
                 <Monitor size={16} className="text-amber-500" />
@@ -224,8 +254,6 @@ export default function AthleteDashboard() {
                 <X size={14} /> Close Player
               </button>
             </div>
-
-            {/* The Actual Protocol Player */}
             <div className="py-6 md:py-10">
               <StructuredCoursePlayer courseId={activeCourse._id} />
             </div>
@@ -236,7 +264,6 @@ export default function AthleteDashboard() {
   );
 }
 
-// Reusable Stat Box UI
 function StatBox({
   icon,
   label,
