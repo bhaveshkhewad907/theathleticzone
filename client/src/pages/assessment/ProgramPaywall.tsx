@@ -12,7 +12,7 @@ export default function ProgramPaywall({
 }) {
   const [coupon, setCoupon] = useState("");
   const [activeCoupon, setActiveCoupon] = useState<string | null>(null);
-  const [displayPrice, setDisplayPrice] = useState(700);
+  const [displayPrice, setDisplayPrice] = useState(10);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const COUPONS: Record<string, number> = {
@@ -25,12 +25,12 @@ export default function ProgramPaywall({
     const code = coupon.toUpperCase();
     if (COUPONS[code]) {
       const discount = COUPONS[code];
-      setDisplayPrice(700 - (700 * discount) / 100);
+      setDisplayPrice(10 - (10 * discount) / 100);
       setActiveCoupon(code);
       toast.success(`${discount}% Discount Applied!`);
     } else {
       toast.error("Invalid or expired code");
-      setDisplayPrice(700);
+      setDisplayPrice(10);
       setActiveCoupon(null);
     }
   };
@@ -145,7 +145,7 @@ export default function ProgramPaywall({
                 </h3>
                 {activeCoupon && (
                   <span className="text-[#8A94A6] line-through text-xl font-bold">
-                    ₹700
+                    ₹10
                   </span>
                 )}
               </div>

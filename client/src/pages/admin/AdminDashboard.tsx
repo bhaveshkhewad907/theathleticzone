@@ -8,7 +8,8 @@ interface AdminDashboardData {
   athletesInTraining: number;
   athletesNeedingAssessment: number;
   totalAssessments: number;
-  couponUsage: { code: string; count: number }[]; // 🚀 NEW: Coupon tracking
+  couponUsage: { code: string; count: number }[];
+  totalRevenue: number;
 }
 
 export default function AdminDashboard() {
@@ -131,6 +132,11 @@ export default function AdminDashboard() {
         {/* Main Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <StatCard label="Total Athletes" value={data.totalAthletes} />
+          <StatCard
+            label="Total Revenue"
+            value={`₹${data.totalRevenue.toLocaleString()}`}
+            colorClass="text-green-500"
+          />
           <StatCard label="Total Admins" value={data.totalAdmins} />
           <StatCard
             label="Completed Assessments"
