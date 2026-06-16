@@ -1,6 +1,6 @@
 import { useState, useContext } from "react";
 import { Outlet, NavLink, useLocation } from "react-router-dom";
-import { Menu, X, LogOut, LayoutDashboard, Database } from "lucide-react";
+import { Menu, X, LogOut, LayoutDashboard, Database, User } from "lucide-react";
 import AuthContext from "../../context/AuthContext";
 import { motion } from "framer-motion";
 
@@ -93,6 +93,12 @@ export default function AdminLayout() {
                 to="/admin/courses"
                 label="Protocol Vault"
                 icon={Database}
+                setSidebarOpen={setSidebarOpen}
+              />
+              <MenuLink
+                to="/admin/athletes"
+                label="Athlete Roster"
+                icon={User} // Don't forget to import User from 'lucide-react' at the top!
                 setSidebarOpen={setSidebarOpen}
               />
             </nav>

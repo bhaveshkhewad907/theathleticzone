@@ -21,10 +21,9 @@ const AthleteDashboard = lazy(
   () => import("../pages/athlete/AthleteDashboard"),
 );
 const AthleteProfile = lazy(() => import("../pages/athlete/AthleteProfile"));
-
 const AdminDashboard = lazy(() => import("../pages/admin/AdminDashboard"));
-
 const AdminCourses = lazy(() => import("../pages/admin/AdminCourses"));
+const AdminAthletes = lazy(() => import("../pages/admin/AdminAthletes"));
 
 const router = createBrowserRouter([
   { path: "/", element: <RootRedirect /> },
@@ -66,6 +65,7 @@ const router = createBrowserRouter([
     children: [
       { path: "/admin", element: Loadable(AdminDashboard) },
       { path: "/admin/courses", element: Loadable(AdminCourses) },
+      { path: "/admin/athletes", element: Loadable(AdminAthletes) },
     ],
   },
 ]);
