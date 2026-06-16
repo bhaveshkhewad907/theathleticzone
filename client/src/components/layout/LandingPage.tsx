@@ -23,14 +23,6 @@ import { useEffect, useState, useRef } from "react";
 import api from "../../services/api";
 import Footer from "./Footer";
 
-interface CoachRoster {
-  _id: string;
-  name: string;
-  profileImage: string;
-  title: string;
-  experience: string;
-}
-
 interface ReviewData {
   _id: string;
   content: string;
@@ -167,31 +159,6 @@ export default function LandingPage() {
   }, [facilitySlides.length]);
 
   const currentGallerySet = facilitySlides[galleryIndex] || [];
-
-  const [coaches, setCoaches] = useState<CoachRoster[]>([]);
-  const coachScrollRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    api.get("/users/coaches/public").then((res) => setCoaches(res.data.data));
-  }, []);
-
-  const scrollCoachNext = () => {
-    if (coachScrollRef.current) {
-      coachScrollRef.current.scrollBy({
-        left: coachScrollRef.current.offsetWidth,
-        behavior: "smooth",
-      });
-    }
-  };
-
-  const scrollCoachPrev = () => {
-    if (coachScrollRef.current) {
-      coachScrollRef.current.scrollBy({
-        left: -coachScrollRef.current.offsetWidth,
-        behavior: "smooth",
-      });
-    }
-  };
 
   return (
     <div className="min-h-screen text-[#E5E7EB] font-sans selection:bg-amber-500/30 overflow-x-hidden relative">
@@ -492,9 +459,9 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 🏅 SECTION 5: ELITE COACHING STAFF */}
+      {/* 🏅 SECTION 5: HEAD COACH */}
       <section className="py-20 md:py-32 px-6 relative z-10 bg-[#0B0F14]">
-        <div className="max-w-7xl mx-auto group/coach relative">
+        <div className="max-w-7xl mx-auto relative flex flex-col items-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -502,84 +469,64 @@ export default function LandingPage() {
             className="mb-16 flex flex-col items-center text-center"
           >
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[10px] font-black uppercase tracking-[0.2em] mb-6">
-              <Shield size={14} /> Elite Personnel
+              <Shield size={14} /> Leadership
             </div>
             <h2 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter text-white">
-              Our <span className="text-amber-500">Coaches</span>
+              Meet Your <span className="text-amber-500">Coach</span>
             </h2>
           </motion.div>
 
-          {coaches.length > 3 && (
-            <button
-              onClick={scrollCoachPrev}
-              className="absolute left-0 md:-left-6 top-[60%] -translate-y-1/2 z-30 h-16 w-16 rounded-full bg-white/5 backdrop-blur-xl border border-white/10 flex items-center justify-center text-white/50 hover:text-amber-500 hover:bg-amber-500/20 transition-all opacity-0 group-hover/coach:opacity-100 md:flex"
-            >
-              <ChevronLeft size={36} strokeWidth={1.5} />
-            </button>
-          )}
-
-          <div
-            ref={coachScrollRef}
-            className="flex gap-6 overflow-x-auto snap-x snap-mandatory pb-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="group relative w-full max-w-md bg-[#121821] border border-white/5 rounded-[24px] overflow-hidden hover:border-amber-500/30 transition-all duration-500 shadow-xl hover:shadow-[0_20px_40px_rgba(245,158,11,0.1)]"
           >
-            {coaches.map((coach, i) => (
-              <motion.div
-                key={coach._id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
-                className="group relative w-[85vw] md:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] shrink-0 snap-start bg-[#121821] border border-white/5 rounded-[24px] overflow-hidden hover:border-amber-500/30 transition-all duration-500 shadow-xl hover:shadow-[0_20px_40px_rgba(245,158,11,0.1)]"
-              >
-                <div className="aspect-[4/5] relative overflow-hidden group">
-                  <img
-                    src={
-                      coach.profileImage ||
-                      "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png"
-                    }
-                    alt={coach.name}
-                    className="absolute inset-0 w-full h-full object-cover grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F19] via-[#0B0F19]/40 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-500" />
-                  <div className="absolute bottom-0 left-0 w-full p-4 md:p-6 translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-                    <div className="relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md p-5 shadow-2xl transition-all duration-500 group-hover:bg-white/10 group-hover:border-amber-500/30">
-                      <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-amber-500 to-transparent opacity-50" />
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="flex items-center justify-center w-5 h-5 rounded-full bg-amber-500/20 text-amber-500">
-                          <Briefcase size={10} />
-                        </div>
-                        <span className="text-amber-500 text-[9px] font-black uppercase tracking-[0.3em] drop-shadow-md">
-                          {coach.title}
-                        </span>
-                      </div>
-                      <h3 className="text-2xl md:text-3xl font-black italic uppercase tracking-tighter text-white mb-4 drop-shadow-lg">
-                        {coach.name}
-                      </h3>
-                      <div className="flex items-center justify-between pt-3 border-t border-white/10">
-                        <div className="flex items-center gap-2">
-                          <Award
-                            size={12}
-                            className="text-[#8A94A6] group-hover:text-amber-500 transition-colors duration-300"
-                          />
-                          <p className="text-[#8A94A6] text-[10px] font-bold uppercase tracking-widest group-hover:text-white transition-colors duration-300">
-                            {coach.experience}
-                          </p>
-                        </div>
-                      </div>
+            <div className="aspect-[4/5] relative overflow-hidden group">
+              {/* 📷 CHANGE THIS IMAGE URL LATER */}
+              <img
+                src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=1470&auto=format&fit=crop"
+                alt="Head Coach"
+                className="absolute inset-0 w-full h-full object-cover grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F19] via-[#0B0F19]/40 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-500" />
+
+              {/* Floating Data Panel */}
+              <div className="absolute bottom-0 left-0 w-full p-6 translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                <div className="relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md p-6 shadow-2xl transition-all duration-500 group-hover:bg-white/10 group-hover:border-amber-500/30">
+                  <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-amber-500 to-transparent opacity-50" />
+
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center justify-center w-5 h-5 rounded-full bg-amber-500/20 text-amber-500">
+                      <Briefcase size={10} />
+                    </div>
+                    {/* ✏️ CHANGE THIS TITLE */}
+                    <span className="text-amber-500 text-[9px] font-black uppercase tracking-[0.3em] drop-shadow-md">
+                      Head Performance Coach
+                    </span>
+                  </div>
+
+                  {/* ✏️ CHANGE THIS NAME */}
+                  <h3 className="text-3xl font-black italic uppercase tracking-tighter text-white mb-4 drop-shadow-lg">
+                    Jitendra Saini
+                  </h3>
+
+                  <div className="flex items-center justify-between pt-4 border-t border-white/10">
+                    <div className="flex items-center gap-2">
+                      <Award
+                        size={14}
+                        className="text-[#8A94A6] group-hover:text-amber-500 transition-colors duration-300"
+                      />
+                      {/* ✏️ CHANGE THIS EXPERIENCE TAGLINE */}
+                      <p className="text-[#8A94A6] text-[11px] font-bold uppercase tracking-widest group-hover:text-white transition-colors duration-300">
+                        4+ Years Elite Track Experience
+                      </p>
                     </div>
                   </div>
                 </div>
-              </motion.div>
-            ))}
-          </div>
-
-          {coaches.length > 3 && (
-            <button
-              onClick={scrollCoachNext}
-              className="absolute right-0 md:-right-6 top-[60%] -translate-y-1/2 z-30 h-16 w-16 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-white hover:text-amber-500 transition-all opacity-100 md:opacity-50 md:group-hover/coach:opacity-100  md:flex"
-            >
-              <ChevronRight size={36} strokeWidth={1.5} />
-            </button>
-          )}
+              </div>
+            </div>
+          </motion.div>
         </div>
       </section>
 
