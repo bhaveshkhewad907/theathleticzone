@@ -33,11 +33,19 @@ export const createEntryOrder = async (req: any, res: Response) => {
     const options = {
       amount: Math.round(price * 100), // Razorpay expects paise
       currency: "INR",
-      // 🚀 THE FIX: Shortened the receipt ID to stay well under Razorpay's 40-character limit
       receipt: `entry_${Date.now()}`,
     };
+
     const order = await instance.orders.create(options);
-    res.status(200).json({ success: true, order, price, appliedCoupon });
+
+    res.status(200).json({
+      success: true,
+      order,
+      price,
+      appliedCoupon,
+      // 🚀 THE FIX: Sending the Live API Key to the frontend so it stops using the Test key!
+      key: process.env.RAZORPAY_KEY_ID,
+    });
   } catch (error) {
     console.error("Entry Order Error:", error);
     res.status(500).json({ success: false, message: "Order creation failed" });
