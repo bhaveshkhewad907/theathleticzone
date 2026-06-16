@@ -5,12 +5,10 @@ import User from "../user/user.model";
 
 // 🚀 YOUR INFLUENCER CODES (Hardcoded discounts in percentage)
 const COUPONS: Record<string, number> = {
-  GEMINI30: 30, // 30% off
-  SPRINT50: 50, // 50% off
-  ELITE10: 10, // 10% off
+  JAYSON30: 30, // 30% off
 };
 
-const BASE_PRICE_INR = 700; // Base cost of the program
+const BASE_PRICE_INR = 10; // Base cost of the program
 
 export const createEntryOrder = async (req: any, res: Response) => {
   try {

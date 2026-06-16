@@ -3,11 +3,9 @@ import Assessment from "../assessment/assessment.model";
 
 // 🚀 NEW: Mirroring the coupon dictionary from your payment controller
 const COUPONS: Record<string, number> = {
-  GEMINI30: 30, // 30% off
-  SPRINT50: 50, // 50% off
-  ELITE10: 10, // 10% off
+  JAYSON30: 30, // 30% off
 };
-const BASE_PRICE = 700;
+const BASE_PRICE = 10;
 
 export const getAdminDashboard = async () => {
   const totalAthletes = await User.countDocuments({ role: "ATHLETE" });
