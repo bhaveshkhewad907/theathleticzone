@@ -4,8 +4,6 @@ import axios from "axios";
 import { toast } from "react-hot-toast";
 import {
   Trash2,
-  PowerOff,
-  Power,
   AlertTriangle,
   X,
   Database,
@@ -17,10 +15,8 @@ import CreateStepModal from "./CreateStepModal";
 import CreateTemplateModal from "./CreateTemplateModal";
 import CourseArchitectModal from "./CourseArchitectModal";
 
-interface Course {
+interface Protocol {
   _id: string;
-  price: number;
-  isActive: boolean;
   meta: {
     title: string;
     description: string;
@@ -31,7 +27,7 @@ interface Course {
 }
 
 export default function AdminCourses() {
-  const [courses, setCourses] = useState<Course[]>([]);
+  const [protocols, setProtocols] = useState<Protocol[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
@@ -48,7 +44,6 @@ export default function AdminCourses() {
     deficit: "Strength",
     customTitle: "",
     description: "",
-    price: "",
   });
 
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
@@ -56,22 +51,22 @@ export default function AdminCourses() {
 
   const [actionModal, setActionModal] = useState<{
     isOpen: boolean;
-    type: "DEACTIVATE" | "REACTIVATE" | "DELETE" | null;
     courseId: string | null;
     courseTitle: string;
-  }>({ isOpen: false, type: null, courseId: null, courseTitle: "" });
+  }>({ isOpen: false, courseId: null, courseTitle: "" });
+
   const [isProcessingAction, setIsProcessingAction] = useState(false);
 
   useEffect(() => {
-    fetchCourses();
+    fetchProtocols();
   }, []);
 
-  const fetchCourses = async () => {
+  const fetchProtocols = async () => {
     try {
       const res = await api.get("/courses/admin");
-      setCourses(res.data.data);
+      setProtocols(res.data.data);
     } catch (error) {
-      console.error("Failed to fetch courses", error);
+      console.error("Failed to fetch protocols", error);
     }
   };
 
@@ -83,7 +78,6 @@ export default function AdminCourses() {
     }
   };
 
-  // Simplified: Now strictly handles thumbnails only
   const uploadThumbnailToR2 = async (file: File) => {
     const { data } = await api.post("/courses/get-upload-url", {
       fileName: file.name,
@@ -109,7 +103,6 @@ export default function AdminCourses() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // 🚀 THE FIX: We no longer require or validate a videoFile
     if (!thumbnailFile) {
       return toast.error("Please provide a visual cover (thumbnail).");
     }
@@ -122,35 +115,29 @@ export default function AdminCourses() {
 
       const finalTitle = `${formData.level} ${formData.deficit} Track: ${formData.customTitle}`;
 
-      // 🚀 THE FIX: We no longer send a videoUrl to the backend!
       await api.post("/courses", {
         meta: {
           title: finalTitle,
           description: formData.description,
-          tier: formData.level, // Fills the META.TIER requirement
-          targetDeficit: formData.deficit, // Fills the META.TARGETDEFICIT requirement
-          coverImageUrl: thumbUrl, // Fills the META.COVERIMAGEURL requirement
+          tier: formData.level,
+          targetDeficit: formData.deficit,
+          coverImageUrl: thumbUrl,
         },
-        price: Number(formData.price),
-        isActive: true, // Optional: Default to true if you want it live immediately
       });
       setShowModal(false);
       resetForm();
-      fetchCourses();
-      toast.success("Module Container published successfully! 🚀");
+      fetchProtocols();
+      toast.success("Protocol Container initialized successfully! 🚀");
     } catch (err) {
-      // 🚀 THE FIX: Strictly type the error to satisfy TypeScript/ESLint
       const error = err as {
         response?: { data?: { message?: string } };
         message?: string;
       };
 
       console.error("Deployment Error:", error.response?.data || error.message);
-
-      // Extract the exact backend message, or fallback to a default
       toast.error(
         error.response?.data?.message ||
-          "Failed to publish container. Verify network integrity.",
+          "Failed to deploy protocol. Verify network integrity.",
       );
     } finally {
       setIsUploading(false);
@@ -158,35 +145,22 @@ export default function AdminCourses() {
     }
   };
 
-  const handleConfirmAction = async () => {
+  const handleConfirmDelete = async () => {
     if (!actionModal.courseId) return;
     setIsProcessingAction(true);
 
     try {
-      if (actionModal.type === "DEACTIVATE") {
-        await api.patch(`/courses/${actionModal.courseId}/deactivate`);
-        toast.success("Module taken offline successfully.");
-      } else if (actionModal.type === "REACTIVATE") {
-        await api.patch(`/courses/${actionModal.courseId}/reactivate`);
-        toast.success("Module is now live on the storefront.");
-      } else if (actionModal.type === "DELETE") {
-        await api.delete(`/courses/${actionModal.courseId}`);
-        toast.success("Module permanently purged from storefront.");
-      }
-      fetchCourses();
+      await api.delete(`/courses/${actionModal.courseId}`);
+      toast.success("Protocol permanently purged from the vault.");
+      fetchProtocols();
     } catch (error) {
       const err = error as { response?: { data?: { message?: string } } };
       toast.error(
-        err.response?.data?.message || "Execution failed. Contact Super Admin.",
+        err.response?.data?.message || "Purge failed. Contact Super Admin.",
       );
     } finally {
       setIsProcessingAction(false);
-      setActionModal({
-        isOpen: false,
-        type: null,
-        courseId: null,
-        courseTitle: "",
-      });
+      setActionModal({ isOpen: false, courseId: null, courseTitle: "" });
     }
   };
 
@@ -196,7 +170,6 @@ export default function AdminCourses() {
       deficit: "Strength",
       customTitle: "",
       description: "",
-      price: "",
     });
     setThumbnailFile(null);
     setThumbPreview(null);
@@ -205,13 +178,14 @@ export default function AdminCourses() {
   return (
     <>
       <div className="relative min-h-screen space-y-6 md:space-y-10 p-2 md:p-4 animate-in fade-in duration-700">
+        {/* Header Section */}
         <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center bg-[#121821] p-6 md:p-8 rounded-3xl border border-white/5 relative overflow-hidden gap-6 shadow-2xl">
           <div className="relative z-10">
             <h1 className="text-3xl md:text-4xl font-black italic tracking-tighter uppercase text-white">
-              Course <span className="text-amber-500">Management</span>
+              Protocol <span className="text-amber-500">Vault</span>
             </h1>
             <p className="text-white/40 text-[10px] font-bold tracking-widest uppercase mt-2">
-              Manage storefront and structured training protocols.
+              Manage internal training programs for algorithmic assignment.
             </p>
           </div>
 
@@ -229,113 +203,74 @@ export default function AdminCourses() {
               className="flex-1 xl:flex-none flex items-center justify-center gap-2 px-5 py-4 bg-black/40 border border-white/10 hover:border-amber-500/50 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-inner hover:bg-black/60"
             >
               <LayoutTemplate size={14} className="text-amber-500" />
-              Protocol Builder
+              Day Builder
             </button>
 
             <button
               onClick={() => setShowModal(true)}
               className="w-full xl:w-auto bg-amber-500 text-black px-8 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-amber-400 transition-all active:scale-95 shadow-xl shadow-amber-500/10"
             >
-              Deploy New Course Container
+              Deploy New Protocol
             </button>
           </div>
         </div>
 
+        {/* Protocols Grid */}
         <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-          {courses.map((course) => (
+          {protocols.map((protocol) => (
             <div
-              key={course._id}
+              key={protocol._id}
               className="group bg-[#121821] border border-white/5 p-4 rounded-[2rem] transition-all duration-300 hover:border-amber-500/40 hover:shadow-[0_0_30px_rgba(245,158,11,0.05)] flex flex-col"
             >
               <div className="relative aspect-video rounded-2xl overflow-hidden mb-4">
                 <img
-                  src={course.meta?.coverImageUrl?.replace(
+                  src={protocol.meta?.coverImageUrl?.replace(
                     "http://",
                     "https://",
                   )}
-                  alt={course.meta?.title || "Course Thumbnail"}
-                  className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${!course.isActive && "grayscale opacity-50"}`}
+                  alt={protocol.meta?.title || "Protocol Thumbnail"}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F14] to-transparent opacity-60" />
-                <div className="absolute bottom-3 left-3 px-3 py-1.5 rounded-lg bg-black/60 backdrop-blur-md border border-white/10 text-[9px] font-black text-amber-500 uppercase tracking-widest">
-                  ₹{course.price}
+                <div className="absolute top-3 left-3 px-3 py-1.5 rounded-lg bg-black/60 backdrop-blur-md border border-white/10 text-[9px] font-black text-amber-500 uppercase tracking-widest">
+                  {protocol.meta?.tier || "LEVEL"} •{" "}
+                  {protocol.meta?.targetDeficit || "DEFICIT"}
                 </div>
               </div>
 
               <h3 className="font-bold text-white tracking-tight px-2 truncate text-base md:text-lg uppercase italic">
-                {course.meta?.title}
+                {protocol.meta?.title}
               </h3>
 
               <div className="mt-auto pt-4 flex flex-col gap-4">
                 <div className="flex justify-between items-center px-2">
                   <div className="flex items-center gap-2">
-                    <div
-                      className={`h-1.5 w-1.5 rounded-full ${
-                        course.isActive
-                          ? "bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.8)]"
-                          : "bg-red-500"
-                      }`}
-                    />
+                    <div className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.8)]" />
                     <span className="text-[9px] font-black uppercase tracking-widest text-white/40">
-                      {course.isActive ? "Active" : "Offline"}
+                      Algorithmic Ready
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    {course.isActive ? (
-                      <button
-                        onClick={() =>
-                          setActionModal({
-                            isOpen: true,
-                            type: "DEACTIVATE",
-                            courseId: course._id,
-                            courseTitle: course.meta?.title,
-                          })
-                        }
-                        className="p-2 rounded-xl bg-[#0B0F14] border border-white/5 text-amber-500/50 hover:text-amber-500 hover:border-amber-500/30 transition-all"
-                        title="Take Offline"
-                      >
-                        <PowerOff size={14} />
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() =>
-                          setActionModal({
-                            isOpen: true,
-                            type: "REACTIVATE",
-                            courseId: course._id,
-                            courseTitle: course.meta?.title,
-                          })
-                        }
-                        className="p-2 rounded-xl bg-[#0B0F14] border border-white/5 text-green-500/50 hover:text-green-500 hover:border-green-500/30 transition-all shadow-[0_0_15px_rgba(34,197,94,0)] hover:shadow-[0_0_15px_rgba(34,197,94,0.2)]"
-                        title="Bring Online"
-                      >
-                        <Power size={14} />
-                      </button>
-                    )}
-
-                    <button
-                      onClick={() =>
-                        setActionModal({
-                          isOpen: true,
-                          type: "DELETE",
-                          courseId: course._id,
-                          courseTitle: course.meta?.title,
-                        })
-                      }
-                      className="p-2 rounded-xl bg-[#0B0F14] border border-white/5 text-red-500/50 hover:text-red-500 hover:border-red-500/30 transition-all"
-                      title="Permanently Purge"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
+                  <button
+                    onClick={() =>
+                      setActionModal({
+                        isOpen: true,
+                        courseId: protocol._id,
+                        courseTitle: protocol.meta?.title,
+                      })
+                    }
+                    className="p-2 rounded-xl bg-[#0B0F14] border border-white/5 text-red-500/50 hover:text-red-500 hover:border-red-500/30 transition-all"
+                    title="Permanently Purge"
+                  >
+                    <Trash2 size={14} />
+                  </button>
                 </div>
 
                 <button
                   onClick={() =>
                     setArchitectCourse({
-                      id: course._id,
-                      name: course.meta?.title,
+                      id: protocol._id,
+                      name: protocol.meta?.title,
                     })
                   }
                   className="w-full flex items-center justify-center gap-2 py-3 bg-amber-500/10 hover:bg-amber-500 text-amber-500 hover:text-black border border-amber-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300"
@@ -349,114 +284,7 @@ export default function AdminCourses() {
         </div>
       </div>
 
-      {actionModal.isOpen && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-xl flex items-center justify-center p-4 z-[60] animate-in fade-in">
-          <div className="bg-[#121821] border border-white/10 p-6 md:p-8 rounded-[2rem] max-w-sm w-[95vw] md:w-full shadow-2xl relative overflow-hidden">
-            <div
-              className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent ${
-                actionModal.type === "DELETE"
-                  ? "via-red-500"
-                  : actionModal.type === "REACTIVATE"
-                    ? "via-green-500"
-                    : "via-amber-500"
-              } to-transparent`}
-            />
-
-            <div className="flex items-center justify-between mb-6 border-b border-white/5 pb-4">
-              <h2 className="text-lg md:text-xl font-black uppercase italic tracking-tighter text-white flex items-center gap-3">
-                <AlertTriangle
-                  className={
-                    actionModal.type === "DELETE"
-                      ? "text-red-500"
-                      : actionModal.type === "REACTIVATE"
-                        ? "text-green-500"
-                        : "text-amber-500"
-                  }
-                  size={20}
-                />
-                {actionModal.type === "DELETE"
-                  ? "Confirm Deletion"
-                  : actionModal.type === "REACTIVATE"
-                    ? "Confirm Deployment"
-                    : "Confirm Offline"}
-              </h2>
-              <button
-                onClick={() =>
-                  setActionModal({
-                    isOpen: false,
-                    type: null,
-                    courseId: null,
-                    courseTitle: "",
-                  })
-                }
-                className="text-white/20 hover:text-white transition-colors"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="space-y-4 mb-8 text-center">
-              <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest leading-relaxed">
-                Target Module:
-              </p>
-              <p className="text-base md:text-lg font-black text-white italic tracking-tight">
-                "{actionModal.courseTitle}"
-              </p>
-
-              <div
-                className={`mt-4 p-4 rounded-xl border ${
-                  actionModal.type === "DELETE"
-                    ? "bg-red-500/10 border-red-500/20 text-red-500"
-                    : actionModal.type === "REACTIVATE"
-                      ? "bg-green-500/10 border-green-500/20 text-green-500"
-                      : "bg-amber-500/10 border-amber-500/20 text-amber-500"
-                }`}
-              >
-                <p className="text-[9px] font-black uppercase tracking-widest leading-relaxed">
-                  {actionModal.type === "DELETE" &&
-                    "CRITICAL WARNING: This will permanently remove the module from the storefront. Existing licenses remain active."}
-                  {actionModal.type === "DEACTIVATE" &&
-                    "WARNING: This module will be taken offline. It cannot be deactivated if active purchases currently exist."}
-                  {actionModal.type === "REACTIVATE" &&
-                    "SYSTEM UPDATE: This module will immediately become visible and purchasable on the public storefront."}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-4">
-              <button
-                onClick={() =>
-                  setActionModal({
-                    isOpen: false,
-                    type: null,
-                    courseId: null,
-                    courseTitle: "",
-                  })
-                }
-                disabled={isProcessingAction}
-                className="flex-1 py-4 rounded-xl bg-[#0B0F14] border border-white/5 text-white/40 text-[10px] font-black uppercase tracking-widest hover:border-white/10 hover:text-white transition-all disabled:opacity-50"
-              >
-                Abort
-              </button>
-
-              <button
-                onClick={handleConfirmAction}
-                disabled={isProcessingAction}
-                className={`flex-1 py-4 rounded-xl text-black text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50 ${
-                  actionModal.type === "DELETE"
-                    ? "bg-red-500 hover:bg-red-400 shadow-xl shadow-red-500/10"
-                    : actionModal.type === "REACTIVATE"
-                      ? "bg-green-500 hover:bg-green-400 shadow-xl shadow-green-500/10"
-                      : "bg-amber-500 hover:bg-amber-400 shadow-xl shadow-amber-500/10"
-                }`}
-              >
-                {isProcessingAction ? "Executing..." : "Execute"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
+      {/* 🚀 RESTORED: Create New Protocol Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-xl flex items-center justify-center p-4 z-50 overflow-y-auto">
           <div className="bg-[#0F1724]/90 border border-white/10 p-6 md:p-10 rounded-[24px] max-w-lg w-[95vw] md:w-full space-y-6 shadow-[0_20px_50px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.04)] relative overflow-hidden my-auto">
@@ -464,7 +292,7 @@ export default function AdminCourses() {
 
             <div className="space-y-1 pt-2">
               <h2 className="text-xl md:text-2xl font-black text-white tracking-tighter uppercase italic leading-none">
-                Course <span className="text-amber-500">Deployment</span>
+                Protocol <span className="text-amber-500">Deployment</span>
               </h2>
               <p className="text-[8px] md:text-[9px] text-[#8A94A6] font-black uppercase tracking-[0.3em] opacity-60">
                 Container Initialization Protocol
@@ -541,60 +369,45 @@ export default function AdminCourses() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8A94A6] ml-2">
-                  Access Valuation (INR)
-                </label>
-                <input
-                  type="number"
-                  placeholder="0.00"
-                  className="w-full bg-black/40 border border-white/[0.05] p-4 rounded-[12px] text-sm text-[#E5E7EB] focus:border-amber-500/50 outline-none transition-all placeholder:text-white/5 font-black"
-                  value={formData.price}
-                  onChange={(e) =>
-                    setFormData({ ...formData, price: e.target.value })
-                  }
-                />
-              </div>
-            </div>
-
-            {/* 🚀 THE FIX: Single Full-Width Thumbnail Upload Block */}
-            <div className="space-y-2">
-              <p className="text-[10px] font-black uppercase tracking-widest text-[#8A94A6] text-center">
-                Visual Cover
-              </p>
-              <div className="relative h-32 md:h-40 w-full border-2 border-dashed border-white/5 rounded-[16px] bg-black/40 overflow-hidden group transition-all hover:border-amber-500/30">
-                {thumbPreview ? (
-                  <>
-                    <img
-                      src={thumbPreview}
-                      alt="Preview"
-                      className="w-full h-full object-cover opacity-70"
-                    />
-                    <button
-                      onClick={() => {
-                        setThumbnailFile(null);
-                        setThumbPreview("");
-                      }}
-                      className="absolute top-2 right-2 bg-red-500/20 hover:bg-red-500 text-red-500 hover:text-white px-3 py-1.5 rounded-md text-[8px] font-black uppercase transition-all backdrop-blur-md"
-                    >
-                      Reset Cover
-                    </button>
-                  </>
-                ) : (
-                  <label className="flex flex-col items-center justify-center w-full h-full cursor-pointer">
-                    <div className="h-10 w-10 rounded-full bg-white/5 flex items-center justify-center mb-3 group-hover:bg-amber-500/20 transition-all">
-                      <span className="text-amber-500 text-xl">+</span>
-                    </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-white/40">
-                      Upload Display Thumbnail
-                    </span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleThumbChange}
-                      className="hidden"
-                    />
-                  </label>
-                )}
+                <p className="text-[10px] font-black uppercase tracking-widest text-[#8A94A6] text-center">
+                  Visual Cover
+                </p>
+                <div className="relative h-32 md:h-40 w-full border-2 border-dashed border-white/5 rounded-[16px] bg-black/40 overflow-hidden group transition-all hover:border-amber-500/30">
+                  {thumbPreview ? (
+                    <>
+                      <img
+                        src={thumbPreview}
+                        alt="Preview"
+                        className="w-full h-full object-cover opacity-70"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setThumbnailFile(null);
+                          setThumbPreview(null);
+                        }}
+                        className="absolute top-2 right-2 bg-red-500/20 hover:bg-red-500 text-red-500 hover:text-white px-3 py-1.5 rounded-md text-[8px] font-black uppercase transition-all backdrop-blur-md"
+                      >
+                        Reset Cover
+                      </button>
+                    </>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center w-full h-full cursor-pointer">
+                      <div className="h-10 w-10 rounded-full bg-white/5 flex items-center justify-center mb-3 group-hover:bg-amber-500/20 transition-all">
+                        <span className="text-amber-500 text-xl">+</span>
+                      </div>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-white/40">
+                        Upload Display Thumbnail
+                      </span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleThumbChange}
+                        className="hidden"
+                      />
+                    </label>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -629,13 +442,80 @@ export default function AdminCourses() {
               </button>
               <button
                 onClick={handleSubmit}
-                // 🚀 THE FIX: Only thumbnail and title are required now!
                 disabled={
                   isUploading || !formData.customTitle || !thumbnailFile
                 }
                 className="w-full sm:flex-[2] bg-amber-500 py-4 rounded-[12px] text-[10px] font-black uppercase tracking-[0.2em] text-black disabled:opacity-20 hover:bg-amber-400 transition-all shadow-[0_10px_20px_rgba(245,158,11,0.2)] active:scale-95"
               >
                 {isUploading ? "Executing Upload..." : "Authorize Deployment"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Action Modals */}
+      {actionModal.isOpen && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-xl flex items-center justify-center p-4 z-[60] animate-in fade-in">
+          <div className="bg-[#121821] border border-white/10 p-6 md:p-8 rounded-[2rem] max-w-sm w-[95vw] md:w-full shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-red-500 to-transparent" />
+
+            <div className="flex items-center justify-between mb-6 border-b border-white/5 pb-4">
+              <h2 className="text-lg md:text-xl font-black uppercase italic tracking-tighter text-white flex items-center gap-3">
+                <AlertTriangle className="text-red-500" size={20} />
+                Confirm Deletion
+              </h2>
+              <button
+                onClick={() =>
+                  setActionModal({
+                    isOpen: false,
+                    courseId: null,
+                    courseTitle: "",
+                  })
+                }
+                className="text-white/20 hover:text-white transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-4 mb-8 text-center">
+              <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest leading-relaxed">
+                Target Protocol:
+              </p>
+              <p className="text-base md:text-lg font-black text-white italic tracking-tight">
+                "{actionModal.courseTitle}"
+              </p>
+
+              <div className="mt-4 p-4 rounded-xl border bg-red-500/10 border-red-500/20 text-red-500">
+                <p className="text-[9px] font-black uppercase tracking-widest leading-relaxed">
+                  CRITICAL WARNING: This will permanently purge the protocol. Do
+                  not delete if athletes are currently assigned to this track.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <button
+                onClick={() =>
+                  setActionModal({
+                    isOpen: false,
+                    courseId: null,
+                    courseTitle: "",
+                  })
+                }
+                disabled={isProcessingAction}
+                className="flex-1 py-4 rounded-xl bg-[#0B0F14] border border-white/5 text-white/40 text-[10px] font-black uppercase tracking-widest hover:border-white/10 hover:text-white transition-all disabled:opacity-50"
+              >
+                Abort
+              </button>
+
+              <button
+                onClick={handleConfirmDelete}
+                disabled={isProcessingAction}
+                className="flex-1 py-4 rounded-xl text-black text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50 bg-red-500 hover:bg-red-400 shadow-xl shadow-red-500/10"
+              >
+                {isProcessingAction ? "Executing..." : "Purge Protocol"}
               </button>
             </div>
           </div>

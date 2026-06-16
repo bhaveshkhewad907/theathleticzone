@@ -8,8 +8,6 @@ export const createCourseSchema = z.object({
     targetDeficit: z.string().min(1, "Target Deficit is required"),
     coverImageUrl: z.string().min(1, "Cover Image is required"),
   }),
-  price: z.number().min(0, "Price is required"),
-  isActive: z.boolean().optional(),
 });
 
 export const updateCourseSchema = z.object({
@@ -22,6 +20,5 @@ export const updateCourseSchema = z.object({
       coverImageUrl: z.string().optional(),
     })
     .optional(),
-  price: z.number().optional(),
-  isActive: z.boolean().optional(),
+  isDeleted: z.boolean().optional(),
 });

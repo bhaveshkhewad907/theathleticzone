@@ -28,8 +28,7 @@ export interface ICourse extends Document {
     tier: "Beginner" | "Intermediate" | "Elite";
     targetDeficit: "Strength" | "Power" | "Mobility" | "Technique" | "Seasonal";
   };
-  price: number;
-  isActive: boolean;
+
   isDeleted: boolean;
 
   // Progression Logic
@@ -60,8 +59,7 @@ const courseSchema = new Schema<ICourse>(
         required: true,
       },
     },
-    price: { type: Number, required: true, min: 0 },
-    isActive: { type: Boolean, default: true },
+
     isDeleted: { type: Boolean, default: false },
 
     cycleType: {
