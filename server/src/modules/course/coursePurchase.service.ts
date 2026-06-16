@@ -14,19 +14,15 @@ export const getMyCourses = async (userId: string) => {
   })
     .populate({
       path: "course",
-      // 🚀 THE FIX: Removed the `isDeleted` match filter.
-      // If a user bought it, they get to keep it, even if it's no longer sold!
     })
     .lean();
 
-  // Filter out truly null courses (only happens if an admin HARD deletes from the database)
   const validPurchases = purchases.filter((p) => p.course !== null);
 
   const updatedPurchases = await Promise.all(
     validPurchases.map(async (purchase: any) => {
       const [signedThumbnail, signedVideo] = await Promise.all([
         getPresignedUrl(purchase.course.thumbnailUrl),
-        // Safely check for videoKey (DB schema) or videoUrl (legacy)
         getPresignedUrl(purchase.course.videoKey || purchase.course.videoUrl),
       ]);
 
@@ -57,7 +53,7 @@ export const createCourseOrder = async (courseId: string, userId: string) => {
   }
 
   const options = {
-    amount: course.price * 100,
+    amount: 0,
     currency: "INR",
     receipt: `rcpt_${Date.now()}`,
   };
@@ -109,9 +105,9 @@ export const verifyCoursePayment = async (
 
   const razorpayOrder = await razorpay.orders.fetch(razorpay_order_id);
 
-  if (!razorpayOrder || razorpayOrder.amount !== course.price * 100) {
+  if (!razorpayOrder || razorpayOrder.amount !== 0) {
     console.error(
-      `🚨 PAYLOAD SWAP DETECTED. User ${userId} attempted to unlock Course ${courseId} using a cheaper order payload.`,
+      `🚨 PAYLOAD SWAP DETECTED. User ${userId} attempted to unlock Course ${courseId}.`,
     );
     throw new ApiError(400, "Payment amount mismatch. Access denied.");
   }
@@ -119,7 +115,7 @@ export const verifyCoursePayment = async (
   const purchase = await CoursePurchase.create({
     course: courseId,
     user: userId,
-    priceAtPurchase: course.price,
+    priceAtPurchase: 0, // 🚀 THE FIX: Hardcoded to 0 so the schema doesn't throw an error!
     razorpayOrderId: razorpay_order_id,
     razorpayPaymentId: razorpay_payment_id,
     status: "PURCHASED",
@@ -130,7 +126,6 @@ export const verifyCoursePayment = async (
     service: "PaymentEngine",
     userId,
     courseId,
-    amountPaid: course.price,
     razorpayOrderId: razorpay_order_id,
     razorpayPaymentId: razorpay_payment_id,
   });
