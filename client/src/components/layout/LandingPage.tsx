@@ -35,52 +35,52 @@ interface ReviewData {
 }
 
 /* ==========================================================================
-   Data Registries & Animation Variants
+   Data Registries (Easy English Updates)
    ========================================================================== */
 
 const INTELLIGENCE_FEATURES = [
   {
     icon: <Activity size={24} />,
-    title: "Biometric Tracking",
-    desc: "Real-time load monitoring and force production metrics.",
+    title: "Track Your Progress",
+    desc: "Monitor your speed, strength, and daily improvement easily.",
   },
   {
     icon: <BarChart3 size={24} />,
-    title: "Load Management",
-    desc: "Volume consistency and central nervous system readiness.",
+    title: "Smart Training",
+    desc: "Train hard and get faster without burning out or getting injured.",
   },
   {
     icon: <Target size={24} />,
-    title: "Technical Analysis",
-    desc: "Algorithmic posture correction and ground contact analysis.",
+    title: "Form Correction",
+    desc: "Improve your running posture and foot strike technique.",
   },
   {
     icon: <TrendingUp size={24} />,
-    title: "Velocity Trajectory",
-    desc: "Visualized speed improvements over 6-week micro-cycles.",
+    title: "See Your Speed",
+    desc: "Watch your sprint times drop week by week on your dashboard.",
   },
 ];
 
 const JOURNEY_STEPS = [
   {
     num: "01",
-    title: "Secure Registration",
-    desc: "Create your athlete profile and access the hub.",
+    title: "Sign Up",
+    desc: "Create your secure account to get started.",
   },
   {
     num: "02",
-    title: "Biomechanical Assessment",
-    desc: "Submit your baseline metrics and sprint tape.",
+    title: "Take the Test",
+    desc: "Share your current stats and a video of your sprint.",
   },
   {
     num: "03",
-    title: "Protocol Assignment",
-    desc: "Receive your custom 6-week speed optimization block.",
+    title: "Get Your Plan",
+    desc: "Get a custom 6-week training plan built just for you.",
   },
   {
     num: "04",
-    title: "Execute & Dominate",
-    desc: "Train daily, track readiness, and crush your PRs.",
+    title: "Train & Win",
+    desc: "Follow the plan, get faster, and beat your personal best.",
   },
 ];
 
@@ -161,38 +161,7 @@ export default function LandingPage() {
   const currentGallerySet = facilitySlides[galleryIndex] || [];
 
   return (
-    <div className="min-h-screen text-[#E5E7EB] font-sans selection:bg-amber-500/30 overflow-x-hidden relative">
-      {/* 🎬 GLOBAL CINEMATIC BACKGROUND SYSTEM */}
-      <div className="fixed inset-0 z-0 pointer-events-none bg-[#0F1724]">
-        <img
-          src="https://media.theathleticzone.in/Landing%20page%20background%20video/poster-image%20(1).avif"
-          alt="The Athletic Zone Background"
-          className="absolute inset-0 w-full h-full object-cover opacity-40 md:hidden"
-        />
-
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          src="https://media.theathleticzone.in/Landing%20page%20background%20video/TAZ-Hero-section-bg%20(1).mp4"
-          className="hidden md:block absolute inset-0 w-full h-full object-cover opacity-40"
-          poster="https://media.theathleticzone.in/Landing%20page%20background%20video/poster-image%20(1).avif"
-        />
-
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0F1724]/95 via-[#0B0F14]/80 to-[#0F1724]/95 mix-blend-multiply" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,#0B0F14_100%)] opacity-90" />
-        <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-amber-500/10 blur-[150px] rounded-full animate-[pulse_8s_ease-in-out_infinite]" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-blue-900/10 blur-[150px] rounded-full animate-[pulse_10s_ease-in-out_infinite_reverse]" />
-
-        <div
-          className="absolute inset-0 opacity-[0.03] mix-blend-overlay"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
-          }}
-        />
-      </div>
-
+    <div className="min-h-screen text-[#E5E7EB] font-sans selection:bg-amber-500/30 overflow-x-hidden bg-[#0B0F14]">
       {/* 🟢 FLOATING WHATSAPP CTA */}
       <a
         href={WHATSAPP_LINK}
@@ -205,9 +174,12 @@ export default function LandingPage() {
       </a>
 
       {/* 💎 GLASSMORPHISM NAVBAR */}
-      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/[0.05] bg-[#0F1724]/20 backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.02)] transition-all duration-300">
+      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/[0.05] bg-[#0F1724]/40 backdrop-blur-xl shadow-[0_10px_30px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.02)] transition-all duration-300">
         <div className="max-w-7xl mx-auto px-6 h-24 flex items-center justify-between">
-          <div className="flex items-center gap-4 group cursor-pointer">
+          <div
+            className="flex items-center gap-4 group cursor-pointer"
+            onClick={() => window.scrollTo(0, 0)}
+          >
             <div className="h-12 w-12 bg-amber-500/10 border border-amber-500/20 rounded-[14px] flex items-center justify-center shadow-inner group-hover:bg-amber-500 group-hover:shadow-[0_0_20px_rgba(245,158,11,0.4)] transition-all duration-500">
               <span className="text-amber-500 group-hover:text-black font-black text-2xl italic tracking-tighter transition-colors">
                 AZ
@@ -223,30 +195,40 @@ export default function LandingPage() {
               to="/register"
               className="text-[11px] font-black uppercase tracking-widest text-[#8A94A6] hover:text-white transition-colors hidden sm:block"
             >
-              Register
+              Sign Up
             </Link>
 
             <Link
               to="/login"
               className="px-5 py-3 md:px-8 md:py-4 bg-amber-500 text-black text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] rounded-[12px] md:rounded-[14px] hover:bg-amber-400 transition-all shadow-[0_10px_20px_rgba(245,158,11,0.2)] active:scale-95 flex items-center gap-1 md:gap-2 whitespace-nowrap"
             >
-              Login <ChevronRight size={14} strokeWidth={3} />
+              Log In <ChevronRight size={14} strokeWidth={3} />
             </Link>
           </div>
         </div>
       </nav>
 
-      {/* 🎬 SECTION 1: HERO (Cinematic Impact) */}
-      <section className="relative min-h-screen flex items-center justify-center pt-24 z-10">
-        <div className="max-w-7xl mx-auto px-6 text-center space-y-8">
+      {/* 🎬 SECTION 1: HERO */}
+      <section className="relative min-h-screen flex items-center justify-center pt-24 overflow-hidden">
+        {/* Unique Background Image */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src="https://images.unsplash.com/photo-1461896836934-ffe607ba8211?q=80&w=2070&auto=format&fit=crop"
+            alt="Starting Blocks"
+            className="w-full h-full object-cover opacity-30 mix-blend-luminosity"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0B0F14] via-transparent to-[#0B0F14]" />
+        </div>
+
+        <div className="relative z-10 max-w-7xl mx-auto px-6 text-center space-y-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7 }}
-            className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full bg-black/40 border border-white/[0.05] text-[10px] font-black text-amber-500 uppercase tracking-[0.3em] shadow-inner backdrop-blur-md"
+            className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full bg-black/40 backdrop-blur-xl border border-white/10 text-[10px] font-black text-amber-500 uppercase tracking-[0.3em] shadow-inner"
           >
             <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse shadow-[0_0_10px_rgba(245,158,11,0.8)]" />
-            Sprint Intelligence Hub Online
+            Online Sprint Training Hub
           </motion.div>
 
           <motion.h1
@@ -273,11 +255,11 @@ export default function LandingPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1, delay: 0.8 }}
-            className="max-w-2xl mx-auto text-[11px] md:text-sm text-[#8A94A6] font-bold uppercase tracking-[0.3em] leading-loose drop-shadow-md"
+            className="max-w-2xl mx-auto text-[11px] md:text-sm text-gray-300 font-bold uppercase tracking-[0.2em] leading-loose drop-shadow-md"
           >
-            Elite technical coaching and algorithmic biomechanical intelligence
-            for the 100m & 200m track athlete. Built exclusively for sprinters
-            who refuse to stay average.
+            Expert coaching and smart training plans for the 100m & 200m track
+            athlete. Built for sprinters who want to run faster and leave the
+            competition behind.
           </motion.p>
 
           <motion.div
@@ -288,10 +270,10 @@ export default function LandingPage() {
           >
             <a
               href="#sprint-program"
-              className="group flex flex-col items-center gap-3 text-[#8A94A6] hover:text-amber-500 transition-colors"
+              className="group flex flex-col items-center gap-3 text-white/50 hover:text-amber-500 transition-colors"
             >
               <span className="text-[9px] font-black uppercase tracking-[0.4em]">
-                Explore The Protocol
+                Explore Programs
               </span>
               <ChevronRight
                 size={18}
@@ -303,25 +285,33 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 🏆 NEW CTA SECTION: 100m & 200m Sprint Program */}
+      {/* 🏆 SECTION 2: CTA CARD */}
       <section
         id="sprint-program"
-        className="py-20 md:py-32 px-6 relative z-10 border-t border-white/[0.05] bg-black/20 backdrop-blur-sm flex justify-center items-center overflow-hidden"
+        className="py-20 md:py-32 px-6 relative flex justify-center items-center overflow-hidden"
       >
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(245,158,11,0.05),transparent_60%)] pointer-events-none" />
+        {/* Unique Background Image */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src="https://images.unsplash.com/photo-1552674605-15cff28591dd?q=80&w=2070&auto=format&fit=crop"
+            alt="Running"
+            className="w-full h-full object-cover opacity-20"
+          />
+          <div className="absolute inset-0 bg-[#0B0F14]/60 backdrop-blur-sm" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0B0F14] via-transparent to-[#0B0F14]" />
+        </div>
 
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="relative z-10 w-full max-w-4xl bg-[#0F1724]/40 backdrop-blur-2xl border border-white/10 p-8 md:p-14 rounded-[2rem] shadow-[0_30px_60px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.05)] text-center flex flex-col items-center group hover:border-amber-500/20 transition-colors duration-500"
+          className="relative z-10 w-full max-w-4xl bg-[#0F1724]/70 backdrop-blur-2xl border border-white/10 p-8 md:p-14 rounded-[2rem] shadow-[0_30px_60px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.05)] text-center flex flex-col items-center group hover:border-amber-500/30 transition-colors duration-500"
         >
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[200px] bg-amber-500/10 blur-[80px] pointer-events-none rounded-full opacity-50 group-hover:opacity-100 transition-opacity duration-700" />
 
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/20 text-[10px] font-black uppercase tracking-[0.2em] text-amber-500 mb-6 shadow-inner">
-            <Timer size={14} />
-            Track & Field Specialization
+            <Timer size={14} /> Track & Field Focus
           </div>
 
           <h2 className="text-3xl md:text-5xl lg:text-6xl font-black italic uppercase tracking-tighter text-white mb-6 leading-[1.1] drop-shadow-lg">
@@ -329,11 +319,10 @@ export default function LandingPage() {
             Sprint
           </h2>
 
-          <p className="text-[#8A94A6] text-sm md:text-base font-medium leading-relaxed max-w-2xl mb-10 group-hover:text-white/70 transition-colors duration-500">
-            Step into the Elite Track. Complete your biomechanical assessment
-            and let our algorithm assign the exact 6-week protocol you need to
-            optimize your mechanics, increase ground force production, and shave
-            milliseconds off your time.
+          <p className="text-gray-300 text-sm md:text-base font-medium leading-relaxed max-w-2xl mb-10 group-hover:text-white transition-colors duration-500">
+            Ready to get faster? Take our quick assessment and let our system
+            build the exact 6-week workout plan you need to improve your form
+            and shave seconds off your time.
           </p>
 
           <button
@@ -341,20 +330,29 @@ export default function LandingPage() {
             className="relative overflow-hidden px-8 py-4 bg-amber-500 text-black font-black text-xs md:text-sm uppercase tracking-widest rounded-xl hover:bg-amber-400 transition-all shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:shadow-[0_0_30px_rgba(245,158,11,0.5)] active:scale-95 flex items-center gap-3"
           >
             <span className="relative z-10 flex items-center gap-2">
-              Unlock Elite Access
+              Start Training Now{" "}
               <ArrowRight
                 size={18}
                 className="group-hover:translate-x-1 transition-transform"
               />
             </span>
-            <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent hover:animate-shimmer" />
           </button>
         </motion.div>
       </section>
 
-      {/* 🧠 SECTION 3: NEXT-GEN INTELLIGENCE */}
-      <section className="py-20 md:py-32 px-6 relative z-10 border-t border-white/[0.02] bg-white/[0.01] backdrop-blur-md">
-        <div className="max-w-7xl mx-auto">
+      {/* 🧠 SECTION 3: FEATURES */}
+      <section className="py-20 md:py-32 px-6 relative overflow-hidden">
+        {/* Unique Background Image */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=2070&auto=format&fit=crop"
+            alt="Track Spikes"
+            className="w-full h-full object-cover opacity-10"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F14] via-[#0B0F14]/80 to-[#0B0F14]" />
+        </div>
+
+        <div className="max-w-7xl mx-auto relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -367,11 +365,11 @@ export default function LandingPage() {
               strokeWidth={1.5}
             />
             <h2 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter text-white drop-shadow-lg">
-              Performance <span className="text-amber-500">Intelligence</span>
+              Smart <span className="text-amber-500">Training</span>
             </h2>
-            <p className="text-[10px] font-black text-[#8A94A6] uppercase tracking-[0.3em] mt-4 max-w-2xl mx-auto leading-relaxed drop-shadow-md">
-              We don't just sprint. We track, analyze, and mathematically
-              optimize speed mechanics using our custom-built analytics hub.
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mt-4 max-w-2xl mx-auto leading-relaxed drop-shadow-md">
+              We don't just run. We track, analyze, and build a plan to make you
+              faster safely.
             </p>
           </motion.div>
 
@@ -383,15 +381,15 @@ export default function LandingPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-50px" }}
                 transition={{ delay: i * 0.1 }}
-                className="bg-black/40 backdrop-blur-md border border-white/[0.05] rounded-[24px] p-8 shadow-[0_15px_35px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.04)] group hover:border-amber-500/30 transition-all duration-500 hover:-translate-y-2"
+                className="bg-[#0F1724]/60 backdrop-blur-xl border border-white/10 rounded-[24px] p-8 shadow-[0_15px_35px_rgba(0,0,0,0.5)] group hover:border-amber-500/50 transition-all duration-500 hover:-translate-y-2"
               >
-                <div className="h-14 w-14 rounded-[16px] bg-white/[0.02] border border-white/[0.05] flex items-center justify-center text-amber-500 mb-6 shadow-inner group-hover:scale-110 group-hover:bg-amber-500/10 transition-all">
+                <div className="h-14 w-14 rounded-[16px] bg-white/5 border border-white/10 flex items-center justify-center text-amber-500 mb-6 shadow-inner group-hover:scale-110 group-hover:bg-amber-500 group-hover:text-black transition-all">
                   {feature.icon}
                 </div>
-                <h3 className="text-lg font-black uppercase italic tracking-tighter text-[#E5E7EB] mb-3">
+                <h3 className="text-lg font-black uppercase italic tracking-tighter text-white mb-3">
                   {feature.title}
                 </h3>
-                <p className="text-[10px] text-[#8A94A6] font-bold uppercase tracking-widest leading-relaxed">
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-relaxed">
                   {feature.desc}
                 </p>
               </motion.div>
@@ -400,9 +398,9 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 🏟️ SECTION 4: FACILITY GALLERY */}
-      <section className="py-20 md:py-32 px-6 relative z-10 border-t border-white/[0.05] bg-black/20 backdrop-blur-sm overflow-hidden">
-        <div className="max-w-7xl mx-auto relative">
+      {/* 🏟️ SECTION 4: GALLERY */}
+      <section className="py-20 md:py-32 px-6 relative bg-[#0B0F14] overflow-hidden border-y border-white/5">
+        <div className="max-w-7xl mx-auto relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -411,7 +409,7 @@ export default function LandingPage() {
           >
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 text-[9px] font-black uppercase tracking-[0.3em] mb-4 shadow-inner">
               <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.8)]" />
-              Live Facility Feed
+              Facility Feed
             </div>
             <h2 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter text-white drop-shadow-lg">
               The <span className="text-amber-500">Facility</span>
@@ -445,12 +443,6 @@ export default function LandingPage() {
                       className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-[2s] opacity-70 group-hover:opacity-100"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F14]/90 via-transparent to-transparent opacity-80 group-hover:opacity-40 transition-opacity duration-700" />
-                    <div className="absolute bottom-4 left-4 flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500/80" />
-                      <span className="text-[9px] font-black uppercase tracking-[0.3em] text-white/90 drop-shadow-md">
-                        Cam 0{i + 1}
-                      </span>
-                    </div>
                   </motion.div>
                 );
               })}
@@ -460,8 +452,8 @@ export default function LandingPage() {
       </section>
 
       {/* 🏅 SECTION 5: HEAD COACH */}
-      <section className="py-20 md:py-32 px-6 relative z-10 bg-[#0B0F14]">
-        <div className="max-w-7xl mx-auto relative flex flex-col items-center">
+      <section className="py-20 md:py-32 px-6 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto relative flex flex-col items-center z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -480,45 +472,37 @@ export default function LandingPage() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="group relative w-full max-w-md bg-[#121821] border border-white/5 rounded-[24px] overflow-hidden hover:border-amber-500/30 transition-all duration-500 shadow-xl hover:shadow-[0_20px_40px_rgba(245,158,11,0.1)]"
+            className="group relative w-full max-w-md bg-[#0F1724]/60 backdrop-blur-xl border border-white/10 rounded-[24px] overflow-hidden hover:border-amber-500/50 transition-all duration-500 shadow-[0_20px_50px_rgba(0,0,0,0.6)]"
           >
             <div className="aspect-[4/5] relative overflow-hidden group">
-              {/* 📷 CHANGE THIS IMAGE URL LATER */}
               <img
-                src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=1470&auto=format&fit=crop"
+                src="https://images.unsplash.com/photo-1574680096145-d05b474e2155?q=80&w=2069&auto=format&fit=crop"
                 alt="Head Coach"
-                className="absolute inset-0 w-full h-full object-cover grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700"
+                className="absolute inset-0 w-full h-full object-cover grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F19] via-[#0B0F19]/40 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-500" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F19] via-[#0B0F19]/40 to-transparent opacity-90 group-hover:opacity-100 transition-opacity duration-500" />
 
-              {/* Floating Data Panel */}
               <div className="absolute bottom-0 left-0 w-full p-6 translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-                <div className="relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md p-6 shadow-2xl transition-all duration-500 group-hover:bg-white/10 group-hover:border-amber-500/30">
+                <div className="relative overflow-hidden rounded-2xl bg-white/10 border border-white/20 backdrop-blur-xl p-6 shadow-2xl transition-all duration-500 group-hover:bg-white/20 group-hover:border-amber-500/50">
                   <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-amber-500 to-transparent opacity-50" />
-
                   <div className="flex items-center gap-2 mb-2">
-                    <div className="flex items-center justify-center w-5 h-5 rounded-full bg-amber-500/20 text-amber-500">
+                    <div className="flex items-center justify-center w-5 h-5 rounded-full bg-amber-500 text-black">
                       <Briefcase size={10} />
                     </div>
-                    {/* ✏️ CHANGE THIS TITLE */}
                     <span className="text-amber-500 text-[9px] font-black uppercase tracking-[0.3em] drop-shadow-md">
-                      Head Performance Coach
+                      Head Sprint Coach
                     </span>
                   </div>
-
-                  {/* ✏️ CHANGE THIS NAME */}
                   <h3 className="text-3xl font-black italic uppercase tracking-tighter text-white mb-4 drop-shadow-lg">
                     Jitendra Saini
                   </h3>
-
-                  <div className="flex items-center justify-between pt-4 border-t border-white/10">
+                  <div className="flex items-center justify-between pt-4 border-t border-white/20">
                     <div className="flex items-center gap-2">
                       <Award
                         size={14}
-                        className="text-[#8A94A6] group-hover:text-amber-500 transition-colors duration-300"
+                        className="text-white group-hover:text-amber-500 transition-colors duration-300"
                       />
-                      {/* ✏️ CHANGE THIS EXPERIENCE TAGLINE */}
-                      <p className="text-[#8A94A6] text-[11px] font-bold uppercase tracking-widest group-hover:text-white transition-colors duration-300">
+                      <p className="text-white text-[11px] font-bold uppercase tracking-widest transition-colors duration-300">
                         4+ Years Elite Track Experience
                       </p>
                     </div>
@@ -530,9 +514,20 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 🚀 SECTION 6: TRAINING JOURNEY */}
-      <section className="py-20 md:py-32 px-6 relative z-10 border-t border-white/[0.05] bg-black/20 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto">
+      {/* 🚀 SECTION 6: THE PROTOCOL */}
+      <section className="py-20 md:py-32 px-6 relative overflow-hidden border-t border-white/5">
+        {/* Unique Background Image */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src="https://images.unsplash.com/photo-1519833159155-7380963ce5d7?q=80&w=2070&auto=format&fit=crop"
+            alt="Stopwatch"
+            className="w-full h-full object-cover opacity-10"
+          />
+          <div className="absolute inset-0 bg-[#0B0F14]/40 backdrop-blur-sm" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0B0F14] via-transparent to-[#0B0F14]" />
+        </div>
+
+        <div className="max-w-7xl mx-auto relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -540,12 +535,12 @@ export default function LandingPage() {
             className="text-center mb-24"
           >
             <h2 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter text-white drop-shadow-lg">
-              The <span className="text-amber-500">Protocol</span>
+              How It <span className="text-amber-500">Works</span>
             </h2>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10 relative">
-            <div className="hidden md:block absolute top-10 left-[10%] right-[10%] h-[2px] bg-gradient-to-r from-transparent via-white/10 to-transparent z-0" />
+            <div className="hidden md:block absolute top-10 left-[10%] right-[10%] h-[2px] bg-gradient-to-r from-transparent via-amber-500/30 to-transparent z-0" />
             {JOURNEY_STEPS.map((step, i) => (
               <motion.div
                 key={i}
@@ -555,15 +550,15 @@ export default function LandingPage() {
                 transition={{ delay: i * 0.1 }}
                 className="relative z-10 text-center space-y-6"
               >
-                <div className="w-20 h-20 mx-auto bg-[#0B0F14] border border-white/[0.1] rounded-full flex items-center justify-center text-2xl font-black italic text-amber-500 shadow-[0_10px_20px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.04)] relative group">
-                  <div className="absolute inset-0 rounded-full border border-amber-500/0 group-hover:border-amber-500/50 group-hover:animate-ping transition-colors duration-500" />
+                <div className="w-20 h-20 mx-auto bg-[#0F1724]/80 backdrop-blur-xl border border-white/10 rounded-full flex items-center justify-center text-2xl font-black italic text-amber-500 shadow-[0_10px_30px_rgba(0,0,0,0.5)] relative group hover:scale-110 transition-transform">
+                  <div className="absolute inset-0 rounded-full border border-amber-500/0 group-hover:border-amber-500/50 transition-colors duration-500" />
                   {step.num}
                 </div>
-                <div>
-                  <h3 className="text-lg font-black uppercase tracking-tighter text-white italic mb-2 drop-shadow-md">
+                <div className="bg-[#0F1724]/40 backdrop-blur-md border border-white/5 rounded-[16px] p-6 shadow-lg">
+                  <h3 className="text-lg font-black uppercase tracking-tighter text-white italic mb-2">
                     {step.title}
                   </h3>
-                  <p className="text-[10px] font-bold text-[#8A94A6] uppercase tracking-widest leading-relaxed drop-shadow-sm">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-relaxed">
                     {step.desc}
                   </p>
                 </div>
@@ -573,9 +568,9 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 🗣️ SECTION 7: SUCCESS STORIES */}
-      <section className="py-20 md:py-32 px-6 relative z-10 border-t border-white/[0.02] bg-white/[0.01] backdrop-blur-md">
-        <div className="max-w-7xl mx-auto">
+      {/* 🗣️ SECTION 7: REVIEWS */}
+      <section className="py-20 md:py-32 px-6 relative overflow-hidden border-t border-white/5">
+        <div className="max-w-7xl mx-auto relative z-10">
           <div className="mb-16 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -588,14 +583,14 @@ export default function LandingPage() {
                 size={32}
               />
               <h2 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter text-white drop-shadow-lg">
-                Genuine<span className="text-amber-500">Feedbacks</span>
+                Success <span className="text-amber-500">Stories</span>
               </h2>
             </motion.div>
 
             <div className="flex items-center gap-3">
               <button
                 onClick={() => scrollReviews("left")}
-                className="w-12 h-12 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-amber-500/50 flex items-center justify-center text-white transition-all active:scale-95"
+                className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-xl border border-white/10 hover:border-amber-500/50 flex items-center justify-center text-white transition-all active:scale-95"
               >
                 <ChevronLeft size={20} />
               </button>
@@ -610,7 +605,7 @@ export default function LandingPage() {
 
           <div
             ref={reviewScrollRef}
-            className="flex gap-6 overflow-x-auto snap-x snap-mandatory pb-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+            className="flex gap-6 overflow-x-auto snap-x snap-mandatory pb-12 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
           >
             {reviews.length > 0 ? (
               reviews.map((review, i) => (
@@ -619,28 +614,28 @@ export default function LandingPage() {
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: i * 0.1 }}
-                  className="w-[85vw] md:w-[400px] shrink-0 snap-start bg-black/40 backdrop-blur-md p-8 rounded-[24px] border border-white/[0.05] shadow-[0_20px_50px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.04)] flex flex-col justify-between hover:border-amber-500/20 transition-colors"
+                  className="w-[85vw] md:w-[400px] shrink-0 snap-start bg-[#0F1724]/60 backdrop-blur-xl p-8 rounded-[24px] border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col justify-between hover:border-amber-500/40 transition-colors"
                 >
-                  <p className="text-sm font-medium text-[#E5E7EB] leading-loose italic mb-8">
+                  <p className="text-sm font-medium text-white leading-loose italic mb-8">
                     "{review.content}"
                   </p>
-                  <div className="flex items-center gap-4 border-t border-white/[0.05] pt-6">
+                  <div className="flex items-center gap-4 border-t border-white/10 pt-6">
                     {review.user?.profileImage ? (
                       <img
                         src={review.user.profileImage}
                         alt="User"
-                        className="w-10 h-10 rounded-full object-cover border border-white/[0.05] shadow-inner"
+                        className="w-10 h-10 rounded-full object-cover border border-white/20 shadow-inner"
                       />
                     ) : (
-                      <div className="w-10 h-10 bg-white/[0.02] rounded-full flex items-center justify-center text-amber-500 font-black italic border border-white/[0.05] shadow-inner">
+                      <div className="w-10 h-10 bg-amber-500/20 rounded-full flex items-center justify-center text-amber-500 font-black italic border border-amber-500/40 shadow-inner">
                         {review.user?.name?.[0] || "A"}
                       </div>
                     )}
                     <div>
                       <p className="text-[11px] font-black text-white uppercase tracking-widest">
-                        {review.user?.name || "Anonymous Recruit"}
+                        {review.user?.name || "Anonymous Athlete"}
                       </p>
-                      <p className="text-[9px] font-black text-amber-500/60 uppercase tracking-[0.2em] mt-1">
+                      <p className="text-[9px] font-black text-amber-500/80 uppercase tracking-[0.2em] mt-1">
                         {review.sport}
                       </p>
                     </div>
@@ -662,7 +657,7 @@ export default function LandingPage() {
               ))
             ) : (
               <div className="w-full text-center py-10 text-white/30 text-xs font-black uppercase tracking-widest">
-                No clearances on record.
+                No reviews available right now.
               </div>
             )}
           </div>
@@ -670,8 +665,8 @@ export default function LandingPage() {
       </section>
 
       {/* 📍 SECTION 8: LOCATION & CONTACT */}
-      <section className="py-24 px-6 relative z-10 border-t border-white/[0.05] bg-black/20 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+      <section className="py-24 px-6 relative overflow-hidden border-t border-white/5">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center relative z-10">
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -682,21 +677,21 @@ export default function LandingPage() {
               <h2 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter text-white mb-4 drop-shadow-lg">
                 The <span className="text-amber-500">Address</span>
               </h2>
-              <p className="text-[10px] font-black text-[#8A94A6] uppercase tracking-[0.3em] drop-shadow-md">
-                Initialize visual contact before deployment.
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] drop-shadow-md">
+                Come visit us and see where the magic happens.
               </p>
             </div>
 
             <div className="space-y-4">
-              <div className="flex items-start gap-4 bg-black/40 backdrop-blur-md p-5 rounded-[16px] border border-white/[0.05] shadow-inner hover:border-amber-500/30 transition-colors">
-                <div className="h-10 w-10 bg-amber-500/10 rounded-[10px] flex items-center justify-center text-amber-500 flex-shrink-0">
+              <div className="flex items-start gap-4 bg-[#0F1724]/60 backdrop-blur-xl p-5 rounded-[16px] border border-white/10 shadow-lg hover:border-amber-500/40 transition-colors">
+                <div className="h-10 w-10 bg-amber-500 rounded-[10px] flex items-center justify-center text-black flex-shrink-0 shadow-[0_0_15px_rgba(245,158,11,0.4)]">
                   <MapPin size={18} />
                 </div>
                 <div>
-                  <p className="text-[9px] font-black uppercase tracking-widest text-[#8A94A6] mb-1">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1">
                     Address
                   </p>
-                  <p className="text-xs font-bold text-[#E5E7EB] tracking-wider leading-relaxed">
+                  <p className="text-xs font-bold text-white tracking-wider leading-relaxed">
                     Athletic Zone
                     <br />
                     34A, opposite Hansa Palace Road
@@ -708,28 +703,28 @@ export default function LandingPage() {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-4 bg-black/40 backdrop-blur-md p-5 rounded-[16px] border border-white/[0.05] shadow-inner hover:border-amber-500/30 transition-colors">
-                <div className="h-10 w-10 bg-amber-500/10 rounded-[10px] flex items-center justify-center text-amber-500 flex-shrink-0">
+              <div className="flex items-center gap-4 bg-[#0F1724]/60 backdrop-blur-xl p-5 rounded-[16px] border border-white/10 shadow-lg hover:border-amber-500/40 transition-colors">
+                <div className="h-10 w-10 bg-amber-500 rounded-[10px] flex items-center justify-center text-black flex-shrink-0 shadow-[0_0_15px_rgba(245,158,11,0.4)]">
                   <Clock size={18} />
                 </div>
                 <div>
-                  <p className="text-[9px] font-black uppercase tracking-widest text-[#8A94A6] mb-1">
-                    Active Window
+                  <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1">
+                    Open Hours
                   </p>
-                  <p className="text-xs font-bold text-[#E5E7EB] tracking-wider">
+                  <p className="text-xs font-bold text-white tracking-wider">
                     06:00 AM — 20:00 PM (Daily)
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-4 bg-black/40 backdrop-blur-md p-5 rounded-[16px] border border-white/[0.05] shadow-inner hover:border-amber-500/30 transition-colors">
-                <div className="h-10 w-10 bg-amber-500/10 rounded-[10px] flex items-center justify-center text-amber-500 flex-shrink-0">
+              <div className="flex items-center gap-4 bg-[#0F1724]/60 backdrop-blur-xl p-5 rounded-[16px] border border-white/10 shadow-lg hover:border-amber-500/40 transition-colors">
+                <div className="h-10 w-10 bg-amber-500 rounded-[10px] flex items-center justify-center text-black flex-shrink-0 shadow-[0_0_15px_rgba(245,158,11,0.4)]">
                   <Phone size={18} />
                 </div>
                 <div>
-                  <p className="text-[9px] font-black uppercase tracking-widest text-[#8A94A6] mb-1">
-                    Direct Comms
+                  <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1">
+                    Contact Us
                   </p>
-                  <p className="text-xs font-bold text-[#E5E7EB] tracking-wider">
+                  <p className="text-xs font-bold text-white tracking-wider">
                     +91 86192 55647
                   </p>
                 </div>
@@ -741,18 +736,13 @@ export default function LandingPage() {
             initial={{ opacity: 0, x: 30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            className="h-[450px] bg-black/60 rounded-[24px] border border-white/[0.05] overflow-hidden relative shadow-[0_20px_50px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.05)] flex items-center justify-center"
+            className="h-[450px] bg-black/60 rounded-[24px] border border-white/20 overflow-hidden relative shadow-[0_30px_60px_rgba(0,0,0,0.8)] flex items-center justify-center"
           >
-            <div className="absolute inset-0 bg-blue-500/5 mix-blend-overlay pointer-events-none z-10" />
             <iframe
               src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3628.5475739845874!2d73.7182282751422!3d24.570291878119853!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3967ef1e19cc92a7%3A0xcfa5ff23f205570f!2sAthletic%20zone!5e0!3m2!1sen!2sin!4v1772879873901!5m2!1sen!2sin"
               width="100%"
               height="100%"
-              style={{
-                border: 0,
-                opacity: 0.7,
-                filter: "grayscale(100%) contrast(1.2)",
-              }}
+              style={{ border: 0, filter: "contrast(1.2)" }}
               allowFullScreen
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
@@ -762,14 +752,24 @@ export default function LandingPage() {
       </section>
 
       {/* 🔥 SECTION 9: FINAL CONVERSION */}
-      <section className="py-40 px-6 relative z-10 overflow-hidden text-center bg-[#0B0F14]/40 backdrop-blur-xl border-t border-white/[0.05]">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl h-[400px] bg-amber-500/10 blur-[150px] rounded-full pointer-events-none" />
+      <section className="py-40 px-6 relative overflow-hidden text-center border-t border-white/5">
+        {/* Unique Background Image */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src="https://images.unsplash.com/photo-1461896836934-ffe607ba8211?q=80&w=2070&auto=format&fit=crop"
+            alt="Final Sprint"
+            className="w-full h-full object-cover opacity-20 mix-blend-luminosity"
+          />
+          <div className="absolute inset-0 bg-[#0B0F14]/70 backdrop-blur-md" />
+        </div>
+
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl h-[400px] bg-amber-500/20 blur-[150px] rounded-full pointer-events-none" />
 
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
-          className="relative z-10 max-w-4xl mx-auto space-y-10"
+          className="relative z-10 max-w-4xl mx-auto space-y-10 bg-[#0F1724]/60 backdrop-blur-2xl border border-white/10 p-12 rounded-[2rem] shadow-[0_40px_80px_rgba(0,0,0,0.8)]"
         >
           <h2 className="text-5xl md:text-7xl font-black uppercase italic tracking-tighter text-white leading-tight drop-shadow-2xl">
             Ready to Train Like <br /> a{" "}
@@ -777,9 +777,9 @@ export default function LandingPage() {
               Professional?
             </span>
           </h2>
-          <p className="text-xs font-black text-[#8A94A6] uppercase tracking-[0.4em] leading-loose max-w-2xl mx-auto drop-shadow-md">
-            Stop guessing. Start tracking. Join the elite roster today and get
-            access to world-class coaching and analytics.
+          <p className="text-xs font-black text-gray-300 uppercase tracking-[0.3em] leading-loose max-w-2xl mx-auto drop-shadow-md">
+            Stop guessing. Start tracking. Create your account today and get
+            access to world-class coaching and personalized training.
           </p>
           <div className="pt-8">
             <Link
