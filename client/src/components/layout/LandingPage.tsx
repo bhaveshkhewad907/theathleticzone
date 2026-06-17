@@ -769,7 +769,7 @@ export default function LandingPage() {
       </section>
 
       {/* 🔥 SECTION 9: FINAL CONVERSION */}
-      <section className="py-40 px-6 relative overflow-hidden text-center border-t border-white/5">
+      <section className="py-24 md:py-40 px-4 md:px-6 relative overflow-hidden text-center border-t border-white/5">
         {/* Unique Background Image */}
         <div className="absolute inset-0 z-0">
           <img
@@ -786,30 +786,34 @@ export default function LandingPage() {
           initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
-          className="relative z-10 max-w-4xl mx-auto space-y-10 bg-[#0F1724]/60 backdrop-blur-2xl border border-white/10 p-12 rounded-[2rem] shadow-[0_40px_80px_rgba(0,0,0,0.8)]"
+          className="relative z-10 w-full max-w-4xl mx-auto space-y-8 md:space-y-10 bg-[#0F1724]/60 backdrop-blur-2xl border border-white/10 p-8 md:p-14 lg:p-16 rounded-[2rem] shadow-[0_40px_80px_rgba(0,0,0,0.8)]"
         >
-          <h2 className="text-5xl md:text-7xl font-black uppercase italic tracking-tighter text-white leading-tight drop-shadow-2xl">
-            Ready to Train Like <br /> a{" "}
+          <h2 className="text-4xl md:text-6xl lg:text-7xl font-black uppercase italic tracking-tighter text-white leading-[1.1] md:leading-tight drop-shadow-2xl">
+            Ready to Train Like <br className="hidden md:block" /> a{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-yellow-300 drop-shadow-[0_0_30px_rgba(245,158,11,0.4)]">
               Professional?
             </span>
           </h2>
-          <p className="text-xs font-black text-gray-300 uppercase tracking-[0.3em] leading-loose max-w-2xl mx-auto drop-shadow-md">
+
+          <p className="text-[10px] md:text-xs font-black text-gray-300 uppercase tracking-[0.2em] md:tracking-[0.3em] leading-relaxed md:leading-loose max-w-2xl mx-auto drop-shadow-md">
             Stop guessing. Start tracking. Create your account today and get
             access to world-class coaching and personalized training.
           </p>
-          <div className="pt-8">
+
+          <div className="pt-4 md:pt-8 w-full flex justify-center">
             <Link
               to="/register"
-              className="inline-flex items-center justify-center gap-3 md:gap-4 px-8 py-5 md:px-16 md:py-8 bg-amber-500 text-black text-[10px] md:text-xs font-black uppercase tracking-[0.2em] md:tracking-[0.3em] rounded-[16px] md:rounded-[24px] hover:bg-amber-400 transition-all shadow-[0_20px_50px_rgba(245,158,11,0.4)] active:scale-95 group overflow-hidden relative whitespace-nowrap"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-5 md:px-14 md:py-6 bg-amber-500 text-black text-[11px] md:text-sm font-black uppercase tracking-widest rounded-[16px] hover:bg-amber-400 transition-all shadow-[0_15px_40px_rgba(245,158,11,0.3)] hover:shadow-[0_20px_50px_rgba(245,158,11,0.5)] active:scale-95 group overflow-hidden relative"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
-              Create Athlete Account{" "}
-              <ChevronRight
-                size={20}
-                strokeWidth={3}
-                className="group-hover:translate-x-1 transition-transform"
-              />
+              <span className="relative z-10 flex items-center gap-2">
+                Create Athlete Account
+                <ChevronRight
+                  size={18}
+                  strokeWidth={3}
+                  className="group-hover:translate-x-1 transition-transform"
+                />
+              </span>
             </Link>
           </div>
         </motion.div>
