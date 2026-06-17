@@ -7,6 +7,27 @@ import crypto from "crypto";
 import mongoose from "mongoose";
 import { logger } from "../../utils/logger";
 
+// 🛡️ THE R2 INTERCEPTOR (Fixes the 403 Forbidden Video Errors)
+const enforceSecureUrl = async (url: string) => {
+  if (!url) return url;
+  try {
+    // If it's a Cloudflare Dev URL, extract the raw key and securely sign it
+    if (url.includes(".r2.dev/")) {
+      const fileKey = url.split(".r2.dev/")[1];
+      return await getPresignedUrl(fileKey);
+    }
+    // If it's already a raw key (no http), securely sign it
+    if (!url.startsWith("http")) {
+      return await getPresignedUrl(url);
+    }
+    // Leave external placeholders untouched
+    return url;
+  } catch (error) {
+    console.error("URL Security Extraction Failed:", error);
+    return url;
+  }
+};
+
 export const getMyCourses = async (userId: string) => {
   const purchases = await CoursePurchase.find({
     user: userId,
@@ -21,17 +42,34 @@ export const getMyCourses = async (userId: string) => {
 
   const updatedPurchases = await Promise.all(
     validPurchases.map(async (purchase: any) => {
+      // 🚀 THE SCHEMA FIX: Check both legacy fields AND the new 'meta' fields
+      const rawThumbnail =
+        purchase.course.meta?.coverImageUrl || purchase.course.thumbnailUrl;
+      const rawVideo =
+        purchase.course.meta?.videoUrl ||
+        purchase.course.videoKey ||
+        purchase.course.videoUrl;
+
+      // 🛡️ Route them through the Interceptor!
       const [signedThumbnail, signedVideo] = await Promise.all([
-        getPresignedUrl(purchase.course.thumbnailUrl),
-        getPresignedUrl(purchase.course.videoKey || purchase.course.videoUrl),
+        enforceSecureUrl(rawThumbnail),
+        enforceSecureUrl(rawVideo),
       ]);
 
       return {
         ...purchase,
         course: {
           ...purchase.course,
+          // Overwrite root properties for legacy components
           thumbnailUrl: signedThumbnail,
           videoUrl: signedVideo,
+          // 🚀 Inject into the meta object so the new Dashboard maps it perfectly!
+          meta: purchase.course.meta
+            ? {
+                ...purchase.course.meta,
+                coverImageUrl: signedThumbnail,
+              }
+            : undefined,
         },
       };
     }),
@@ -115,7 +153,7 @@ export const verifyCoursePayment = async (
   const purchase = await CoursePurchase.create({
     course: courseId,
     user: userId,
-    priceAtPurchase: 0, // 🚀 THE FIX: Hardcoded to 0 so the schema doesn't throw an error!
+    priceAtPurchase: 0,
     razorpayOrderId: razorpay_order_id,
     razorpayPaymentId: razorpay_payment_id,
     status: "PURCHASED",

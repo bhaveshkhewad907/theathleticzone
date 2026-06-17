@@ -71,26 +71,28 @@ export default function AthleteDashboard() {
       try {
         // 1. Fetch the assigned course
         try {
-          // 🚀 Changed back to /course-purchase/my just in case!
           const courseRes = await api.get("/course-purchase/my");
-          console.log("📦 COURSE API RESPONSE:", courseRes.data); // 👈 We need to see this!
 
           if (courseRes.data?.data?.length > 0) {
-            setActiveCourse(courseRes.data.data[0].course);
+            const courseObj = courseRes.data.data[0].course;
+
+            // 🚀 THE FIX: Map the new 'meta' schema to what the frontend expects!
+            setActiveCourse({
+              _id: courseObj._id,
+              title: courseObj.meta?.title || courseObj.title,
+              description: courseObj.meta?.description || courseObj.description,
+              thumbnailUrl:
+                courseObj.meta?.coverImageUrl || courseObj.thumbnailUrl,
+            });
           }
-        } catch (error) {
-          console.error("🚨 COURSE FETCH FAILED:", error);
+        } catch (courseErr) {
+          console.error("🚨 COURSE FETCH FAILED:", courseErr);
         }
 
         // 2. Fetch the assessment stats
         try {
-          let assessmentRes;
-          try {
-            assessmentRes = await api.get("/assessments/my");
-          } catch {
-            assessmentRes = await api.get("/assessment/my");
-          }
-          console.log("📊 ASSESSMENT API RESPONSE:", assessmentRes.data); // 👈 We need to see this!
+          // 🚀 THE FIX: Changed from /my to /me to perfectly match your backend route!
+          const assessmentRes = await api.get("/assessments/me");
 
           if (assessmentRes.data?.data?.length > 0) {
             const latest = assessmentRes.data.data[0].physical;
@@ -100,8 +102,8 @@ export default function AthleteDashboard() {
               height: latest?.heightCm || 0,
             });
           }
-        } catch (error) {
-          console.error("🚨 ASSESSMENT FETCH FAILED:", error);
+        } catch (assessmentErr) {
+          console.error("🚨 ASSESSMENT FETCH FAILED:", assessmentErr);
         }
       } finally {
         setLoading(false);
