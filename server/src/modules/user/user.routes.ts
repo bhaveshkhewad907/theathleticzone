@@ -5,6 +5,7 @@ import {
   updateProfile,
   getProfileUploadUrl,
   uploadProfilePicture,
+  completeTrainingCycle,
 } from "./user.controller";
 import multer from "multer";
 
@@ -23,5 +24,6 @@ router.post(
   upload.single("avatar"),
   uploadProfilePicture,
 );
+router.post("/cycle/complete", completeTrainingCycle);
 
 export default router;

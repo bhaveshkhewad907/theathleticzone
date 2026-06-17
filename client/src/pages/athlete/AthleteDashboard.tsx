@@ -13,12 +13,13 @@ import {
   Monitor,
   ShieldCheck,
 } from "lucide-react";
+import toast from "react-hot-toast"; // 🚀 Added for the success notification
 
 import StructuredCoursePlayer from "./StructuredCoursePlayer";
 import ProgramPaywall from "../assessment/ProgramPaywall";
 import AssessmentWizard from "../../components/ui/AssessmentWizard";
 
-// 🚀 THE FIX: Defined strict TypeScript interfaces to replace 'any'
+// 🚀 Strict TypeScript interfaces
 interface ExtendedAuthUser {
   platformState?: {
     status?: string;
@@ -43,22 +44,25 @@ interface ActiveCourseData {
 export default function AthleteDashboard() {
   const auth = useContext(AuthContext);
 
-  // 🚀 THE FIX: Applied the ExtendedAuthUser interface
   const userStatus = (auth?.user as ExtendedAuthUser)?.platformState?.status;
   const hasPaid = (auth?.user as ExtendedAuthUser)?.platformState
     ?.hasPaidEntryFee;
 
-  // 🚀 THE FIX: Applied specific data interfaces instead of <any>
   const [profile, setProfile] = useState<AthleteProfileData | null>(null);
   const [activeCourse, setActiveCourse] = useState<ActiveCourseData | null>(
     null,
   );
   const [loading, setLoading] = useState(true);
   const [isPlayerOpen, setIsPlayerOpen] = useState(false);
+  const [showPaywall, setShowPaywall] = useState(false); // 🚀 State to trigger the renewal paywall
 
   useEffect(() => {
-    // If they need an assessment, stop loading immediately. Don't fetch course data.
-    if (userStatus === "NEEDS_ASSESSMENT" || !userStatus) {
+    // 🚀 THE FIX: Stop loading immediately if they are in an assessment or victory state!
+    if (
+      userStatus === "NEEDS_ASSESSMENT" ||
+      userStatus === "COMPLETED_TRAINING" ||
+      !userStatus
+    ) {
       setLoading(false);
       return;
     }
@@ -82,21 +86,72 @@ export default function AthleteDashboard() {
     fetchDashboardData();
   }, [userStatus]);
 
+  // 🚀 THE INFINITE LOOP TRIGGER
+  const handleCompleteProtocol = async () => {
+    try {
+      // Tell the backend to reset the status and payment
+      await api.post("/users/cycle/complete");
+      toast.success("Protocol Complete! Phase Two Unlocked.");
+      // Hard refresh the page to fetch the new Auth token and update the UI states instantly
+      window.location.reload();
+    } catch (error) {
+      toast.error("Failed to complete protocol.");
+      console.error(error);
+    }
+  };
+
   // =========================================================
-  // 🛑 THE CHAMELEON INTERCEPTOR: No Routing Involved!
+  // 🛑 THE CHAMELEON INTERCEPTOR 1: Assessment Phase
   // =========================================================
   if (userStatus === "NEEDS_ASSESSMENT" || !userStatus) {
     if (!hasPaid) {
-      // Show Paywall full screen overlay
       return <ProgramPaywall onSuccess={() => window.location.reload()} />;
     } else {
-      // Show Assessment inline inside their dashboard wrapper
       return (
         <div className="animate-in fade-in duration-500">
           <AssessmentWizard />
         </div>
       );
     }
+  }
+
+  // =========================================================
+  // 🏆 THE CHAMELEON INTERCEPTOR 2: Victory / Renewal Phase
+  // =========================================================
+  if (userStatus === "COMPLETED_TRAINING" && !hasPaid) {
+    if (showPaywall) {
+      return <ProgramPaywall onSuccess={() => window.location.reload()} />;
+    }
+
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center p-6 bg-transparent">
+        <div className="max-w-xl w-full bg-[#121821]/90 backdrop-blur-xl border border-amber-500/30 p-10 rounded-[2rem] text-center shadow-[0_0_50px_rgba(245,158,11,0.1)] relative overflow-hidden animate-in fade-in zoom-in duration-700">
+          {/* Ambient Glow */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[150px] bg-amber-500/20 blur-[80px] pointer-events-none rounded-full" />
+
+          <div className="relative z-10">
+            <div className="w-16 h-16 mx-auto bg-amber-500/10 border border-amber-500/20 rounded-full flex items-center justify-center text-amber-500 mb-6 shadow-inner">
+              <ShieldCheck size={32} />
+            </div>
+            <h2 className="text-4xl font-black italic uppercase tracking-tighter text-white mb-4">
+              Protocol <span className="text-amber-500">Mastered</span>
+            </h2>
+            <p className="text-[#8A94A6] text-sm font-bold leading-relaxed mb-8">
+              You have completed your 6-week training block. Your body has
+              adapted. Your central nervous system is primed. It is time to
+              recalibrate your biomechanics and push to the next tier of speed.
+            </p>
+
+            <button
+              onClick={() => setShowPaywall(true)}
+              className="w-full py-4 bg-amber-500 text-black font-black uppercase tracking-widest rounded-xl hover:bg-amber-400 transition-all shadow-[0_0_20px_rgba(245,158,11,0.3)] active:scale-95"
+            >
+              Unlock Next Phase Assessment (₹10)
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   // =========================================================
@@ -180,12 +235,24 @@ export default function AthleteDashboard() {
                       <p className="text-sm text-[#8A94A6] mb-8 font-medium line-clamp-2">
                         {activeCourse.description}
                       </p>
-                      <button
-                        onClick={() => setIsPlayerOpen(true)}
-                        className="mt-auto w-full py-5 rounded-[12px] bg-amber-500 text-black font-black text-xs uppercase tracking-[0.2em] hover:bg-amber-400 active:scale-95 flex justify-center items-center gap-2 shadow-[0_10px_20px_rgba(245,158,11,0.2)] transition-all"
-                      >
-                        <PlayCircle size={18} /> Start Training Session
-                      </button>
+
+                      {/* 🚀 Action Buttons Container */}
+                      <div className="mt-auto space-y-3 w-full">
+                        <button
+                          onClick={() => setIsPlayerOpen(true)}
+                          className="w-full py-5 rounded-[12px] bg-amber-500 text-black font-black text-[10px] md:text-xs uppercase tracking-[0.2em] hover:bg-amber-400 active:scale-95 flex justify-center items-center gap-2 shadow-[0_10px_20px_rgba(245,158,11,0.2)] transition-all"
+                        >
+                          <PlayCircle size={18} /> Start Training Session
+                        </button>
+
+                        {/* 🚀 THE RESET LOOP BUTTON */}
+                        <button
+                          onClick={handleCompleteProtocol}
+                          className="w-full py-4 bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white rounded-[12px] font-black text-[10px] uppercase tracking-[0.2em] transition-colors shadow-inner active:scale-95"
+                        >
+                          End Protocol & Unlock Next Phase
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ) : (

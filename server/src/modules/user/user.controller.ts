@@ -123,3 +123,34 @@ export const uploadProfilePicture = async (
     next(error);
   }
 };
+
+// Add this to the bottom of user.controller.ts
+export const completeTrainingCycle = async (req: any, res: any) => {
+  try {
+    const userId = req.user.id;
+
+    // Reset their financial status and move them to the victory state
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      {
+        $set: {
+          "platformState.status": "COMPLETED_TRAINING",
+          "platformState.hasPaidEntryFee": false,
+          "platformState.usedCoupon": null,
+        },
+      },
+      { new: true }, // Returns the updated user document
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Protocol Mastered. Ready for the next phase.",
+      data: updatedUser,
+    });
+  } catch (error) {
+    console.error("Error completing training cycle:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to complete cycle." });
+  }
+};
