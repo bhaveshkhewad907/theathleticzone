@@ -69,40 +69,39 @@ export default function AthleteDashboard() {
 
     const fetchDashboardData = async () => {
       try {
-        // 🚀 THE FIX: We are now catching errors independently so if one fails, the other still loads!
-
         // 1. Fetch the assigned course
         try {
-          const courseRes = await api.get("/courses/my"); // Uses your real courses route!
+          // 🚀 Changed back to /course-purchase/my just in case!
+          const courseRes = await api.get("/course-purchase/my");
+          console.log("📦 COURSE API RESPONSE:", courseRes.data); // 👈 We need to see this!
+
           if (courseRes.data?.data?.length > 0) {
-            // The backend returns an array of purchases. The actual course is nested inside.
             setActiveCourse(courseRes.data.data[0].course);
           }
-        } catch (courseErr) {
-          console.error("Failed to fetch course data.", courseErr);
+        } catch (error) {
+          console.error("🚨 COURSE FETCH FAILED:", error);
         }
 
-        // 2. Fetch the latest assessment for their physical stats
+        // 2. Fetch the assessment stats
         try {
-          // Try plural first, fallback to singular if your route is named differently
           let assessmentRes;
           try {
             assessmentRes = await api.get("/assessments/my");
           } catch {
             assessmentRes = await api.get("/assessment/my");
           }
+          console.log("📊 ASSESSMENT API RESPONSE:", assessmentRes.data); // 👈 We need to see this!
 
           if (assessmentRes.data?.data?.length > 0) {
-            // Get the most recent assessment from the array
             const latest = assessmentRes.data.data[0].physical;
             setProfile({
               age: latest?.age || 0,
-              weight: latest?.bodyweightKg || 0, // 🚀 Mapped exactly to your DB field
-              height: latest?.heightCm || 0, // 🚀 Mapped exactly to your DB field
+              weight: latest?.bodyweightKg || 0,
+              height: latest?.heightCm || 0,
             });
           }
-        } catch (assessmentErr) {
-          console.error("Failed to fetch stats.", assessmentErr);
+        } catch (error) {
+          console.error("🚨 ASSESSMENT FETCH FAILED:", error);
         }
       } finally {
         setLoading(false);
