@@ -53,7 +53,7 @@ export default function AdminAthletes() {
   // Helper to render the correct UI badge for their algorithm status
   const getStatusBadge = (status?: string) => {
     switch (status) {
-      case "ACTIVE":
+      case "ACTIVE_TRAINING":
         return (
           <span className="flex items-center gap-1.5 px-3 py-1 bg-green-500/10 text-green-500 border border-green-500/20 rounded-lg text-[9px] font-black tracking-widest uppercase">
             <CheckCircle size={10} /> Active

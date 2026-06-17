@@ -16,9 +16,7 @@ export default function ProgramPaywall({
   const [isProcessing, setIsProcessing] = useState(false);
 
   const COUPONS: Record<string, number> = {
-    GEMINI30: 30,
-    SPRINT50: 50,
-    ELITE10: 10,
+    JAYSON30: 30,
   };
 
   const handleApplyCoupon = () => {
@@ -163,7 +161,7 @@ export default function ProgramPaywall({
                   />
                   <input
                     type="text"
-                    placeholder="e.g. GEMINI30"
+                    placeholder="ENTER CODE"
                     value={coupon}
                     onChange={(e) => setCoupon(e.target.value)}
                     className="w-full bg-black/40 border border-white/5 rounded-xl py-4 pl-10 pr-4 text-white uppercase font-bold tracking-widest outline-none focus:border-amber-500/50 transition-colors placeholder:text-white/10"

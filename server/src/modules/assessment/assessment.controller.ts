@@ -3,6 +3,7 @@ import Assessment from "./assessment.model";
 import User from "../user/user.model";
 import ApiError from "../../utils/apiError";
 import { runRecommendationEngine } from "./recommendation.service"; // 🚀 Import the Engine
+import CoursePurchase from "../course/coursePurchase.model";
 
 export const submitAssessment = async (
   req: any,
@@ -21,14 +22,30 @@ export const submitAssessment = async (
       userId,
       physical,
       metrics,
-      engineResult, // Logs exactly why they got assigned this course
+      engineResult,
     });
+
+    // 🚀 THE FIX: Formally assign the course to the athlete!
+    // This creates the zero-dollar ticket so it shows up on their dashboard
+    const existingAssignment = await CoursePurchase.findOne({
+      user: userId,
+      course: engineResult.assignedCourseId,
+    });
+
+    if (!existingAssignment) {
+      await CoursePurchase.create({
+        user: userId,
+        course: engineResult.assignedCourseId,
+        priceAtPurchase: 0,
+        status: "PURCHASED",
+      });
+    }
 
     // 3. Update the User's State Machine
     await User.findByIdAndUpdate(userId, {
       $set: {
         "platformState.status": "ACTIVE_TRAINING",
-        "platformState.activeCourseId": engineResult.assignedCourseId, // Automatically assigns the course
+        "platformState.activeCourseId": engineResult.assignedCourseId,
       },
       $push: { assessmentHistory: assessment._id },
     });
@@ -42,7 +59,6 @@ export const submitAssessment = async (
     next(error);
   }
 };
-
 export const getMyAssessments = async (
   req: any,
   res: Response,
