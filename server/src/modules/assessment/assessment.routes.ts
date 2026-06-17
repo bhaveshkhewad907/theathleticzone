@@ -4,6 +4,7 @@ import {
   submitAssessment,
   getMyAssessments,
   getAllAssessmentsAdmin,
+  resetCycle, // 🚀 Imported new function
 } from "./assessment.controller";
 
 const router = Router();
@@ -11,16 +12,15 @@ const router = Router();
 // ==========================
 // ATHLETE ROUTES
 // ==========================
-// Submit a new assessment (Triggers the State Machine)
 router.post("/", requireAuth, requireRole("ATHLETE"), submitAssessment);
-
-// View personal assessment history
 router.get("/me", requireAuth, requireRole("ATHLETE"), getMyAssessments);
+
+// 🚀 THE NEW RESET ROUTE
+router.post("/reset-cycle", requireAuth, requireRole("ATHLETE"), resetCycle);
 
 // ==========================
 // ADMIN ROUTES
 // ==========================
-// View all assessments across the platform
 router.get("/admin", requireAuth, requireRole("ADMIN"), getAllAssessmentsAdmin);
 
 export default router;

@@ -12,28 +12,24 @@ import {
   X,
   Monitor,
   ShieldCheck,
+  Trophy,
+  ArrowRight,
 } from "lucide-react";
-import toast from "react-hot-toast"; // 🚀 Added for the success notification
+import toast from "react-hot-toast";
 
 import StructuredCoursePlayer from "./StructuredCoursePlayer";
 import ProgramPaywall from "../assessment/ProgramPaywall";
 import AssessmentWizard from "../../components/ui/AssessmentWizard";
 
-// 🚀 Strict TypeScript interfaces
 interface ExtendedAuthUser {
-  platformState?: {
-    status?: string;
-    hasPaidEntryFee?: boolean;
-  };
+  platformState?: { status?: string; hasPaidEntryFee?: boolean };
 }
-
 interface AthleteProfileData {
   age?: number;
   weight?: number;
   height?: number;
   sport?: string;
 }
-
 interface ActiveCourseData {
   _id: string;
   title: string;
@@ -53,11 +49,14 @@ export default function AthleteDashboard() {
     null,
   );
   const [loading, setLoading] = useState(true);
+
+  // 🚀 New UI States for the Loop
   const [isPlayerOpen, setIsPlayerOpen] = useState(false);
-  const [showPaywall, setShowPaywall] = useState(false); // 🚀 State to trigger the renewal paywall
+  const [isVictoryModalOpen, setIsVictoryModalOpen] = useState(false);
+  const [showPaywall, setShowPaywall] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   useEffect(() => {
-    // Stop loading immediately if they are in an assessment or victory state
     if (
       userStatus === "NEEDS_ASSESSMENT" ||
       userStatus === "COMPLETED_TRAINING" ||
@@ -69,14 +68,10 @@ export default function AthleteDashboard() {
 
     const fetchDashboardData = async () => {
       try {
-        // 1. Fetch the assigned course
         try {
           const courseRes = await api.get("/course-purchase/my");
-
           if (courseRes.data?.data?.length > 0) {
             const courseObj = courseRes.data.data[0].course;
-
-            // 🚀 THE FIX: Map the new 'meta' schema to what the frontend expects!
             setActiveCourse({
               _id: courseObj._id,
               title: courseObj.meta?.title || courseObj.title,
@@ -86,14 +81,11 @@ export default function AthleteDashboard() {
             });
           }
         } catch (courseErr) {
-          console.error("🚨 COURSE FETCH FAILED:", courseErr);
+          console.error(courseErr);
         }
 
-        // 2. Fetch the assessment stats
         try {
-          // 🚀 THE FIX: Changed from /my to /me to perfectly match your backend route!
-          const assessmentRes = await api.get("/assessments/me");
-
+          const assessmentRes = await api.get("/assessment/me");
           if (assessmentRes.data?.data?.length > 0) {
             const latest = assessmentRes.data.data[0].physical;
             setProfile({
@@ -103,33 +95,39 @@ export default function AthleteDashboard() {
             });
           }
         } catch (assessmentErr) {
-          console.error("🚨 ASSESSMENT FETCH FAILED:", assessmentErr);
+          console.error(assessmentErr);
         }
       } finally {
         setLoading(false);
       }
     };
-
     fetchDashboardData();
   }, [userStatus]);
 
-  // 🚀 THE INFINITE LOOP TRIGGER
-  const handleCompleteProtocol = async () => {
+  // 🚀 TRIGGERS THE API AND OPENS RAZORPAY
+  const handleInitiateRenewal = async () => {
+    setIsResetting(true);
     try {
-      // Tell the backend to reset the status and payment
-      await api.post("/users/cycle/complete");
-      toast.success("Protocol Complete! Phase Two Unlocked.");
-      // Hard refresh the page to fetch the new Auth token and update the UI states instantly
-      window.location.reload();
-    } catch (error) {
-      toast.error("Failed to complete protocol.");
-      console.error(error);
+      await api.post("/assessment/reset-cycle"); // Calls our new backend logic!
+      setIsVictoryModalOpen(false); // Close the popup
+      setShowPaywall(true); // Open the checkout
+    } catch {
+      toast.error("Failed to sync with server. Check connection.");
+    } finally {
+      setIsResetting(false);
     }
   };
 
   // =========================================================
-  // 🛑 THE CHAMELEON INTERCEPTOR 1: Assessment Phase
+  // 🛑 STATE INTERCEPTORS (The Chameleon Logic)
   // =========================================================
+
+  // 1. If Paywall state is triggered, show checkout fullscreen
+  if (showPaywall || (userStatus === "COMPLETED_TRAINING" && !hasPaid)) {
+    return <ProgramPaywall onSuccess={() => window.location.reload()} />;
+  }
+
+  // 2. If Assessment state is triggered, show assessment wizard
   if (userStatus === "NEEDS_ASSESSMENT" || !userStatus) {
     if (!hasPaid) {
       return <ProgramPaywall onSuccess={() => window.location.reload()} />;
@@ -142,48 +140,6 @@ export default function AthleteDashboard() {
     }
   }
 
-  // =========================================================
-  // 🏆 THE CHAMELEON INTERCEPTOR 2: Victory / Renewal Phase
-  // =========================================================
-  if (userStatus === "COMPLETED_TRAINING" && !hasPaid) {
-    if (showPaywall) {
-      return <ProgramPaywall onSuccess={() => window.location.reload()} />;
-    }
-
-    return (
-      <div className="min-h-[80vh] flex items-center justify-center p-6 bg-transparent">
-        <div className="max-w-xl w-full bg-[#121821]/90 backdrop-blur-xl border border-amber-500/30 p-10 rounded-[2rem] text-center shadow-[0_0_50px_rgba(245,158,11,0.1)] relative overflow-hidden animate-in fade-in zoom-in duration-700">
-          {/* Ambient Glow */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[150px] bg-amber-500/20 blur-[80px] pointer-events-none rounded-full" />
-
-          <div className="relative z-10">
-            <div className="w-16 h-16 mx-auto bg-amber-500/10 border border-amber-500/20 rounded-full flex items-center justify-center text-amber-500 mb-6 shadow-inner">
-              <ShieldCheck size={32} />
-            </div>
-            <h2 className="text-4xl font-black italic uppercase tracking-tighter text-white mb-4">
-              Protocol <span className="text-amber-500">Mastered</span>
-            </h2>
-            <p className="text-[#8A94A6] text-sm font-bold leading-relaxed mb-8">
-              You have completed your 6-week training block. Your body has
-              adapted. Your central nervous system is primed. It is time to
-              recalibrate your biomechanics and push to the next tier of speed.
-            </p>
-
-            <button
-              onClick={() => setShowPaywall(true)}
-              className="w-full py-4 bg-amber-500 text-black font-black uppercase tracking-widest rounded-xl hover:bg-amber-400 transition-all shadow-[0_0_20px_rgba(245,158,11,0.3)] active:scale-95"
-            >
-              Unlock Next Phase Assessment (₹10)
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // =========================================================
-  // ✅ THE ACTIVE DASHBOARD
-  // =========================================================
   if (loading) {
     return (
       <div className="relative min-h-[60vh] flex items-center justify-center">
@@ -192,10 +148,14 @@ export default function AthleteDashboard() {
     );
   }
 
+  // =========================================================
+  // ✅ THE ACTIVE DASHBOARD
+  // =========================================================
   return (
     <Fragment>
       <div className="relative min-h-full">
         <div className="relative z-10 space-y-10 animate-in fade-in duration-700 max-w-5xl mx-auto">
+          {/* Dashboard Header */}
           <div className="relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between bg-[#0F1724]/60 backdrop-blur-md border border-white/[0.05] p-8 rounded-[16px] gap-6 shadow-[0_10px_30px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.04)]">
             <div className="absolute inset-0 bg-gradient-to-r from-black/40 to-transparent pointer-events-none" />
             <div className="relative z-10">
@@ -209,6 +169,7 @@ export default function AthleteDashboard() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Stats Column */}
             <div className="lg:col-span-1 space-y-8">
               <div className="bg-[#0F1724]/80 backdrop-blur-md border border-white/[0.05] rounded-[16px] p-8 shadow-[0_10px_30px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.04)]">
                 <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#8A94A6] mb-8 flex items-center gap-2">
@@ -240,6 +201,7 @@ export default function AthleteDashboard() {
               </div>
             </div>
 
+            {/* Course Column */}
             <div className="lg:col-span-2 flex flex-col">
               <div className="relative bg-[#0F1724]/60 backdrop-blur-md border border-white/[0.05] rounded-[16px] p-2 flex flex-col h-full overflow-hidden transition-all hover:border-amber-500/30 shadow-[0_10px_30px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.04)]">
                 {activeCourse ? (
@@ -263,7 +225,6 @@ export default function AthleteDashboard() {
                         {activeCourse.description}
                       </p>
 
-                      {/* 🚀 Action Buttons Container */}
                       <div className="mt-auto space-y-3 w-full">
                         <button
                           onClick={() => setIsPlayerOpen(true)}
@@ -272,9 +233,9 @@ export default function AthleteDashboard() {
                           <PlayCircle size={18} /> Start Training Session
                         </button>
 
-                        {/* 🚀 THE RESET LOOP BUTTON */}
+                        {/* 🚀 OPENS THE CONGRATULATIONS POPUP */}
                         <button
-                          onClick={handleCompleteProtocol}
+                          onClick={() => setIsVictoryModalOpen(true)}
                           className="w-full py-4 bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white rounded-[12px] font-black text-[10px] uppercase tracking-[0.2em] transition-colors shadow-inner active:scale-95"
                         >
                           End Protocol & Unlock Next Phase
@@ -288,10 +249,6 @@ export default function AthleteDashboard() {
                     <h3 className="text-xl font-black text-white italic uppercase mb-2">
                       No Program Assigned
                     </h3>
-                    <p className="text-xs text-[#8A94A6] max-w-xs">
-                      If you just completed your assessment, please wait for the
-                      algorithm to process your results.
-                    </p>
                   </div>
                 )}
               </div>
@@ -300,6 +257,66 @@ export default function AthleteDashboard() {
         </div>
       </div>
 
+      {/* 🏆 THE CONGRATULATIONS POPUP MODAL */}
+      <AnimatePresence>
+        {isVictoryModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-[#0B0F14]/90 backdrop-blur-xl"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="max-w-lg w-full bg-[#121821] border border-amber-500/30 rounded-[24px] p-8 md:p-10 text-center shadow-[0_30px_60px_rgba(245,158,11,0.15)] relative overflow-hidden"
+            >
+              {/* Background glow */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[150px] bg-amber-500/20 blur-[80px] pointer-events-none rounded-full" />
+
+              <div className="relative z-10">
+                <div className="w-20 h-20 mx-auto bg-amber-500/10 border border-amber-500/20 rounded-full flex items-center justify-center text-amber-500 mb-6 shadow-inner">
+                  <Trophy size={40} />
+                </div>
+                <h2 className="text-3xl font-black italic uppercase tracking-tighter text-white mb-4">
+                  Protocol <span className="text-amber-500">Completed!</span>
+                </h2>
+                <p className="text-[#8A94A6] text-sm font-medium leading-relaxed mb-8">
+                  Congratulations! You have successfully mastered your current
+                  training block. Your central nervous system is primed. It's
+                  time to recalibrate your biomechanics and push to the next
+                  tier.
+                </p>
+
+                <div className="space-y-4">
+                  {/* 🚀 THIS BUTTON TRIGGERS THE RESET AND OPENS RAZORPAY */}
+                  <button
+                    onClick={handleInitiateRenewal}
+                    disabled={isResetting}
+                    className="w-full py-4 bg-amber-500 text-black font-black uppercase tracking-widest rounded-xl hover:bg-amber-400 transition-all shadow-[0_0_20px_rgba(245,158,11,0.3)] flex justify-center items-center gap-2 active:scale-95"
+                  >
+                    {isResetting
+                      ? "Initializing..."
+                      : "Move Ahead & Unlock Phase 2"}
+                    {!isResetting && <ArrowRight size={18} />}
+                  </button>
+
+                  <button
+                    onClick={() => setIsVictoryModalOpen(false)}
+                    disabled={isResetting}
+                    className="w-full py-3 text-[10px] font-black uppercase tracking-widest text-[#8A94A6]/60 hover:text-white transition-colors"
+                  >
+                    Cancel & Stay on Dashboard
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 🎬 THE COURSE PLAYER */}
       <AnimatePresence>
         {isPlayerOpen && activeCourse && (
           <motion.div
