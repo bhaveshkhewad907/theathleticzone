@@ -57,7 +57,7 @@ export default function AthleteDashboard() {
   const [showPaywall, setShowPaywall] = useState(false); // 🚀 State to trigger the renewal paywall
 
   useEffect(() => {
-    // 🚀 THE FIX: Stop loading immediately if they are in an assessment or victory state!
+    // Stop loading immediately if they are in an assessment or victory state
     if (
       userStatus === "NEEDS_ASSESSMENT" ||
       userStatus === "COMPLETED_TRAINING" ||
@@ -69,20 +69,46 @@ export default function AthleteDashboard() {
 
     const fetchDashboardData = async () => {
       try {
-        const [profileRes, courseRes] = await Promise.all([
-          api.get("/athlete-profile"),
-          api.get("/course-purchase/my"),
-        ]);
-        setProfile(profileRes.data.data);
-        if (courseRes.data.data && courseRes.data.data.length > 0) {
-          setActiveCourse(courseRes.data.data[0].course);
+        // 🚀 THE FIX: We are now catching errors independently so if one fails, the other still loads!
+
+        // 1. Fetch the assigned course
+        try {
+          const courseRes = await api.get("/courses/my"); // Uses your real courses route!
+          if (courseRes.data?.data?.length > 0) {
+            // The backend returns an array of purchases. The actual course is nested inside.
+            setActiveCourse(courseRes.data.data[0].course);
+          }
+        } catch (courseErr) {
+          console.error("Failed to fetch course data.", courseErr);
         }
-      } catch (error) {
-        console.error("Dashboard sync failed", error);
+
+        // 2. Fetch the latest assessment for their physical stats
+        try {
+          // Try plural first, fallback to singular if your route is named differently
+          let assessmentRes;
+          try {
+            assessmentRes = await api.get("/assessments/my");
+          } catch {
+            assessmentRes = await api.get("/assessment/my");
+          }
+
+          if (assessmentRes.data?.data?.length > 0) {
+            // Get the most recent assessment from the array
+            const latest = assessmentRes.data.data[0].physical;
+            setProfile({
+              age: latest?.age || 0,
+              weight: latest?.bodyweightKg || 0, // 🚀 Mapped exactly to your DB field
+              height: latest?.heightCm || 0, // 🚀 Mapped exactly to your DB field
+            });
+          }
+        } catch (assessmentErr) {
+          console.error("Failed to fetch stats.", assessmentErr);
+        }
       } finally {
         setLoading(false);
       }
     };
+
     fetchDashboardData();
   }, [userStatus]);
 
@@ -202,7 +228,7 @@ export default function AthleteDashboard() {
                   <StatBox
                     icon={<Ruler size={14} />}
                     label="Height"
-                    value={`${profile?.height || 0} FT`}
+                    value={`${profile?.height || 0} CM`}
                   />
                   <StatBox
                     icon={<Dumbbell size={14} />}
