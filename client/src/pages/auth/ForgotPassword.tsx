@@ -39,7 +39,7 @@ export default function ForgotPassword() {
       setStep(2);
     } catch (error) {
       const err = error as AxiosError<{ message: string }>;
-      toast.error(err.response?.data?.message || "Failed to dispatch code.");
+      toast.error(err.response?.data?.message || "Failed to send code.");
     } finally {
       setLoading(false);
     }
@@ -50,7 +50,7 @@ export default function ForgotPassword() {
     setLoading(true);
     try {
       await api.post("/auth/reset-password", { email, otp, newPassword });
-      toast.success("Credentials updated. Security protocols synchronized.");
+      toast.success("Password updated successfully.");
       navigate("/login");
     } catch (error) {
       const err = error as AxiosError<{ message: string }>;
@@ -103,10 +103,10 @@ export default function ForgotPassword() {
             <ShieldCheck size={32} />
           </div>
           <h1 className="text-3xl font-black uppercase italic tracking-tighter text-white">
-            Access <span className="text-amber-500">Recovery</span>
+            Reset <span className="text-amber-500">Password</span>
           </h1>
           <p className="text-[#8A94A6] text-[10px] font-bold uppercase tracking-[0.3em] mt-3">
-            Security Credential Override
+            Get back into your account
           </p>
         </div>
 
@@ -122,7 +122,7 @@ export default function ForgotPassword() {
             >
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-[#8A94A6] ml-2">
-                  Registered Email
+                  Email Address
                 </label>
                 <div className="relative group">
                   <Mail
@@ -144,7 +144,7 @@ export default function ForgotPassword() {
                 disabled={loading}
                 className="w-full py-4 rounded-[12px] bg-white text-black text-[10px] font-black uppercase tracking-[0.2em] hover:bg-amber-500 transition-all flex items-center justify-center gap-2 group shadow-[0_10px_20px_rgba(255,255,255,0.1)] hover:shadow-[0_15px_30px_rgba(245,158,11,0.3)] active:scale-[0.98]"
               >
-                {loading ? "Dispatching..." : "Request Security Code"}
+                {loading ? "Sending..." : "Send Reset Code"}
                 <ArrowRight
                   size={14}
                   className="group-hover:translate-x-1 transition-transform"
@@ -207,7 +207,7 @@ export default function ForgotPassword() {
                 disabled={loading}
                 className="w-full py-4 rounded-[12px] bg-amber-500 text-black text-[10px] font-black uppercase tracking-[0.2em] hover:bg-amber-400 transition-all shadow-[0_10px_20px_rgba(245,158,11,0.2)] hover:shadow-[0_15px_30px_rgba(245,158,11,0.4)] active:scale-[0.98]"
               >
-                {loading ? "Synchronizing..." : "Update Credentials"}
+                {loading ? "Updating..." : "Update Password"}
               </button>
             </motion.form>
           )}
@@ -219,7 +219,7 @@ export default function ForgotPassword() {
             className="text-[10px] font-black uppercase tracking-widest text-[#8A94A6] hover:text-white transition-colors flex items-center justify-center gap-2"
           >
             <ArrowRight size={12} className="rotate-180" />
-            Return to Log In
+            Back to Log In
           </Link>
         </div>
       </motion.div>

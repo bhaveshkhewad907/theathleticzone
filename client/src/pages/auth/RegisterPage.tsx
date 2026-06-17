@@ -20,8 +20,6 @@ export default function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [sports, setSports] = useState<{ _id: string; name: string }[]>([]);
-  const [sportId, setSportId] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{
@@ -46,18 +44,6 @@ export default function RegisterPage() {
     }, 7000);
 
     return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    const fetchSports = async () => {
-      try {
-        const res = await api.get("/sports");
-        setSports(res.data.data);
-      } catch {
-        console.error("Failed to load sports for registration");
-      }
-    };
-    fetchSports();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -85,9 +71,10 @@ export default function RegisterPage() {
         name,
         email,
         password,
-        sportId,
       });
-      toast.success("Tactical account initialized. Security code dispatched.");
+      toast.success(
+        "Account created! Please check your email for the verification code.",
+      );
       navigate("/login", {
         state: { email: email, requiresVerification: true },
       });
@@ -141,13 +128,12 @@ export default function RegisterPage() {
         <div className="hidden md:flex items-center justify-center relative overflow-hidden bg-black/10 border-r border-white/[0.05]">
           <div className="relative z-10 text-center px-12">
             <h2 className="text-4xl font-black uppercase italic tracking-tighter text-white mb-6 drop-shadow-lg">
-              Forge Your <br />
-              <span className="text-amber-500">Legacy.</span>
+              Start Your <br />
+              <span className="text-amber-500">Training.</span>
             </h2>
             <p className="text-[#8A94A6] text-[10px] font-bold uppercase tracking-[0.2em] leading-loose drop-shadow-md">
-              Join an elite roster of athletes and technical coaches. Access
-              exclusive training modules, live clusters, and professional
-              performance analytics.
+              Join our community of athletes. Get access to expert coaching,
+              personalized training programs, and performance tracking.
             </p>
           </div>
         </div>
@@ -158,10 +144,10 @@ export default function RegisterPage() {
 
           <div className="mb-8">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/40 border border-white/[0.05] text-[9px] font-black text-[#8A94A6] uppercase tracking-widest mb-4 shadow-inner">
-              New Identity Registration
+              Create Account
             </div>
             <h1 className="text-4xl font-black tracking-tighter uppercase italic text-white leading-none">
-              Establish <span className="text-amber-500">Profile</span>
+              Sign <span className="text-amber-500">Up</span>
             </h1>
           </div>
 
@@ -174,7 +160,7 @@ export default function RegisterPage() {
 
             <div>
               <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8A94A6] mb-2 block ml-2">
-                Athlete Designation
+                Full Name
               </label>
               <div
                 className={`flex items-center bg-black/40 rounded-[12px] px-5 py-4 border transition-all duration-300 shadow-inner ${fieldErrors.name ? "border-red-500/50" : "border-white/[0.05] focus-within:border-amber-500/50"}`}
@@ -197,7 +183,7 @@ export default function RegisterPage() {
 
             <div>
               <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8A94A6] mb-2 block ml-2">
-                Email Directive
+                Email Address
               </label>
               <div
                 className={`flex items-center bg-black/40 rounded-[12px] px-5 py-4 border transition-all duration-300 shadow-inner ${fieldErrors.email ? "border-red-500/50" : "border-white/[0.05] focus-within:border-amber-500/50"}`}
@@ -220,7 +206,7 @@ export default function RegisterPage() {
 
             <div>
               <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8A94A6] mb-2 block ml-2">
-                Security Key
+                Password
               </label>
               <div
                 className={`flex items-center bg-black/40 rounded-[12px] px-5 py-4 border transition-all duration-300 shadow-inner ${fieldErrors.password ? "border-red-500/50" : "border-white/[0.05] focus-within:border-amber-500/50"}`}
@@ -248,39 +234,12 @@ export default function RegisterPage() {
               )}
             </div>
 
-            <div className="space-y-2">
-              <label className="text-[9px] font-black text-[#8A94A6] uppercase tracking-[0.2em] ml-2">
-                Primary Sector Deployment
-              </label>
-              <div className="relative group">
-                <select
-                  required
-                  value={sportId}
-                  onChange={(e) => setSportId(e.target.value)}
-                  className="w-full bg-black/40 text-[#E5E7EB] placeholder-[#8A94A6]/20 text-xs font-bold uppercase tracking-widest p-4 rounded-[12px] border border-white/[0.05] focus:border-amber-500/50 outline-none transition-all appearance-none cursor-pointer shadow-inner"
-                >
-                  <option value="" disabled className="bg-[#0F1724]">
-                    -- Select Sector --
-                  </option>
-                  {sports.map((sport) => (
-                    <option
-                      key={sport._id}
-                      value={sport._id}
-                      className="bg-[#0F1724]"
-                    >
-                      {sport.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
             <button
               type="submit"
               disabled={loading}
               className="group w-full py-5 rounded-[12px] bg-amber-500 text-black text-[10px] font-black uppercase tracking-[0.2em] hover:bg-amber-400 transition-all active:scale-[0.98] disabled:opacity-50 shadow-[0_10px_20px_rgba(245,158,11,0.2)] hover:shadow-[0_15px_30px_rgba(245,158,11,0.3)] flex items-center justify-center gap-2 mt-4"
             >
-              {loading ? "Deploying Profile..." : "Confirm Registration"}{" "}
+              {loading ? "Creating Account..." : "Create Account"}{" "}
               <ChevronRight
                 size={16}
                 strokeWidth={3}
@@ -290,12 +249,12 @@ export default function RegisterPage() {
           </form>
 
           <p className="text-[#8A94A6] text-[10px] font-black uppercase tracking-widest mt-8 text-center">
-            Active Clearance?{" "}
+            Already have an account?{" "}
             <Link
               to="/login"
               className="text-amber-500 hover:text-amber-400 transition ml-1"
             >
-              Initialize Session
+              Log In
             </Link>
           </p>
         </div>

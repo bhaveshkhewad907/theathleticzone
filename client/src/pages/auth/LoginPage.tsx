@@ -97,21 +97,21 @@ export default function LoginPage() {
     }
     try {
       const response = await api.post("/auth/login", { email, password });
-      toast.success("Authorization successful.");
+      toast.success("Login successful.");
       auth?.setAuth(response.data.data);
     } catch (error) {
       const err = error as AxiosError<{ message: string }>;
-      const errorMsg = err.response?.data?.message || "Authorization failed.";
+      const errorMsg = err.response?.data?.message || "Login failed.";
 
       if (
         err.response?.status === 403 ||
         errorMsg.toLowerCase().includes("verify")
       ) {
         setStep("VERIFY");
-        toast.error("Account inactive. Input security code to proceed.");
-        setError("Account inactive. Input security code to proceed.");
+        toast.error("Account not verified. Please enter your code.");
+        setError("Account not verified. Please enter your code.");
       } else {
-        setError("Authorization failed. Verify your credentials.");
+        setError("Login failed. Please check your email and password.");
       }
     } finally {
       setLoading(false);
@@ -124,13 +124,13 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await api.post("/auth/verify-email", { email, otp });
-      toast.success("Clearance granted. Identity verified.");
+      toast.success("Account verified successfully.");
       setStep("LOGIN");
       setOtp("");
       setPassword("");
     } catch (error) {
       const err = error as AxiosError<{ message: string }>;
-      setError(err.response?.data?.message || "Invalid security code.");
+      setError(err.response?.data?.message || "Invalid verification code.");
     } finally {
       setLoading(false);
     }
@@ -176,7 +176,7 @@ export default function LoginPage() {
           <Link
             to="/"
             className="md:hidden h-12 w-12 mb-8 bg-amber-500/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.2)] hover:bg-amber-500/20 transition-all active:scale-95 group"
-            title="Return to Headquarters"
+            title="Return Home"
           >
             <span className="text-amber-500 font-black text-xl italic group-hover:scale-110 transition-transform">
               AZ
@@ -185,12 +185,14 @@ export default function LoginPage() {
 
           <div className="mb-10">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/40 border border-white/[0.05] text-[9px] font-black text-[#8A94A6] uppercase tracking-widest mb-4 shadow-inner">
-              System Authentication
+              Secure Login
             </div>
 
             <h1 className="text-4xl font-black tracking-tighter uppercase italic text-white leading-none">
-              {step === "LOGIN" ? "Access" : "Verify"}{" "}
-              <span className="text-amber-500">Portal</span>
+              {step === "LOGIN" ? "Sign" : "Verify"}{" "}
+              <span className="text-amber-500">
+                {step === "LOGIN" ? "In" : "Account"}
+              </span>
             </h1>
           </div>
 
@@ -208,7 +210,7 @@ export default function LoginPage() {
             >
               <div>
                 <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8A94A6] mb-2 block ml-2">
-                  Email Directive
+                  Email Address
                 </label>
                 <div
                   className={`flex items-center bg-black/40 rounded-[12px] px-5 py-4 border transition-all duration-300 shadow-inner ${fieldErrors.email ? "border-red-500/50" : "border-white/[0.05] focus-within:border-amber-500/50"}`}
@@ -231,7 +233,7 @@ export default function LoginPage() {
 
               <div>
                 <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8A94A6] mb-2 block ml-2">
-                  Security Key
+                  Password
                 </label>
                 <div
                   className={`flex items-center bg-black/40 rounded-[12px] px-5 py-4 border transition-all duration-300 shadow-inner ${fieldErrors.password ? "border-red-500/50" : "border-white/[0.05] focus-within:border-amber-500/50"}`}
@@ -264,7 +266,7 @@ export default function LoginPage() {
                   to="/forgot-password"
                   className="text-amber-500 hover:text-amber-400 transition-colors"
                 >
-                  Recover Access
+                  Forgot Password?
                 </Link>
               </div>
 
@@ -273,7 +275,7 @@ export default function LoginPage() {
                 disabled={loading}
                 className="group w-full py-5 rounded-[12px] bg-amber-500 text-black text-[10px] font-black uppercase tracking-[0.2em] hover:bg-amber-400 transition-all active:scale-[0.98] disabled:opacity-50 shadow-[0_10px_20px_rgba(245,158,11,0.2)] hover:shadow-[0_15px_30px_rgba(245,158,11,0.3)] flex items-center justify-center gap-2"
               >
-                {loading ? "Authenticating..." : "Initialize Session"}{" "}
+                {loading ? "Logging in..." : "Log In"}{" "}
                 <ChevronRight
                   size={16}
                   strokeWidth={3}
@@ -283,7 +285,7 @@ export default function LoginPage() {
 
               <div className="flex items-center gap-4 text-[#8A94A6]/30 text-[9px] font-black uppercase tracking-[0.3em] my-8">
                 <div className="flex-1 h-px bg-white/[0.05]"></div>
-                External Protocol
+                Or continue with
                 <div className="flex-1 h-px bg-white/[0.05]"></div>
               </div>
 
@@ -313,17 +315,17 @@ export default function LoginPage() {
                   />
                 </svg>
                 <span className="text-[10px] font-black uppercase tracking-widest text-[#E5E7EB]">
-                  Google SSO
+                  Google
                 </span>
               </button>
 
               <p className="text-[#8A94A6] text-[10px] font-black uppercase tracking-widest mt-8 text-center">
-                Unregistered Identity?{" "}
+                Don't have an account?{" "}
                 <Link
                   to="/register"
                   className="text-amber-500 hover:text-amber-400 transition ml-1"
                 >
-                  Establish Profile
+                  Sign Up
                 </Link>
               </p>
             </form>
@@ -337,14 +339,14 @@ export default function LoginPage() {
             >
               <div className="bg-amber-500/10 border border-amber-500/20 rounded-[12px] p-5 text-center mb-6 shadow-inner">
                 <p className="text-[10px] font-bold text-amber-500 uppercase tracking-widest leading-relaxed">
-                  A 6-digit security code has been transmitted to <br />
+                  A 6-digit verification code has been sent to <br />
                   <span className="text-[#E5E7EB] font-black">{email}</span>
                 </p>
               </div>
 
               <div>
                 <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8A94A6] mb-2 block ml-2">
-                  Authorization Code
+                  Verification Code
                 </label>
                 <div className="flex items-center bg-black/40 rounded-[12px] px-5 py-4 border border-white/[0.05] focus-within:border-amber-500/50 transition-all duration-300 shadow-inner">
                   <ShieldCheck className="text-[#8A94A6]/40 mr-4" size={18} />
@@ -365,7 +367,7 @@ export default function LoginPage() {
                 disabled={loading || otp.length !== 6}
                 className="group w-full py-5 rounded-[12px] bg-amber-500 text-black text-[10px] font-black uppercase tracking-[0.2em] hover:bg-amber-400 transition-all active:scale-[0.98] disabled:opacity-50 shadow-[0_10px_20px_rgba(245,158,11,0.2)] flex items-center justify-center gap-3 mt-8"
               >
-                {loading ? "Verifying Identity..." : "Confirm Clearance"}{" "}
+                {loading ? "Verifying..." : "Verify Code"}{" "}
                 <ShieldCheck size={16} strokeWidth={3} />
               </button>
 
@@ -374,7 +376,7 @@ export default function LoginPage() {
                 onClick={() => setStep("LOGIN")}
                 className="w-full py-3 text-[9px] font-black uppercase tracking-[0.2em] text-[#8A94A6]/40 hover:text-white transition-colors"
               >
-                Abort & Return to Main Screen
+                Cancel & Go Back
               </button>
             </form>
           )}
@@ -387,7 +389,7 @@ export default function LoginPage() {
             <Link
               to="/"
               className="group h-20 w-20 mx-auto bg-amber-500/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-amber-500/30 shadow-[0_0_40px_rgba(245,158,11,0.2)] mb-8 hover:bg-amber-500/20 hover:shadow-[0_0_60px_rgba(245,158,11,0.4)] hover:-translate-y-1 transition-all active:scale-95 cursor-pointer"
-              title="Return to Headquarters"
+              title="Return Home"
             >
               <span className="text-amber-500 font-black text-4xl italic group-hover:scale-110 transition-transform">
                 AZ
