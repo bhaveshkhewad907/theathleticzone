@@ -16,7 +16,6 @@ import {
   Briefcase,
   Award,
   Star,
-  Timer,
   ArrowRight,
 } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
@@ -285,58 +284,76 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 🏆 SECTION 2: CTA CARD */}
+      {/* 🏆 SECTION 2: CTA CARD (Upgraded & Irresistible) */}
       <section
         id="sprint-program"
-        className="py-20 md:py-32 px-6 relative flex justify-center items-center overflow-hidden"
+        className="py-24 md:py-40 px-6 relative flex justify-center items-center overflow-hidden bg-[#0B0F14]"
       >
-        {/* Unique Background Image */}
-        <div className="absolute inset-0 z-0">
-          <img
-            src="https://images.unsplash.com/photo-1552674605-15cff28591dd?q=80&w=2070&auto=format&fit=crop"
-            alt="Running"
-            className="w-full h-full object-cover opacity-20"
-          />
-          <div className="absolute inset-0 bg-[#0B0F14]/60 backdrop-blur-sm" />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#0B0F14] via-transparent to-[#0B0F14]" />
-        </div>
+        {/* Subtle Ambient Section Glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-6xl h-[600px] bg-amber-500/5 blur-[120px] rounded-full pointer-events-none" />
 
         <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          initial={{ opacity: 0, y: 50, scale: 0.95 }}
+          whileInView={{ opacity: 1, y: 0, scale: 1 }}
+          viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="relative z-10 w-full max-w-4xl bg-[#0F1724]/70 backdrop-blur-2xl border border-white/10 p-8 md:p-14 rounded-[2rem] shadow-[0_30px_60px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.05)] text-center flex flex-col items-center group hover:border-amber-500/30 transition-colors duration-500"
+          className="relative z-10 w-full max-w-5xl rounded-[2.5rem] overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.8)] group border border-white/10 hover:border-amber-500/50 transition-all duration-700"
         >
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[200px] bg-amber-500/10 blur-[80px] pointer-events-none rounded-full opacity-50 group-hover:opacity-100 transition-opacity duration-700" />
-
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/20 text-[10px] font-black uppercase tracking-[0.2em] text-amber-500 mb-6 shadow-inner">
-            <Timer size={14} /> Track & Field Focus
+          {/* 🖼️ THE CARD'S OWN ATTRACTION IMAGE */}
+          <div className="absolute inset-0 z-0">
+            <img
+              src="https://images.unsplash.com/photo-1552674605-15cff28591dd?q=80&w=2070&auto=format&fit=crop"
+              alt="Sprinter exploding off blocks"
+              className="w-full h-full object-cover opacity-40 group-hover:scale-110 group-hover:opacity-60 transition-all duration-[2s] ease-out"
+            />
+            {/* Deep gradient overlay to ensure text readability */}
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F14] via-[#0B0F14]/70 to-[#0B0F14]/30" />
+            <div className="absolute inset-0 bg-amber-500/5 mix-blend-overlay group-hover:bg-amber-500/10 transition-colors duration-700" />
           </div>
 
-          <h2 className="text-3xl md:text-5xl lg:text-6xl font-black italic uppercase tracking-tighter text-white mb-6 leading-[1.1] drop-shadow-lg">
-            Master the <span className="text-amber-500">100m & 200m</span>{" "}
-            Sprint
-          </h2>
+          {/* ✨ CONTENT PAYLOAD */}
+          <div className="relative z-10 p-10 md:p-20 flex flex-col items-center text-center">
+            {/* Ambient Inner Glow */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[80%] h-[150px] bg-amber-500/20 blur-[80px] pointer-events-none rounded-full opacity-50 group-hover:opacity-100 transition-opacity duration-700" />
 
-          <p className="text-gray-300 text-sm md:text-base font-medium leading-relaxed max-w-2xl mb-10 group-hover:text-white transition-colors duration-500">
-            Ready to get faster? Take our quick assessment and let our system
-            build the exact 6-week workout plan you need to improve your form
-            and shave seconds off your time.
-          </p>
+            <div className="inline-flex items-center gap-3 px-6 py-2.5 rounded-full bg-black/60 backdrop-blur-md border border-amber-500/30 text-[10px] md:text-xs font-black uppercase tracking-[0.2em] text-amber-500 mb-8 shadow-[0_0_30px_rgba(245,158,11,0.2)]">
+              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shadow-[0_0_10px_rgba(245,158,11,0.8)]" />
+              Elite Track & Field Focus
+            </div>
 
-          <button
-            onClick={() => navigate("/register")}
-            className="relative overflow-hidden px-8 py-4 bg-amber-500 text-black font-black text-xs md:text-sm uppercase tracking-widest rounded-xl hover:bg-amber-400 transition-all shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:shadow-[0_0_30px_rgba(245,158,11,0.5)] active:scale-95 flex items-center gap-3"
-          >
-            <span className="relative z-10 flex items-center gap-2">
-              Start Training Now{" "}
-              <ArrowRight
-                size={18}
-                className="group-hover:translate-x-1 transition-transform"
-              />
-            </span>
-          </button>
+            <h2 className="text-4xl md:text-6xl lg:text-7xl font-black italic uppercase tracking-tighter text-white mb-6 leading-[1.05] drop-shadow-2xl">
+              Master the <br className="hidden md:block" />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-200 drop-shadow-[0_0_30px_rgba(245,158,11,0.4)]">
+                100m & 200m Sprint
+              </span>
+            </h2>
+
+            <p className="text-gray-300 text-sm md:text-lg font-medium leading-relaxed max-w-2xl mb-12 drop-shadow-md">
+              Ready to get faster? Take our quick assessment and let our system
+              build the exact 6-week workout plan you need to perfect your form
+              and shave critical milliseconds off your time.
+            </p>
+
+            {/* 🚀 HYPER-ATTRACTIVE BUTTON */}
+            <button
+              onClick={() => navigate("/register")}
+              className="relative overflow-hidden px-10 py-5 md:px-14 md:py-6 bg-amber-500 text-black font-black text-sm md:text-base uppercase tracking-widest rounded-[20px] hover:bg-amber-400 transition-all shadow-[0_0_40px_rgba(245,158,11,0.4)] hover:shadow-[0_0_60px_rgba(245,158,11,0.6)] active:scale-95 flex items-center gap-3 group/btn"
+            >
+              <span className="relative z-10 flex items-center gap-3">
+                Unlock Your Plan
+                <ArrowRight
+                  size={22}
+                  className="group-hover/btn:translate-x-2 transition-transform duration-300"
+                />
+              </span>
+              {/* Shimmer Light Sweep Effect */}
+              <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent group-hover/btn:animate-[shimmer_1.5s_infinite]" />
+            </button>
+
+            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-6">
+              Join 500+ Athletes Currently Enrolled
+            </p>
+          </div>
         </motion.div>
       </section>
 
