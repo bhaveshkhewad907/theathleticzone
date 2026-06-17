@@ -302,7 +302,7 @@ export default function LandingPage() {
           {/* 🖼️ THE CARD'S OWN ATTRACTION IMAGE */}
           <div className="absolute inset-0 z-0">
             <img
-              src="https://images.unsplash.com/photo-1552674605-15cff28591dd?q=80&w=2070&auto=format&fit=crop"
+              src="https://images.unsplash.com/photo-1698671823406-035c77ff6fcd?q=80&w=715&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
               alt="Sprinter exploding off blocks"
               className="w-full h-full object-cover opacity-40 group-hover:scale-110 group-hover:opacity-60 transition-all duration-[2s] ease-out"
             />
