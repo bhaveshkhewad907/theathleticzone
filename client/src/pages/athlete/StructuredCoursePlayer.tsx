@@ -83,19 +83,18 @@ export default function StructuredCoursePlayer({
   useEffect(() => {
     const fetchPlayerState = async () => {
       try {
+        // 🚀 1. Fetch the Plan FIRST (This must succeed)
         const planRes = await api.get(`/chapters/plan/${courseId}`);
-        let planData = planRes.data?.data;
+        const planData = planRes.data?.data;
 
-        if (Array.isArray(planData) && planData.length > 0) {
-          planData = planData[0];
-        }
-
+        // If no plan is returned from the DB, we stop here and let the legacy player take over
         if (!planData || !planData.days || planData.days.length === 0) {
           return;
         }
 
         setPlan(planData);
 
+        // Auto-load the very first video of Day 1
         if (planData.days.length > 0) {
           const firstDaySteps = planData.days[0].templateId?.steps;
           if (firstDaySteps && firstDaySteps.length > 0) {
@@ -103,20 +102,17 @@ export default function StructuredCoursePlayer({
           }
         }
 
+        // 🚀 2. Fetch the Progress SECOND (It's perfectly fine if this fails for new users)
         try {
           const progRes = await api.get(`/chapters/progress/${courseId}`);
           setProgress(progRes.data?.data || null);
         } catch {
-          setProgress({
-            _id: "",
-            courseId,
-            completedSteps: [],
-            completedDays: [],
-          });
+          console.log("No progress found. Athlete is starting fresh.");
+          setProgress(null); // User hasn't started yet, which is totally normal!
         }
       } catch (error) {
         console.error(
-          "Critical Error fetching plan. Standard course fallback triggered.",
+          "No structured plan found. Standard course fallback triggered.",
           error,
         );
       }
@@ -144,7 +140,6 @@ export default function StructuredCoursePlayer({
 
   return (
     <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8 p-6 animate-in fade-in duration-700">
-      {/* LEFT: Video Player */}
       <div className="lg:col-span-2">
         <div className="aspect-video bg-[#0B0F14] rounded-2xl overflow-hidden border border-white/10 relative shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
           {activeVideo ? (
@@ -165,7 +160,6 @@ export default function StructuredCoursePlayer({
         </div>
       </div>
 
-      {/* RIGHT: Structured Day Plan (The Accordion) */}
       <div className="bg-[#0F1724]/80 backdrop-blur-xl border border-white/[0.05] rounded-2xl p-6 overflow-y-auto max-h-[80vh] shadow-xl">
         <h3 className="text-xl font-black italic uppercase text-white mb-6 sticky top-0 bg-[#0F1724] z-10 pb-4 border-b border-white/5">
           Training Protocol
@@ -173,24 +167,13 @@ export default function StructuredCoursePlayer({
 
         <div className="space-y-4">
           {plan.days.map((day: CourseDay) => {
-            const template = day.templateId;
-            if (!template) return null;
-
-            // 🚀 THE FIX: Derived State Auto-Completion Logic
-            const isDayCompleteByDB = progress?.completedDays?.includes(
+            const isDayComplete = progress?.completedDays?.includes(
               day.dayNumber,
             );
+            const template = day.templateId;
 
-            // Check if every single step in this day has been ticked by the user
-            const allSteps = template.steps || [];
-            const areAllStepsChecked =
-              allSteps.length > 0 &&
-              allSteps.every((step) =>
-                progress?.completedSteps?.includes(step._id),
-              );
-
-            // The Day is complete if EITHER the DB says it is, OR all steps are visually checked!
-            const isDayFullyComplete = isDayCompleteByDB || areAllStepsChecked;
+            // Safety check in case a template was deleted from the DB
+            if (!template) return null;
 
             const isExpanded = expandedDay === day.dayNumber;
             const formattedLabel = formatDayLabel(day.dayNumber);
@@ -204,7 +187,6 @@ export default function StructuredCoursePlayer({
                     : "border-white/5 bg-black/20 hover:border-white/10"
                 }`}
               >
-                {/* DAY HEADER */}
                 <button
                   onClick={() =>
                     setExpandedDay(isExpanded ? null : day.dayNumber)
@@ -212,17 +194,13 @@ export default function StructuredCoursePlayer({
                   className="w-full flex justify-between items-center p-4 outline-none"
                 >
                   <div className="flex items-center gap-4">
-                    {/* 🚀 Updated Checkmark logic uses our new derived state */}
-                    {isDayFullyComplete ? (
+                    {isDayComplete ? (
                       <CheckCircle
-                        className="text-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)] rounded-full shrink-0"
+                        className="text-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)] rounded-full"
                         size={20}
                       />
                     ) : (
-                      <Circle
-                        className="text-[#8A94A6]/30 shrink-0"
-                        size={20}
-                      />
+                      <Circle className="text-[#8A94A6]/30" size={20} />
                     )}
 
                     <div className="text-left">
@@ -236,7 +214,7 @@ export default function StructuredCoursePlayer({
                   </div>
 
                   <div
-                    className={`p-1.5 rounded-full bg-white/5 transition-transform duration-300 shrink-0 ${isExpanded ? "rotate-180" : ""}`}
+                    className={`p-1.5 rounded-full bg-white/5 transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`}
                   >
                     <ChevronDown
                       size={14}
@@ -247,7 +225,6 @@ export default function StructuredCoursePlayer({
                   </div>
                 </button>
 
-                {/* EXPANDABLE STEPS */}
                 <div
                   className={`transition-all duration-500 ease-in-out ${isExpanded ? "max-h-[1000px] opacity-100" : "max-h-0 opacity-0"}`}
                 >
@@ -268,13 +245,13 @@ export default function StructuredCoursePlayer({
                               : "bg-[#121821] border-white/5 hover:border-amber-500/30"
                           }`}
                         >
-                          <div className="flex items-center gap-3 overflow-hidden">
+                          <div className="flex items-center gap-3">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleStepComplete(step._id);
                               }}
-                              className="active:scale-90 transition-transform shrink-0"
+                              className="active:scale-90 transition-transform"
                             >
                               {isStepComplete ? (
                                 <CheckCircle
@@ -285,27 +262,30 @@ export default function StructuredCoursePlayer({
                                 <Circle size={16} className="text-[#8A94A6]" />
                               )}
                             </button>
-                            <div className="truncate">
+                            <div>
                               <p
-                                className={`text-xs font-black uppercase tracking-widest truncate ${isPlaying ? "text-amber-500" : "text-white"}`}
+                                className={`text-xs font-black uppercase tracking-widest ${isPlaying ? "text-amber-500" : "text-white"}`}
                               >
                                 {step.title}
                               </p>
-                              <p className="text-[9px] text-[#8A94A6] uppercase tracking-wider mt-0.5">
+                              <p className="text-[9px] text-[#8A94A6] uppercase tracking-wider">
                                 {step.type}
                               </p>
                             </div>
                           </div>
                           <PlayCircle
                             size={16}
-                            className={`shrink-0 ${isPlaying ? "text-amber-500 animate-pulse" : "text-white/20"}`}
+                            className={
+                              isPlaying
+                                ? "text-amber-500 animate-pulse"
+                                : "text-white/20"
+                            }
                           />
                         </div>
                       );
                     })}
 
-                    {/* 🚀 Hide this button if the day is fully complete! */}
-                    {!isDayFullyComplete && (
+                    {!isDayComplete && (
                       <button
                         onClick={() => handleDayComplete(day.dayNumber)}
                         className="mt-6 w-full py-4 rounded-xl bg-amber-500 text-black font-black text-[10px] uppercase tracking-[0.2em] hover:bg-amber-400 transition-all shadow-[0_10px_20px_rgba(245,158,11,0.2)] active:scale-95"
