@@ -40,7 +40,6 @@ interface StructuredCoursePlayerProps {
   courseId: string;
 }
 
-// 🚀 UPDATED INTERFACE: Includes the 'meta' object so TypeScript doesn't panic
 interface PurchaseRecord {
   course: {
     _id: string;
@@ -82,27 +81,44 @@ export default function StructuredCoursePlayer({
   const [expandedDay, setExpandedDay] = useState<number | null>(1);
 
   useEffect(() => {
-    Promise.all([
-      api.get(`/chapters/plan/${courseId}`),
-      api.get(`/chapters/progress/${courseId}`),
-    ])
-      .then(([planRes, progRes]) => {
-        const planData = planRes.data.data;
-        setPlan(planData);
-        setProgress(progRes.data.data);
+    const fetchPlayerState = async () => {
+      try {
+        // 🚀 1. Fetch the Plan FIRST (This must succeed)
+        const planRes = await api.get(`/chapters/plan/${courseId}`);
+        const planData = planRes.data?.data;
 
-        if (planData?.days?.length > 0) {
+        // If no plan is returned from the DB, we stop here and let the legacy player take over
+        if (!planData || !planData.days || planData.days.length === 0) {
+          return;
+        }
+
+        setPlan(planData);
+
+        // Auto-load the very first video of Day 1
+        if (planData.days.length > 0) {
           const firstDaySteps = planData.days[0].templateId?.steps;
           if (firstDaySteps && firstDaySteps.length > 0) {
             setActiveVideo(firstDaySteps[0].videoUrl);
           }
         }
-      })
-      .catch(() => {
+
+        // 🚀 2. Fetch the Progress SECOND (It's perfectly fine if this fails for new users)
+        try {
+          const progRes = await api.get(`/chapters/progress/${courseId}`);
+          setProgress(progRes.data?.data || null);
+        } catch {
+          console.log("No progress found. Athlete is starting fresh.");
+          setProgress(null); // User hasn't started yet, which is totally normal!
+        }
+      } catch (error) {
         console.error(
           "No structured plan found. Standard course fallback triggered.",
+          error,
         );
-      });
+      }
+    };
+
+    fetchPlayerState();
   }, [courseId]);
 
   const handleStepComplete = async (stepId: string) => {
@@ -124,7 +140,6 @@ export default function StructuredCoursePlayer({
 
   return (
     <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8 p-6 animate-in fade-in duration-700">
-      {/* LEFT: Video Player */}
       <div className="lg:col-span-2">
         <div className="aspect-video bg-[#0B0F14] rounded-2xl overflow-hidden border border-white/10 relative shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
           {activeVideo ? (
@@ -145,7 +160,6 @@ export default function StructuredCoursePlayer({
         </div>
       </div>
 
-      {/* RIGHT: Structured Day Plan (The Accordion) */}
       <div className="bg-[#0F1724]/80 backdrop-blur-xl border border-white/[0.05] rounded-2xl p-6 overflow-y-auto max-h-[80vh] shadow-xl">
         <h3 className="text-xl font-black italic uppercase text-white mb-6 sticky top-0 bg-[#0F1724] z-10 pb-4 border-b border-white/5">
           Training Protocol
@@ -157,6 +171,10 @@ export default function StructuredCoursePlayer({
               day.dayNumber,
             );
             const template = day.templateId;
+
+            // Safety check in case a template was deleted from the DB
+            if (!template) return null;
+
             const isExpanded = expandedDay === day.dayNumber;
             const formattedLabel = formatDayLabel(day.dayNumber);
 
@@ -291,12 +309,12 @@ export default function StructuredCoursePlayer({
 // ==========================================
 function ClassicSingleVideoPlayer({ courseId }: { courseId: string }) {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     api
       .get("/course-purchase/my")
       .then((res) => {
-        // 🚀 THE FIX: Applied the strict PurchaseRecord interface here
         const purchase = res.data.data.find(
           (p: PurchaseRecord) => p.course._id === courseId,
         );
@@ -306,13 +324,21 @@ function ClassicSingleVideoPlayer({ courseId }: { courseId: string }) {
           if (rawVideo) setVideoUrl(rawVideo);
         }
       })
-      .catch((err) => console.error("Failed to fetch legacy video URL", err));
+      .catch((err) => console.error("Failed to fetch legacy video URL", err))
+      .finally(() => setIsLoading(false));
   }, [courseId]);
 
   return (
     <div className="max-w-4xl mx-auto p-6 animate-in fade-in duration-700">
       <div className="aspect-video bg-[#0B0F14] rounded-2xl overflow-hidden border border-white/10 relative shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
-        {videoUrl ? (
+        {isLoading ? (
+          <div className="absolute inset-0 flex items-center justify-center flex-col text-[#8A94A6]">
+            <div className="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mb-4 shadow-[0_0_15px_rgba(245,158,11,0.4)]" />
+            <p className="font-black uppercase tracking-widest text-xs">
+              Decrypting Video Stream...
+            </p>
+          </div>
+        ) : videoUrl ? (
           <video
             src={videoUrl}
             controls
@@ -320,10 +346,14 @@ function ClassicSingleVideoPlayer({ courseId }: { courseId: string }) {
             className="w-full h-full object-contain"
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center flex-col text-[#8A94A6]">
-            <div className="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mb-4 shadow-[0_0_15px_rgba(245,158,11,0.4)]" />
-            <p className="font-black uppercase tracking-widest text-xs">
-              Decrypting Video Stream...
+          <div className="absolute inset-0 flex items-center justify-center flex-col text-[#8A94A6] bg-black/40">
+            <PlayCircle size={48} className="mb-4 opacity-20" />
+            <p className="font-black uppercase tracking-widest text-xs text-amber-500 mb-2">
+              Media Stream Unavailable
+            </p>
+            <p className="text-[10px] text-[#8A94A6] max-w-xs text-center leading-relaxed">
+              No content has been uploaded to this protocol yet. Please wait for
+              the administrator to deploy the Day-by-Day schedule.
             </p>
           </div>
         )}

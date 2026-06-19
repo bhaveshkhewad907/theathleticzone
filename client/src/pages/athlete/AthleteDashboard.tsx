@@ -80,7 +80,7 @@ export default function AthleteDashboard() {
         }
 
         try {
-          const assessmentRes = await api.get("/assessment/me");
+          const assessmentRes = await api.get("/assessments/me");
           if (assessmentRes.data?.data?.length > 0) {
             const latest = assessmentRes.data.data[0].physical;
             setProfile({
