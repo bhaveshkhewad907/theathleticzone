@@ -40,6 +40,35 @@ interface StructuredCoursePlayerProps {
   courseId: string;
 }
 
+// 🚀 UPDATED INTERFACE: Includes the 'meta' object so TypeScript doesn't panic
+interface PurchaseRecord {
+  course: {
+    _id: string;
+    videoUrl?: string;
+    meta?: {
+      videoUrl?: string;
+    };
+  };
+}
+
+// ==========================================
+// 🧠 HELPER: MATHEMATICAL DAY CONVERTER
+// ==========================================
+const formatDayLabel = (dayNumber: number) => {
+  const daysOfWeek = [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+  ];
+  const weekNumber = Math.ceil(dayNumber / 7);
+  const dayName = daysOfWeek[(dayNumber - 1) % 7];
+  return `Week ${weekNumber}: ${dayName}`;
+};
+
 // ==========================================
 // 🎬 MAIN COMPONENT
 // ==========================================
@@ -50,7 +79,6 @@ export default function StructuredCoursePlayer({
   const [progress, setProgress] = useState<UserProgress | null>(null);
   const [activeVideo, setActiveVideo] = useState<string | null>(null);
 
-  // 🚀 THE FIX: State to track which day is currently open (Defaults to Day 1)
   const [expandedDay, setExpandedDay] = useState<number | null>(1);
 
   useEffect(() => {
@@ -59,11 +87,21 @@ export default function StructuredCoursePlayer({
       api.get(`/chapters/progress/${courseId}`),
     ])
       .then(([planRes, progRes]) => {
-        setPlan(planRes.data.data);
+        const planData = planRes.data.data;
+        setPlan(planData);
         setProgress(progRes.data.data);
+
+        if (planData?.days?.length > 0) {
+          const firstDaySteps = planData.days[0].templateId?.steps;
+          if (firstDaySteps && firstDaySteps.length > 0) {
+            setActiveVideo(firstDaySteps[0].videoUrl);
+          }
+        }
       })
       .catch(() => {
-        console.error("Standard course fallback triggered");
+        console.error(
+          "No structured plan found. Standard course fallback triggered.",
+        );
       });
   }, [courseId]);
 
@@ -79,18 +117,16 @@ export default function StructuredCoursePlayer({
       isDayComplete: true,
     });
     setProgress(res.data.data);
-
-    // Optional UX improvement: Automatically open the next day when they complete one!
     setExpandedDay(dayNumber + 1);
   };
 
   if (!plan) return <ClassicSingleVideoPlayer courseId={courseId} />;
 
   return (
-    <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8 p-6">
+    <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8 p-6 animate-in fade-in duration-700">
       {/* LEFT: Video Player */}
       <div className="lg:col-span-2">
-        <div className="aspect-video bg-[#0B0F14] rounded-2xl overflow-hidden border border-white/10 relative shadow-2xl">
+        <div className="aspect-video bg-[#0B0F14] rounded-2xl overflow-hidden border border-white/10 relative shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
           {activeVideo ? (
             <video
               src={activeVideo}
@@ -102,7 +138,7 @@ export default function StructuredCoursePlayer({
             <div className="absolute inset-0 flex items-center justify-center flex-col text-[#8A94A6]">
               <PlayCircle size={48} className="mb-4 opacity-50" />
               <p className="font-black uppercase tracking-widest text-xs">
-                Select a step to initialize protocol
+                Select a module to initialize protocol
               </p>
             </div>
           )}
@@ -110,8 +146,8 @@ export default function StructuredCoursePlayer({
       </div>
 
       {/* RIGHT: Structured Day Plan (The Accordion) */}
-      <div className="bg-[#0F1724] border border-white/[0.05] rounded-2xl p-6 overflow-y-auto max-h-[80vh] shadow-xl">
-        <h3 className="text-xl font-black italic uppercase text-white mb-6 sticky top-0 bg-[#0F1724] z-10 pb-2 border-b border-white/5">
+      <div className="bg-[#0F1724]/80 backdrop-blur-xl border border-white/[0.05] rounded-2xl p-6 overflow-y-auto max-h-[80vh] shadow-xl">
+        <h3 className="text-xl font-black italic uppercase text-white mb-6 sticky top-0 bg-[#0F1724] z-10 pb-4 border-b border-white/5">
           Training Protocol
         </h3>
 
@@ -122,6 +158,7 @@ export default function StructuredCoursePlayer({
             );
             const template = day.templateId;
             const isExpanded = expandedDay === day.dayNumber;
+            const formattedLabel = formatDayLabel(day.dayNumber);
 
             return (
               <div
@@ -132,7 +169,6 @@ export default function StructuredCoursePlayer({
                     : "border-white/5 bg-black/20 hover:border-white/10"
                 }`}
               >
-                {/* 🚀 ACCORDION HEADER */}
                 <button
                   onClick={() =>
                     setExpandedDay(isExpanded ? null : day.dayNumber)
@@ -140,7 +176,6 @@ export default function StructuredCoursePlayer({
                   className="w-full flex justify-between items-center p-4 outline-none"
                 >
                   <div className="flex items-center gap-4">
-                    {/* Day Completion Icon */}
                     {isDayComplete ? (
                       <CheckCircle
                         className="text-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)] rounded-full"
@@ -151,16 +186,15 @@ export default function StructuredCoursePlayer({
                     )}
 
                     <div className="text-left">
-                      <h4 className="font-black text-white uppercase tracking-widest text-sm">
-                        Day {day.dayNumber}
+                      <h4 className="font-black text-white uppercase tracking-widest text-xs">
+                        {formattedLabel}
                       </h4>
-                      <p className="text-[10px] text-amber-500 uppercase tracking-wider mt-0.5">
+                      <p className="text-[10px] text-amber-500 uppercase tracking-wider mt-1">
                         {template.name}
                       </p>
                     </div>
                   </div>
 
-                  {/* Expand/Collapse Chevron */}
                   <div
                     className={`p-1.5 rounded-full bg-white/5 transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`}
                   >
@@ -173,13 +207,8 @@ export default function StructuredCoursePlayer({
                   </div>
                 </button>
 
-                {/* 🚀 ACCORDION BODY (The Steps) */}
                 <div
-                  className={`transition-all duration-500 ease-in-out ${
-                    isExpanded
-                      ? "max-h-[1000px] opacity-100"
-                      : "max-h-0 opacity-0"
-                  }`}
+                  className={`transition-all duration-500 ease-in-out ${isExpanded ? "max-h-[1000px] opacity-100" : "max-h-0 opacity-0"}`}
                 >
                   <div className="p-4 pt-0 border-t border-white/5 mt-2 space-y-3">
                     {template.steps.map((step: Step) => {
@@ -238,7 +267,6 @@ export default function StructuredCoursePlayer({
                       );
                     })}
 
-                    {/* Complete Session Button */}
                     {!isDayComplete && (
                       <button
                         onClick={() => handleDayComplete(day.dayNumber)}
@@ -259,17 +287,63 @@ export default function StructuredCoursePlayer({
 }
 
 // ==========================================
-// 🛠️ TEMPORARY PLACEHOLDER
+// 🛠️ UPGRADED SINGLE VIDEO PLAYER
 // ==========================================
 function ClassicSingleVideoPlayer({ courseId }: { courseId: string }) {
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    api
+      .get("/course-purchase/my")
+      .then((res) => {
+        // 🚀 THE FIX: Applied the strict PurchaseRecord interface here
+        const purchase = res.data.data.find(
+          (p: PurchaseRecord) => p.course._id === courseId,
+        );
+        if (purchase) {
+          const rawVideo =
+            purchase.course.meta?.videoUrl || purchase.course.videoUrl;
+          if (rawVideo) setVideoUrl(rawVideo);
+        }
+      })
+      .catch((err) => console.error("Failed to fetch legacy video URL", err));
+  }, [courseId]);
+
   return (
-    <div className="p-10 text-center border border-white/10 rounded-xl bg-black/40 text-white">
-      <p className="text-amber-500 font-bold tracking-widest uppercase text-sm mb-2">
-        Legacy Protocol Detected
-      </p>
-      <p className="text-[#8A94A6] text-xs">
-        Loading classic video interface for course: {courseId}...
-      </p>
+    <div className="max-w-4xl mx-auto p-6 animate-in fade-in duration-700">
+      <div className="aspect-video bg-[#0B0F14] rounded-2xl overflow-hidden border border-white/10 relative shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+        {videoUrl ? (
+          <video
+            src={videoUrl}
+            controls
+            autoPlay
+            className="w-full h-full object-contain"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center flex-col text-[#8A94A6]">
+            <div className="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mb-4 shadow-[0_0_15px_rgba(245,158,11,0.4)]" />
+            <p className="font-black uppercase tracking-widest text-xs">
+              Decrypting Video Stream...
+            </p>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-8 p-6 bg-amber-500/10 border border-amber-500/20 rounded-xl text-center md:text-left flex flex-col md:flex-row items-center gap-6">
+        <div className="h-12 w-12 rounded-full bg-amber-500 flex items-center justify-center text-black shrink-0 shadow-[0_0_15px_rgba(245,158,11,0.5)]">
+          <PlayCircle size={24} />
+        </div>
+        <div>
+          <p className="text-amber-500 font-black text-[10px] uppercase tracking-[0.3em] mb-1">
+            Legacy View Active
+          </p>
+          <p className="text-[#E5E7EB] text-sm font-medium">
+            This specific module has not been upgraded to the interactive 6-week
+            Day-by-Day protocol yet. Loading the classic continuous video
+            stream.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

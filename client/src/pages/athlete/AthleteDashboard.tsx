@@ -108,7 +108,7 @@ export default function AthleteDashboard() {
   const handleInitiateRenewal = async () => {
     setIsResetting(true);
     try {
-      await api.post("/assessment/reset-cycle"); // Calls our new backend logic!
+      await api.post("/assessments/reset-cycle"); // Calls our new backend logic!
       setIsVictoryModalOpen(false); // Close the popup
       setShowPaywall(true); // Open the checkout
     } catch {

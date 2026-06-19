@@ -8,9 +8,25 @@ import PowerStep from "../../pages/steps/PowerStep";
 import SprintStep from "../../pages/steps/SprintStep";
 import StrengthStep from "../../pages/steps/StrengthStep";
 
+// 🚀 THE FIX 1: Defined a strict interface to replace 'any'
+interface ScorePayload {
+  engine: {
+    assignedLevel?: string;
+    identifiedDeficit?: string;
+  };
+  scores: {
+    base: number;
+    power: number;
+    mechanics: number;
+  };
+}
+
 export default function AssessmentWizard() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // 🚀 Applied the strict interface here
+  const [scoreData, setScoreData] = useState<ScorePayload | null>(null);
 
   const [formData, setFormData] = useState({
     physical: { age: "", heightCm: "", bodyweightKg: "", trainingAgeYears: "" },
@@ -63,12 +79,26 @@ export default function AssessmentWizard() {
         },
       };
 
-      await api.post("/assessments", payload);
-      toast.success("Assessment Processed! Course Assigned.");
+      const response = await api.post("/assessments", payload);
+      toast.success("Assessment Processed! Algorithm Analysis Complete.");
 
-      // 🚀 THE FIX: Since we are ALREADY on the dashboard, we just force a refresh
-      // to pull the new AuthContext and Course data seamlessly.
-      window.location.reload();
+      // 🚀 THE FIX 2: Calculate the random math HERE, safely outside the render phase!
+      const trainingAge = payload.physical.trainingAgeYears || 0;
+      const calculatedBaseScore = Math.min(
+        96,
+        45 + trainingAge * 12 + Math.floor(Math.random() * 8),
+      );
+      const calculatedPowerScore = Math.min(99, calculatedBaseScore + 6);
+      const calculatedMechanicsScore = Math.min(99, calculatedBaseScore - 4);
+
+      setScoreData({
+        engine: response.data.data.engineResult,
+        scores: {
+          base: calculatedBaseScore,
+          power: calculatedPowerScore,
+          mechanics: calculatedMechanicsScore,
+        },
+      });
     } catch (err) {
       const error = err as { response?: { data?: { message?: string } } };
       toast.error(error.response?.data?.message || "Failed to submit.");
@@ -76,6 +106,101 @@ export default function AssessmentWizard() {
     }
   };
 
+  // =========================================================
+  // 🏆 THE GAMIFIED SCORECARD VIEW
+  // =========================================================
+  if (scoreData) {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center p-6 animate-in fade-in zoom-in duration-700 w-full">
+        <div className="max-w-2xl w-full bg-[#121821]/90 backdrop-blur-2xl border border-amber-500/30 p-10 md:p-14 rounded-[2rem] shadow-[0_30px_60px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.05)] relative overflow-hidden">
+          {/* Ambient Glow */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[200px] bg-amber-500/10 blur-[80px] pointer-events-none rounded-full" />
+
+          <div className="text-center relative z-10 mb-12">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-[10px] font-black uppercase tracking-widest text-amber-500 mb-6 shadow-inner">
+              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.8)]" />
+              Analysis Complete
+            </div>
+            <h2 className="text-4xl md:text-5xl font-black italic uppercase tracking-tighter text-white drop-shadow-lg">
+              Athletic <span className="text-amber-500">Scorecard</span>
+            </h2>
+            <p className="text-[#8A94A6] text-xs font-bold uppercase tracking-widest mt-3">
+              Algorithm Diagnostics & Baseline Metrics
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10 mb-12">
+            {/* The Main Score */}
+            <div className="md:col-span-1 bg-black/40 border border-white/5 rounded-[20px] p-6 flex flex-col items-center justify-center shadow-inner relative overflow-hidden group hover:border-amber-500/30 transition-colors">
+              <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-amber-500/10 to-transparent opacity-50" />
+              <p className="text-[10px] font-black text-[#8A94A6] uppercase tracking-widest mb-2">
+                Overall Rating
+              </p>
+              <div className="text-6xl font-black italic text-white drop-shadow-[0_0_15px_rgba(245,158,11,0.4)]">
+                {scoreData.scores.base}
+                <span className="text-2xl text-[#8A94A6]">/100</span>
+              </div>
+            </div>
+
+            {/* Sub Metrics */}
+            <div className="md:col-span-2 grid grid-cols-2 gap-4">
+              <div className="bg-black/40 border border-white/5 rounded-[20px] p-6 flex flex-col justify-center shadow-inner">
+                <p className="text-[9px] font-black text-[#8A94A6] uppercase tracking-widest mb-1">
+                  Power Output
+                </p>
+                <div className="flex items-end gap-2">
+                  <span className="text-3xl font-black italic text-amber-500">
+                    {scoreData.scores.power}
+                  </span>
+                  <span className="text-xs text-[#8A94A6] font-bold mb-1 border-b border-amber-500/30 pb-0.5">
+                    / 100
+                  </span>
+                </div>
+              </div>
+              <div className="bg-black/40 border border-white/5 rounded-[20px] p-6 flex flex-col justify-center shadow-inner">
+                <p className="text-[9px] font-black text-[#8A94A6] uppercase tracking-widest mb-1">
+                  Biomechanics
+                </p>
+                <div className="flex items-end gap-2">
+                  <span className="text-3xl font-black italic text-amber-500">
+                    {scoreData.scores.mechanics}
+                  </span>
+                  <span className="text-xs text-[#8A94A6] font-bold mb-1 border-b border-amber-500/30 pb-0.5">
+                    / 100
+                  </span>
+                </div>
+              </div>
+              <div className="col-span-2 bg-amber-500/10 border border-amber-500/20 rounded-[20px] p-5 flex items-center justify-between shadow-inner">
+                <div>
+                  <p className="text-[9px] font-black text-amber-500/80 uppercase tracking-widest mb-1">
+                    Assigned Protocol
+                  </p>
+                  <p className="text-sm md:text-base font-black text-white uppercase tracking-wider">
+                    {scoreData.engine?.assignedLevel}{" "}
+                    {scoreData.engine?.identifiedDeficit} Track
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="relative z-10">
+            {/* 🚀 THE FINAL CTA THAT DROPS THEM ON THE DASHBOARD */}
+            <button
+              onClick={() => window.location.reload()}
+              className="w-full py-5 bg-amber-500 text-black font-black text-xs md:text-sm uppercase tracking-widest rounded-xl hover:bg-amber-400 transition-all shadow-[0_0_30px_rgba(245,158,11,0.3)] active:scale-95 flex justify-center items-center gap-3"
+            >
+              Acknowledge & Access Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // =========================================================
+  // 📝 STANDARD ASSESSMENT WIZARD VIEW
+  // =========================================================
   return (
     <div className="min-h-screen bg-[#0B0F14] text-white flex flex-col pt-12 md:pt-24 px-4 pb-24">
       <div className="max-w-xl mx-auto w-full">
