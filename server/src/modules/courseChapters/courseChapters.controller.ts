@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { Step, Template, CoursePlan } from "./courseArchitect.model";
+import CourseProgress from "../course/courseProgress.model";
 
 // ==============================
 // CONTENT VAULT (STEPS)
@@ -105,10 +106,79 @@ export const getCoursePlan = async (
   try {
     const plan = await CoursePlan.findOne({
       courseId: req.params.courseId,
-    }).populate("days.templateId");
+    }).populate({
+      path: "days.templateId",
+      populate: { path: "steps" }, // 🚀 THE FIX: This fetches the actual step details!
+    });
 
-    // We explicitly return null if no plan is found so the frontend knows to show an empty canvas
     res.status(200).json({ success: true, data: plan || null });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ==============================
+// USER PROGRESS TRACKING
+// ==============================
+
+export const getCourseProgress = async (
+  req: any,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const progress = await CourseProgress.findOne({
+      user: req.user.id, // 🚀 Changed from userId to user
+      course: req.params.courseId, // 🚀 Changed from courseId to course
+    });
+    res.status(200).json({ success: true, data: progress });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateCourseProgress = async (
+  req: any,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { courseId, stepId, dayNumber, isDayComplete } = req.body;
+    const userId = req.user.id;
+
+    // Find or create a progress document for this user & course
+    let progress = await CourseProgress.findOne({
+      user: userId,
+      course: courseId,
+    });
+    if (!progress) {
+      progress = await CourseProgress.create({
+        user: userId,
+        course: courseId,
+        completedSteps: [],
+        completedDays: [],
+      });
+    }
+
+    // Toggle individual steps
+    if (stepId) {
+      const stepIndex = progress.completedSteps.indexOf(stepId);
+      if (stepIndex > -1) {
+        progress.completedSteps.splice(stepIndex, 1); // Un-tick
+      } else {
+        progress.completedSteps.push(stepId); // Tick
+      }
+    }
+
+    // Mark whole day as complete
+    if (isDayComplete && dayNumber !== undefined) {
+      if (!progress.completedDays.includes(dayNumber)) {
+        progress.completedDays.push(dayNumber);
+      }
+    }
+
+    await progress.save();
+    res.status(200).json({ success: true, data: progress });
   } catch (error) {
     next(error);
   }

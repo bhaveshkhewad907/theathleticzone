@@ -8,6 +8,8 @@ import {
   getTemplates,
   saveCoursePlan,
   getCoursePlan,
+  getCourseProgress,
+  updateCourseProgress,
 } from "./courseChapters.controller";
 
 const router = Router();
@@ -40,5 +42,7 @@ router.post("/plan", adminOnly, saveCoursePlan);
 
 // 🚀 THE FIX: Athletes are now allowed to fetch the structured plan!
 router.get("/plan/:courseId", getCoursePlan);
+router.get("/progress/:courseId", getCourseProgress);
+router.post("/progress", updateCourseProgress);
 
 export default router;

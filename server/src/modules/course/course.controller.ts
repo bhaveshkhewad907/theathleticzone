@@ -10,7 +10,6 @@ import {
   deleteCourseSoft,
 } from "./course.service";
 import ApiError from "../../utils/apiError";
-import CoursePurchase from "./coursePurchase.model";
 import CourseProgress from "./courseProgress.model";
 import Course from "./course.model";
 import { generateSecureVideoUrl } from "../../services/r2.service";

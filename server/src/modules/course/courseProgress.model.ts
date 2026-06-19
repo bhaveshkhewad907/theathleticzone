@@ -3,9 +3,13 @@ import mongoose, { Schema, Document } from "mongoose";
 export interface ICourseProgress extends Document {
   user: mongoose.Types.ObjectId;
   course: mongoose.Types.ObjectId;
-  lastWatchedSeconds: number; // Exactly where the video paused
-  progressPercentage: number; // 0 to 100
+  // Legacy Fields
+  lastWatchedSeconds: number;
+  progressPercentage: number;
   isCompleted: boolean;
+  // 🚀 NEW: Structured Protocol Fields
+  completedSteps: string[];
+  completedDays: number[];
   updatedAt: Date;
 }
 
@@ -17,14 +21,18 @@ const courseProgressSchema = new Schema<ICourseProgress>(
       ref: "Course",
       required: true,
     },
+    // Legacy Tracking
     lastWatchedSeconds: { type: Number, default: 0 },
     progressPercentage: { type: Number, default: 0, max: 100 },
     isCompleted: { type: Boolean, default: false },
+    // 🚀 NEW Tracking Arrays
+    completedSteps: [{ type: String }],
+    completedDays: [{ type: Number }],
   },
   { timestamps: true },
 );
 
-// ⚡ PERFORMANCE UPGRADE: Fast lookup for resuming a video
+// ⚡ PERFORMANCE UPGRADE: Fast lookup for resuming a video or loading protocol
 courseProgressSchema.index({ user: 1, course: 1 }, { unique: true });
 
 const CourseProgress = mongoose.model<ICourseProgress>(
