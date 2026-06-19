@@ -50,18 +50,13 @@ export default function AthleteDashboard() {
   );
   const [loading, setLoading] = useState(true);
 
-  // 🚀 New UI States for the Loop
   const [isPlayerOpen, setIsPlayerOpen] = useState(false);
   const [isVictoryModalOpen, setIsVictoryModalOpen] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
 
   useEffect(() => {
-    if (
-      userStatus === "NEEDS_ASSESSMENT" ||
-      userStatus === "COMPLETED_TRAINING" ||
-      !userStatus
-    ) {
+    if (userStatus !== "ACTIVE_TRAINING") {
       setLoading(false);
       return;
     }
@@ -104,13 +99,12 @@ export default function AthleteDashboard() {
     fetchDashboardData();
   }, [userStatus]);
 
-  // 🚀 TRIGGERS THE API AND OPENS RAZORPAY
   const handleInitiateRenewal = async () => {
     setIsResetting(true);
     try {
-      await api.post("/assessments/reset-cycle"); // Calls our new backend logic!
-      setIsVictoryModalOpen(false); // Close the popup
-      setShowPaywall(true); // Open the checkout
+      await api.post("/assessments/reset-cycle");
+      setIsVictoryModalOpen(false);
+      setShowPaywall(true);
     } catch {
       toast.error("Failed to sync with server. Check connection.");
     } finally {
@@ -119,27 +113,25 @@ export default function AthleteDashboard() {
   };
 
   // =========================================================
-  // 🛑 STATE INTERCEPTORS (The Chameleon Logic)
+  // 🛑 STATE INTERCEPTORS (Bulletproof Logic)
   // =========================================================
 
-  // 1. If Paywall state is triggered, show checkout fullscreen
-  if (showPaywall || (userStatus === "COMPLETED_TRAINING" && !hasPaid)) {
+  // 1. Unpaid State -> Force Paywall
+  if (showPaywall || !hasPaid) {
     return <ProgramPaywall onSuccess={() => window.location.reload()} />;
   }
 
-  // 2. If Assessment state is triggered, show assessment wizard
-  if (userStatus === "NEEDS_ASSESSMENT" || !userStatus) {
-    if (!hasPaid) {
-      return <ProgramPaywall onSuccess={() => window.location.reload()} />;
-    } else {
-      return (
-        <div className="animate-in fade-in duration-500">
-          <AssessmentWizard />
-        </div>
-      );
-    }
+  // 2. Paid but NOT Active -> Force Assessment Wizard
+  // 🚀 This catches "COMPLETED_TRAINING", "NEEDS_ASSESSMENT", or undefined states!
+  if (hasPaid && userStatus !== "ACTIVE_TRAINING") {
+    return (
+      <div className="animate-in fade-in duration-500">
+        <AssessmentWizard />
+      </div>
+    );
   }
 
+  // 3. Loading State
   if (loading) {
     return (
       <div className="relative min-h-[60vh] flex items-center justify-center">
@@ -233,7 +225,6 @@ export default function AthleteDashboard() {
                           <PlayCircle size={18} /> Start Training Session
                         </button>
 
-                        {/* 🚀 OPENS THE CONGRATULATIONS POPUP */}
                         <button
                           onClick={() => setIsVictoryModalOpen(true)}
                           className="w-full py-4 bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white rounded-[12px] font-black text-[10px] uppercase tracking-[0.2em] transition-colors shadow-inner active:scale-95"
@@ -272,7 +263,6 @@ export default function AthleteDashboard() {
               exit={{ scale: 0.9, y: 20 }}
               className="max-w-lg w-full bg-[#121821] border border-amber-500/30 rounded-[24px] p-8 md:p-10 text-center shadow-[0_30px_60px_rgba(245,158,11,0.15)] relative overflow-hidden"
             >
-              {/* Background glow */}
               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[150px] bg-amber-500/20 blur-[80px] pointer-events-none rounded-full" />
 
               <div className="relative z-10">
@@ -290,7 +280,6 @@ export default function AthleteDashboard() {
                 </p>
 
                 <div className="space-y-4">
-                  {/* 🚀 THIS BUTTON TRIGGERS THE RESET AND OPENS RAZORPAY */}
                   <button
                     onClick={handleInitiateRenewal}
                     disabled={isResetting}
