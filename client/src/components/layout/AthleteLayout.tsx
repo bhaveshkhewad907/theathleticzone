@@ -92,7 +92,13 @@ export default function AthleteLayout() {
             </NavLink>
           ))}
           <button
-            onClick={auth.logout}
+            type="button" // 🚀 FIX 1: Prevents default form submission behavior
+            onClick={(e) => {
+              e.preventDefault(); // 🚀 FIX 2: Stops the browser from interrupting the network request
+              if (auth?.logout) {
+                auth.logout(); // 🚀 FIX 3: Just call the function, it handles the redirect internally!
+              }
+            }}
             className="flex items-center gap-3 px-4 py-3 mt-12 text-red-500/40 hover:text-red-500 hover:bg-red-500/5 rounded-xl transition-all w-full text-[11px] font-black uppercase tracking-widest active:scale-95"
           >
             <LogOut size={18} /> Logout
