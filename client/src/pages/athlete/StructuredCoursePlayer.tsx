@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { PlayCircle, CheckCircle, Circle, ChevronDown } from "lucide-react";
+import { PlayCircle, CheckCircle, Circle, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import api from "../../services/api";
 
 // ==========================================
@@ -54,18 +55,10 @@ interface PurchaseRecord {
 // 🧠 HELPER: MATHEMATICAL DAY CONVERTER
 // ==========================================
 const formatDayLabel = (dayNumber: number) => {
-  const daysOfWeek = [
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-    "Sunday",
-  ];
+  const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   const weekNumber = Math.ceil(dayNumber / 7);
   const dayName = daysOfWeek[(dayNumber - 1) % 7];
-  return `Week ${weekNumber}: ${dayName}`;
+  return `W${weekNumber}: ${dayName}`;
 };
 
 // ==========================================
@@ -76,43 +69,48 @@ export default function StructuredCoursePlayer({
 }: StructuredCoursePlayerProps) {
   const [plan, setPlan] = useState<CoursePlan | null>(null);
   const [progress, setProgress] = useState<UserProgress | null>(null);
-  const [activeVideo, setActiveVideo] = useState<string | null>(null);
 
-  const [expandedDay, setExpandedDay] = useState<number | null>(1);
+  // Modal State
+  const [activeVideo, setActiveVideo] = useState<string | null>(null);
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+
+  // Tab State
+  const [activeDay, setActiveDay] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchPlayerState = async () => {
       try {
-        // 🚀 1. Fetch the Plan FIRST (This must succeed)
         const planRes = await api.get(`/chapters/plan/${courseId}`);
-        const planData = planRes.data?.data;
+        let planData = planRes.data?.data;
 
-        // If no plan is returned from the DB, we stop here and let the legacy player take over
+        if (Array.isArray(planData) && planData.length > 0) {
+          planData = planData[0];
+        }
+
         if (!planData || !planData.days || planData.days.length === 0) {
           return;
         }
 
         setPlan(planData);
-
-        // Auto-load the very first video of Day 1
+        // Automatically select the first day in the tabs
         if (planData.days.length > 0) {
-          const firstDaySteps = planData.days[0].templateId?.steps;
-          if (firstDaySteps && firstDaySteps.length > 0) {
-            setActiveVideo(firstDaySteps[0].videoUrl);
-          }
+          setActiveDay(planData.days[0].dayNumber);
         }
 
-        // 🚀 2. Fetch the Progress SECOND (It's perfectly fine if this fails for new users)
         try {
           const progRes = await api.get(`/chapters/progress/${courseId}`);
           setProgress(progRes.data?.data || null);
         } catch {
-          console.log("No progress found. Athlete is starting fresh.");
-          setProgress(null); // User hasn't started yet, which is totally normal!
+          setProgress({
+            _id: "",
+            courseId,
+            completedSteps: [],
+            completedDays: [],
+          });
         }
       } catch (error) {
         console.error(
-          "No structured plan found. Standard course fallback triggered.",
+          "Critical Error fetching plan. Standard course fallback triggered.",
           error,
         );
       }
@@ -121,8 +119,11 @@ export default function StructuredCoursePlayer({
     fetchPlayerState();
   }, [courseId]);
 
-  const handleStepComplete = async (stepId: string) => {
-    const res = await api.post("/chapters/progress", { courseId, stepId });
+  const handleStepComplete = async (scopedStepId: string) => {
+    const res = await api.post("/chapters/progress", {
+      courseId,
+      stepId: scopedStepId,
+    });
     setProgress(res.data.data);
   };
 
@@ -133,173 +134,212 @@ export default function StructuredCoursePlayer({
       isDayComplete: true,
     });
     setProgress(res.data.data);
-    setExpandedDay(dayNumber + 1);
+
+    // Automatically slide to the next day!
+    const nextDay = plan?.days.find((d) => d.dayNumber === dayNumber + 1);
+    if (nextDay) setActiveDay(nextDay.dayNumber);
+  };
+
+  const openVideo = (url: string) => {
+    setActiveVideo(url);
+    setIsVideoModalOpen(true);
   };
 
   if (!plan) return <ClassicSingleVideoPlayer courseId={courseId} />;
 
-  return (
-    <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8 p-6 animate-in fade-in duration-700">
-      <div className="lg:col-span-2">
-        <div className="aspect-video bg-[#0B0F14] rounded-2xl overflow-hidden border border-white/10 relative shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
-          {activeVideo ? (
-            <video
-              src={activeVideo}
-              controls
-              autoPlay
-              className="w-full h-full object-contain"
-            />
-          ) : (
-            <div className="absolute inset-0 flex items-center justify-center flex-col text-[#8A94A6]">
-              <PlayCircle size={48} className="mb-4 opacity-50" />
-              <p className="font-black uppercase tracking-widest text-xs">
-                Select a module to initialize protocol
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
+  // Find the currently active day object to render
+  const currentDayData = plan.days.find((d) => d.dayNumber === activeDay);
 
-      <div className="bg-[#0F1724]/80 backdrop-blur-xl border border-white/[0.05] rounded-2xl p-6 overflow-y-auto max-h-[80vh] shadow-xl">
-        <h3 className="text-xl font-black italic uppercase text-white mb-6 sticky top-0 bg-[#0F1724] z-10 pb-4 border-b border-white/5">
+  return (
+    <div className="max-w-4xl mx-auto p-4 md:p-6 animate-in fade-in duration-700 relative">
+      {/* 🚀 HORIZONTAL DAY SELECTOR (The Tabs) */}
+      <div className="mb-8">
+        <h3 className="text-xl font-black italic uppercase text-white mb-4">
           Training Protocol
         </h3>
-
-        <div className="space-y-4">
-          {plan.days.map((day: CourseDay) => {
-            const isDayComplete = progress?.completedDays?.includes(
+        <div className="flex overflow-x-auto gap-3 pb-4 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          {plan.days.map((day) => {
+            const isActive = activeDay === day.dayNumber;
+            const isDayCompleteByDB = progress?.completedDays?.includes(
               day.dayNumber,
             );
-            const template = day.templateId;
-
-            // Safety check in case a template was deleted from the DB
-            if (!template) return null;
-
-            const isExpanded = expandedDay === day.dayNumber;
-            const formattedLabel = formatDayLabel(day.dayNumber);
+            const allSteps = day.templateId?.steps || [];
+            const areAllStepsChecked =
+              allSteps.length > 0 &&
+              allSteps.every((step) =>
+                progress?.completedSteps?.includes(
+                  `${day.dayNumber}-${step._id}`,
+                ),
+              );
+            const isFullyComplete = isDayCompleteByDB || areAllStepsChecked;
 
             return (
-              <div
+              <button
                 key={day.dayNumber}
-                className={`border rounded-xl transition-all duration-300 overflow-hidden ${
-                  isExpanded
-                    ? "border-amber-500/30 bg-black/40"
-                    : "border-white/5 bg-black/20 hover:border-white/10"
+                onClick={() => setActiveDay(day.dayNumber)}
+                className={`relative shrink-0 snap-start px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all duration-300 ${
+                  isActive
+                    ? "bg-amber-500 text-black shadow-[0_10px_20px_rgba(245,158,11,0.3)]"
+                    : "bg-[#0F1724] border border-white/5 text-[#8A94A6] hover:bg-white/5"
                 }`}
               >
-                <button
-                  onClick={() =>
-                    setExpandedDay(isExpanded ? null : day.dayNumber)
-                  }
-                  className="w-full flex justify-between items-center p-4 outline-none"
-                >
-                  <div className="flex items-center gap-4">
-                    {isDayComplete ? (
-                      <CheckCircle
-                        className="text-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)] rounded-full"
-                        size={20}
-                      />
-                    ) : (
-                      <Circle className="text-[#8A94A6]/30" size={20} />
-                    )}
-
-                    <div className="text-left">
-                      <h4 className="font-black text-white uppercase tracking-widest text-xs">
-                        {formattedLabel}
-                      </h4>
-                      <p className="text-[10px] text-amber-500 uppercase tracking-wider mt-1">
-                        {template.name}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div
-                    className={`p-1.5 rounded-full bg-white/5 transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`}
-                  >
-                    <ChevronDown
+                <div className="flex items-center gap-2">
+                  {isFullyComplete && (
+                    <CheckCircle
                       size={14}
-                      className={
-                        isExpanded ? "text-amber-500" : "text-white/40"
-                      }
+                      className={isActive ? "text-black" : "text-emerald-500"}
                     />
-                  </div>
-                </button>
-
-                <div
-                  className={`transition-all duration-500 ease-in-out ${isExpanded ? "max-h-[1000px] opacity-100" : "max-h-0 opacity-0"}`}
-                >
-                  <div className="p-4 pt-0 border-t border-white/5 mt-2 space-y-3">
-                    {template.steps.map((step: Step) => {
-                      const isStepComplete = progress?.completedSteps?.includes(
-                        step._id,
-                      );
-                      const isPlaying = activeVideo === step.videoUrl;
-
-                      return (
-                        <div
-                          key={step._id}
-                          onClick={() => setActiveVideo(step.videoUrl)}
-                          className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
-                            isPlaying
-                              ? "bg-amber-500/10 border-amber-500/50"
-                              : "bg-[#121821] border-white/5 hover:border-amber-500/30"
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleStepComplete(step._id);
-                              }}
-                              className="active:scale-90 transition-transform"
-                            >
-                              {isStepComplete ? (
-                                <CheckCircle
-                                  size={16}
-                                  className="text-emerald-500"
-                                />
-                              ) : (
-                                <Circle size={16} className="text-[#8A94A6]" />
-                              )}
-                            </button>
-                            <div>
-                              <p
-                                className={`text-xs font-black uppercase tracking-widest ${isPlaying ? "text-amber-500" : "text-white"}`}
-                              >
-                                {step.title}
-                              </p>
-                              <p className="text-[9px] text-[#8A94A6] uppercase tracking-wider">
-                                {step.type}
-                              </p>
-                            </div>
-                          </div>
-                          <PlayCircle
-                            size={16}
-                            className={
-                              isPlaying
-                                ? "text-amber-500 animate-pulse"
-                                : "text-white/20"
-                            }
-                          />
-                        </div>
-                      );
-                    })}
-
-                    {!isDayComplete && (
-                      <button
-                        onClick={() => handleDayComplete(day.dayNumber)}
-                        className="mt-6 w-full py-4 rounded-xl bg-amber-500 text-black font-black text-[10px] uppercase tracking-[0.2em] hover:bg-amber-400 transition-all shadow-[0_10px_20px_rgba(245,158,11,0.2)] active:scale-95"
-                      >
-                        Complete Session
-                      </button>
-                    )}
-                  </div>
+                  )}
+                  {formatDayLabel(day.dayNumber)}
                 </div>
-              </div>
+              </button>
             );
           })}
         </div>
       </div>
+
+      {/* 🚀 CARD SWAPPING CONTAINER */}
+      <div className="relative overflow-hidden bg-[#0F1724]/60 backdrop-blur-xl border border-white/[0.05] rounded-[2rem] shadow-2xl min-h-[400px]">
+        <AnimatePresence mode="wait">
+          {currentDayData && currentDayData.templateId && (
+            <motion.div
+              key={currentDayData.dayNumber}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className="p-6 md:p-8"
+            >
+              <div className="mb-8">
+                <h4 className="text-2xl font-black uppercase tracking-tighter italic text-white">
+                  {currentDayData.templateId.name}
+                </h4>
+                <p className="text-[10px] text-amber-500 uppercase tracking-widest mt-1 font-bold">
+                  {currentDayData.templateId.steps.length} Protocol Steps
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                {currentDayData.templateId.steps.map((step) => {
+                  const scopedStepId = `${currentDayData.dayNumber}-${step._id}`;
+                  const isStepComplete =
+                    progress?.completedSteps?.includes(scopedStepId);
+
+                  return (
+                    <div
+                      key={step._id}
+                      onClick={() => openVideo(step.videoUrl)}
+                      className="p-4 rounded-[16px] bg-black/40 border border-white/5 hover:border-amber-500/40 hover:bg-[#121821] transition-all cursor-pointer flex items-center justify-between group shadow-inner"
+                    >
+                      <div className="flex items-center gap-4 overflow-hidden">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleStepComplete(scopedStepId);
+                          }}
+                          className="active:scale-90 transition-transform shrink-0"
+                        >
+                          {isStepComplete ? (
+                            <CheckCircle
+                              size={20}
+                              className="text-emerald-500 drop-shadow-[0_0_8px_rgba(16,185,129,0.4)]"
+                            />
+                          ) : (
+                            <Circle
+                              size={20}
+                              className="text-[#8A94A6]/50 group-hover:text-amber-500/50"
+                            />
+                          )}
+                        </button>
+                        <div className="truncate">
+                          <p className="text-sm font-black uppercase tracking-widest text-white truncate group-hover:text-amber-500 transition-colors">
+                            {step.title}
+                          </p>
+                          <p className="text-[10px] text-[#8A94A6] uppercase tracking-wider mt-0.5">
+                            {step.type}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center shrink-0 group-hover:bg-amber-500 group-hover:text-black text-amber-500 transition-all">
+                        <PlayCircle
+                          size={20}
+                          className={!isStepComplete ? "animate-pulse" : ""}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Day Completion Logic */}
+              {(() => {
+                const allSteps = currentDayData.templateId.steps || [];
+                const areAllStepsChecked =
+                  allSteps.length > 0 &&
+                  allSteps.every((step) =>
+                    progress?.completedSteps?.includes(
+                      `${currentDayData.dayNumber}-${step._id}`,
+                    ),
+                  );
+                const isDayCompleteByDB = progress?.completedDays?.includes(
+                  currentDayData.dayNumber,
+                );
+
+                if (!isDayCompleteByDB && !areAllStepsChecked) {
+                  return (
+                    <button
+                      onClick={() =>
+                        handleDayComplete(currentDayData.dayNumber)
+                      }
+                      className="mt-8 w-full py-5 rounded-xl bg-amber-500 text-black font-black text-xs uppercase tracking-[0.2em] hover:bg-amber-400 transition-all shadow-[0_10px_30px_rgba(245,158,11,0.2)] active:scale-95"
+                    >
+                      Log Day as Complete
+                    </button>
+                  );
+                }
+                return null;
+              })()}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* 🎬 IMMERSIVE VERTICAL REEL MODAL */}
+      <AnimatePresence>
+        {isVideoModalOpen && activeVideo && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-[#0B0F14]/95 backdrop-blur-2xl"
+          >
+            {/* Close Button */}
+            <button
+              onClick={() => setIsVideoModalOpen(false)}
+              className="absolute top-6 right-6 md:top-10 md:right-10 w-12 h-12 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full flex items-center justify-center text-white backdrop-blur-md transition-all active:scale-90 z-10"
+            >
+              <X size={24} />
+            </button>
+
+            {/* Vertical Video Container (9:16 Aspect Ratio) */}
+            <motion.div
+              initial={{ scale: 0.9, y: 50 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 50 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="relative w-full max-w-[45vh] aspect-[9/16] bg-black rounded-[2rem] overflow-hidden border border-white/10 shadow-[0_40px_100px_rgba(0,0,0,0.8)]"
+            >
+              <video
+                src={activeVideo}
+                controls
+                autoPlay
+                playsInline
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -357,22 +397,6 @@ function ClassicSingleVideoPlayer({ courseId }: { courseId: string }) {
             </p>
           </div>
         )}
-      </div>
-
-      <div className="mt-8 p-6 bg-amber-500/10 border border-amber-500/20 rounded-xl text-center md:text-left flex flex-col md:flex-row items-center gap-6">
-        <div className="h-12 w-12 rounded-full bg-amber-500 flex items-center justify-center text-black shrink-0 shadow-[0_0_15px_rgba(245,158,11,0.5)]">
-          <PlayCircle size={24} />
-        </div>
-        <div>
-          <p className="text-amber-500 font-black text-[10px] uppercase tracking-[0.3em] mb-1">
-            Legacy View Active
-          </p>
-          <p className="text-[#E5E7EB] text-sm font-medium">
-            This specific module has not been upgraded to the interactive 6-week
-            Day-by-Day protocol yet. Loading the classic continuous video
-            stream.
-          </p>
-        </div>
       </div>
     </div>
   );
