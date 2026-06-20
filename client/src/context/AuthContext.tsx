@@ -46,6 +46,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     setAuth(null);
 
+    // 🚀 NEW: Wipe all browser memory so the next login is totally fresh
+    localStorage.clear();
+    sessionStorage.clear();
+
     // 🚀 THE FIX: Use replace to prevent "back button" auto-login loops
     window.location.replace("/login");
   };
