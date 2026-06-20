@@ -1,6 +1,8 @@
 import { RequestHandler } from "express";
 import { getAdminDashboard } from "./adminDashboard.service";
 import User from "../../modules/user/user.model";
+import Assessment from "../../modules/assessment/assessment.model";
+import { Request, Response, NextFunction } from "express";
 
 export const dashboard: RequestHandler = async (_req, res, next) => {
   try {
@@ -32,5 +34,28 @@ export const getAthletesRoster = async (req: any, res: any) => {
     res
       .status(500)
       .json({ success: false, message: "Failed to fetch roster." });
+  }
+};
+
+export const getAthleteAssessmentForAdmin = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { id } = req.params; // The athlete._id sent from the frontend
+
+    // Find the most recent assessment for this specific user
+    const assessment = await Assessment.findOne({ userId: id }).sort({
+      createdAt: -1,
+    });
+
+    // Return the assessment (or null if they haven't taken it yet)
+    res.status(200).json({
+      success: true,
+      data: assessment || null,
+    });
+  } catch (error) {
+    next(error);
   }
 };

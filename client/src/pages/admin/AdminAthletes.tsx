@@ -61,17 +61,21 @@ export default function AdminAthletes() {
     setAssessmentData(null);
 
     try {
-      // Fetch the latest assessment for this specific user
-      // Update this endpoint string if your routes are structured differently!
-      const res = await api.get(`/assessments/user/${athlete._id}`);
+      // 🚀 FIX 1: Point to the dedicated Admin endpoint we just created
+      const res = await api.get(`/admin/athletes/${athlete._id}/assessment`);
 
-      // Handle the response whether it returns an array of assessments or a single object
-      const data = Array.isArray(res.data.data)
-        ? res.data.data[0]
-        : res.data.data;
-      setAssessmentData(data);
-    } catch (error) {
-      console.error("Failed to fetch assessment for review", error);
+      // 🚀 FIX 2: Our new backend controller sends the exact object, so we don't need messy Array checks!
+      setAssessmentData(res.data.data);
+    } catch (err) {
+      // 🚀 FIX: Remove 'any' from the catch parameter, and safely cast it inside!
+      const apiError = err as {
+        response?: { data?: unknown };
+        message?: string;
+      };
+      console.error(
+        "Backend Error:",
+        apiError.response?.data || apiError.message,
+      );
     } finally {
       setLoadingAssessment(false);
     }
