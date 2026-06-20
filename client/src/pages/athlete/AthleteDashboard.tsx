@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   Trophy,
   ArrowRight,
+  Video,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -35,6 +36,7 @@ interface ActiveCourseData {
   title: string;
   description: string;
   thumbnailUrl: string;
+  videoUrl?: string | null; // 🚀 Added to capture the Intro Reel
 }
 
 export default function AthleteDashboard() {
@@ -55,6 +57,9 @@ export default function AthleteDashboard() {
   const [showPaywall, setShowPaywall] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
 
+  // 🚀 NEW: State for the Cinematic Intro Reel
+  const [showIntroReel, setShowIntroReel] = useState(false);
+
   useEffect(() => {
     if (userStatus !== "ACTIVE_TRAINING") {
       setLoading(false);
@@ -73,6 +78,7 @@ export default function AthleteDashboard() {
               description: courseObj.meta?.description || courseObj.description,
               thumbnailUrl:
                 courseObj.meta?.coverImageUrl || courseObj.thumbnailUrl,
+              videoUrl: courseObj.meta?.videoUrl || courseObj.videoUrl, // 🚀 Captures the video
             });
           }
         } catch (courseErr) {
@@ -99,6 +105,17 @@ export default function AthleteDashboard() {
     fetchDashboardData();
   }, [userStatus]);
 
+  // 🚀 AUTO-POPUP LOGIC: Triggers the video once per session
+  useEffect(() => {
+    if (activeCourse?.videoUrl) {
+      const storageKey = `has_seen_intro_${activeCourse._id}`;
+      if (!sessionStorage.getItem(storageKey)) {
+        setShowIntroReel(true);
+        sessionStorage.setItem(storageKey, "true");
+      }
+    }
+  }, [activeCourse]);
+
   const handleInitiateRenewal = async () => {
     setIsResetting(true);
     try {
@@ -116,13 +133,10 @@ export default function AthleteDashboard() {
   // 🛑 STATE INTERCEPTORS (Bulletproof Logic)
   // =========================================================
 
-  // 1. Unpaid State -> Force Paywall
   if (showPaywall || !hasPaid) {
     return <ProgramPaywall onSuccess={() => window.location.reload()} />;
   }
 
-  // 2. Paid but NOT Active -> Force Assessment Wizard
-  // 🚀 This catches "COMPLETED_TRAINING", "NEEDS_ASSESSMENT", or undefined states!
   if (hasPaid && userStatus !== "ACTIVE_TRAINING") {
     return (
       <div className="animate-in fade-in duration-500">
@@ -131,7 +145,6 @@ export default function AthleteDashboard() {
     );
   }
 
-  // 3. Loading State
   if (loading) {
     return (
       <div className="relative min-h-[60vh] flex items-center justify-center">
@@ -195,7 +208,7 @@ export default function AthleteDashboard() {
 
             {/* Course Column */}
             <div className="lg:col-span-2 flex flex-col">
-              <div className="relative bg-[#0F1724]/60 backdrop-blur-md border border-white/[0.05] rounded-[16px] p-2 flex flex-col h-full overflow-hidden transition-all hover:border-amber-500/30 shadow-[0_10px_30px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.04)]">
+              <div className="relative bg-[#0F1724]/60 backdrop-blur-md border border-white/[0.05] rounded-[16px] p-2 flex flex-col h-full overflow-hidden transition-all hover:border-amber-500/30 shadow-[0_10px_30px_rgba(0,0,0,0.45)]">
                 {activeCourse ? (
                   <div className="flex flex-col h-full relative">
                     <div className="relative aspect-video rounded-[12px] overflow-hidden bg-black/60 group shadow-inner">
@@ -218,6 +231,17 @@ export default function AthleteDashboard() {
                       </p>
 
                       <div className="mt-auto space-y-3 w-full">
+                        {/* 🚀 NEW: Mission Briefing Button */}
+                        {activeCourse.videoUrl && (
+                          <button
+                            onClick={() => setShowIntroReel(true)}
+                            className="w-full py-4 rounded-[12px] bg-white/5 border border-white/10 text-white font-black text-[10px] md:text-xs uppercase tracking-[0.2em] hover:bg-white/10 active:scale-95 flex justify-center items-center gap-2 transition-all"
+                          >
+                            <Video size={18} className="text-amber-500" /> Watch
+                            Mission Briefing
+                          </button>
+                        )}
+
                         <button
                           onClick={() => setIsPlayerOpen(true)}
                           className="w-full py-5 rounded-[12px] bg-amber-500 text-black font-black text-[10px] md:text-xs uppercase tracking-[0.2em] hover:bg-amber-400 active:scale-95 flex justify-center items-center gap-2 shadow-[0_10px_20px_rgba(245,158,11,0.2)] transition-all"
@@ -248,7 +272,42 @@ export default function AthleteDashboard() {
         </div>
       </div>
 
-      {/* 🏆 THE CONGRATULATIONS POPUP MODAL */}
+      {/* 🎬 THE INTRO REEL MODAL */}
+      <AnimatePresence>
+        {showIntroReel && activeCourse?.videoUrl && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-[#0B0F14]/95 backdrop-blur-2xl"
+          >
+            <button
+              onClick={() => setShowIntroReel(false)}
+              className="absolute top-6 right-6 md:top-10 md:right-10 w-12 h-12 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full flex items-center justify-center text-white backdrop-blur-md transition-all active:scale-90 z-10"
+            >
+              <X size={24} />
+            </button>
+
+            <motion.div
+              initial={{ scale: 0.9, y: 50 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 50 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="relative w-full max-w-[45vh] aspect-[9/16] bg-black rounded-[2rem] overflow-hidden border border-white/10 shadow-[0_40px_100px_rgba(0,0,0,0.8)]"
+            >
+              <video
+                src={activeCourse.videoUrl}
+                controls
+                autoPlay
+                playsInline
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 🏆 THE CONGRATULATIONS POPUP MODAL (Kept Exactly as before) */}
       <AnimatePresence>
         {isVictoryModalOpen && (
           <motion.div
@@ -264,7 +323,6 @@ export default function AthleteDashboard() {
               className="max-w-lg w-full bg-[#121821] border border-amber-500/30 rounded-[24px] p-8 md:p-10 text-center shadow-[0_30px_60px_rgba(245,158,11,0.15)] relative overflow-hidden"
             >
               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[150px] bg-amber-500/20 blur-[80px] pointer-events-none rounded-full" />
-
               <div className="relative z-10">
                 <div className="w-20 h-20 mx-auto bg-amber-500/10 border border-amber-500/20 rounded-full flex items-center justify-center text-amber-500 mb-6 shadow-inner">
                   <Trophy size={40} />
@@ -278,7 +336,6 @@ export default function AthleteDashboard() {
                   time to recalibrate your biomechanics and push to the next
                   tier.
                 </p>
-
                 <div className="space-y-4">
                   <button
                     onClick={handleInitiateRenewal}
@@ -290,7 +347,6 @@ export default function AthleteDashboard() {
                       : "Move Ahead & Unlock Phase 2"}
                     {!isResetting && <ArrowRight size={18} />}
                   </button>
-
                   <button
                     onClick={() => setIsVictoryModalOpen(false)}
                     disabled={isResetting}

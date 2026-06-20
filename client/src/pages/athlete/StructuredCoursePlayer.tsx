@@ -41,24 +41,22 @@ interface StructuredCoursePlayerProps {
   courseId: string;
 }
 
-interface PurchaseRecord {
-  course: {
-    _id: string;
-    videoUrl?: string;
-    meta?: {
-      videoUrl?: string;
-    };
-  };
-}
+// ==========================================
+// 🧠 HELPERS: TWO-TIER MATH CONVERTERS
+// ==========================================
+const getWeekNumber = (dayNumber: number) => Math.ceil(dayNumber / 7);
 
-// ==========================================
-// 🧠 HELPER: MATHEMATICAL DAY CONVERTER
-// ==========================================
-const formatDayLabel = (dayNumber: number) => {
-  const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  const weekNumber = Math.ceil(dayNumber / 7);
-  const dayName = daysOfWeek[(dayNumber - 1) % 7];
-  return `W${weekNumber}: ${dayName}`;
+const getDayNameOnly = (dayNumber: number) => {
+  const daysOfWeek = [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+  ];
+  return daysOfWeek[(dayNumber - 1) % 7];
 };
 
 // ==========================================
@@ -74,7 +72,8 @@ export default function StructuredCoursePlayer({
   const [activeVideo, setActiveVideo] = useState<string | null>(null);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
 
-  // Tab State
+  // 🚀 NEW: Two-Tier Tab State
+  const [activeWeek, setActiveWeek] = useState<number>(1);
   const [activeDay, setActiveDay] = useState<number | null>(null);
 
   useEffect(() => {
@@ -83,18 +82,18 @@ export default function StructuredCoursePlayer({
         const planRes = await api.get(`/chapters/plan/${courseId}`);
         let planData = planRes.data?.data;
 
-        if (Array.isArray(planData) && planData.length > 0) {
+        if (Array.isArray(planData) && planData.length > 0)
           planData = planData[0];
-        }
 
-        if (!planData || !planData.days || planData.days.length === 0) {
-          return;
-        }
+        if (!planData || !planData.days || planData.days.length === 0) return;
 
         setPlan(planData);
-        // Automatically select the first day in the tabs
+
+        // Auto-select the first available week and day
         if (planData.days.length > 0) {
-          setActiveDay(planData.days[0].dayNumber);
+          const firstDay = planData.days[0].dayNumber;
+          setActiveWeek(getWeekNumber(firstDay));
+          setActiveDay(firstDay);
         }
 
         try {
@@ -109,10 +108,7 @@ export default function StructuredCoursePlayer({
           });
         }
       } catch (error) {
-        console.error(
-          "Critical Error fetching plan. Standard course fallback triggered.",
-          error,
-        );
+        console.error("Error fetching plan.", error);
       }
     };
 
@@ -135,9 +131,36 @@ export default function StructuredCoursePlayer({
     });
     setProgress(res.data.data);
 
-    // Automatically slide to the next day!
-    const nextDay = plan?.days.find((d) => d.dayNumber === dayNumber + 1);
-    if (nextDay) setActiveDay(nextDay.dayNumber);
+    // 🚀 THE FIX: Smart Auto-Advance that skips rest days!
+    if (plan?.days) {
+      // Sort the days to ensure they are in numerical order
+      const sortedDays = [...plan.days].sort(
+        (a, b) => a.dayNumber - b.dayNumber,
+      );
+
+      // Find where we currently are in the array
+      const currentIndex = sortedDays.findIndex(
+        (d) => d.dayNumber === dayNumber,
+      );
+
+      // If there is another training day in the schedule, slide directly to it!
+      if (currentIndex !== -1 && currentIndex < sortedDays.length - 1) {
+        const nextDay = sortedDays[currentIndex + 1];
+        setActiveDay(nextDay.dayNumber);
+        setActiveWeek(getWeekNumber(nextDay.dayNumber));
+      }
+    }
+  };
+
+  // 🚀 Smart Week Switcher: Auto-selects the first day of the new week clicked
+  const handleWeekSwitch = (weekNum: number) => {
+    setActiveWeek(weekNum);
+    const firstDayOfSelectedWeek = plan?.days.find(
+      (d) => getWeekNumber(d.dayNumber) === weekNum,
+    );
+    if (firstDayOfSelectedWeek) {
+      setActiveDay(firstDayOfSelectedWeek.dayNumber);
+    }
   };
 
   const openVideo = (url: string) => {
@@ -145,20 +168,56 @@ export default function StructuredCoursePlayer({
     setIsVideoModalOpen(true);
   };
 
-  if (!plan) return <ClassicSingleVideoPlayer courseId={courseId} />;
+  if (!plan) return <ClassicSingleVideoPlayer />;
 
-  // Find the currently active day object to render
   const currentDayData = plan.days.find((d) => d.dayNumber === activeDay);
+
+  // Extract unique weeks from the plan data
+  const uniqueWeeks = Array.from(
+    new Set(plan.days.map((d) => getWeekNumber(d.dayNumber))),
+  ).sort((a, b) => a - b);
+  // Filter days to ONLY show the ones in the currently active week
+  const daysInActiveWeek = plan.days.filter(
+    (d) => getWeekNumber(d.dayNumber) === activeWeek,
+  );
 
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-6 animate-in fade-in duration-700 relative">
-      {/* 🚀 HORIZONTAL DAY SELECTOR (The Tabs) */}
-      <div className="mb-8">
-        <h3 className="text-xl font-black italic uppercase text-white mb-4">
-          Training Protocol
+      <div className="mb-8 space-y-6">
+        <h3 className="text-xl md:text-2xl font-black italic uppercase text-white">
+          Protocol <span className="text-amber-500">Navigator</span>
         </h3>
-        <div className="flex overflow-x-auto gap-3 pb-4 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-          {plan.days.map((day) => {
+
+        {/* 🚀 TIER 1: THE WEEK SELECTOR (Framer Motion Sliding Underline) */}
+        <div className="flex overflow-x-auto gap-8 border-b border-white/10 pb-3 snap-x [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {uniqueWeeks.map((week) => {
+            const isActiveWeek = activeWeek === week;
+            return (
+              <button
+                key={`week-${week}`}
+                onClick={() => handleWeekSwitch(week)}
+                className={`relative pb-2 shrink-0 font-black uppercase tracking-widest text-sm transition-colors duration-300 ${
+                  isActiveWeek
+                    ? "text-white"
+                    : "text-[#8A94A6] hover:text-white/70"
+                }`}
+              >
+                Week {week}
+                {isActiveWeek && (
+                  <motion.div
+                    layoutId="activeWeekUnderline"
+                    className="absolute -bottom-[3px] left-0 right-0 h-[3px] bg-amber-500 rounded-t-full shadow-[0_0_10px_rgba(245,158,11,0.5)]"
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                  />
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* 🚀 TIER 2: THE DAY SELECTOR (Filtered by activeWeek) */}
+        <div className="flex overflow-x-auto gap-3 pb-2 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          {daysInActiveWeek.map((day) => {
             const isActive = activeDay === day.dayNumber;
             const isDayCompleteByDB = progress?.completedDays?.includes(
               day.dayNumber,
@@ -177,9 +236,9 @@ export default function StructuredCoursePlayer({
               <button
                 key={day.dayNumber}
                 onClick={() => setActiveDay(day.dayNumber)}
-                className={`relative shrink-0 snap-start px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all duration-300 ${
+                className={`relative shrink-0 snap-start px-5 py-3 rounded-2xl font-black text-[10px] md:text-xs uppercase tracking-widest transition-all duration-300 ${
                   isActive
-                    ? "bg-amber-500 text-black shadow-[0_10px_20px_rgba(245,158,11,0.3)]"
+                    ? "bg-amber-500 text-black shadow-[0_5px_15px_rgba(245,158,11,0.2)] scale-105"
                     : "bg-[#0F1724] border border-white/5 text-[#8A94A6] hover:bg-white/5"
                 }`}
               >
@@ -190,7 +249,7 @@ export default function StructuredCoursePlayer({
                       className={isActive ? "text-black" : "text-emerald-500"}
                     />
                   )}
-                  {formatDayLabel(day.dayNumber)}
+                  {getDayNameOnly(day.dayNumber)}
                 </div>
               </button>
             );
@@ -198,32 +257,41 @@ export default function StructuredCoursePlayer({
         </div>
       </div>
 
-      {/* 🚀 CARD SWAPPING CONTAINER */}
-      <div className="relative overflow-hidden bg-[#0F1724]/60 backdrop-blur-xl border border-white/[0.05] rounded-[2rem] shadow-2xl min-h-[400px]">
+      {/* 🚀 CARD SWAPPING CONTAINER (Protocol Steps) */}
+      <div className="relative overflow-hidden bg-[#0F1724]/60 backdrop-blur-xl border border-white/[0.05] rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] min-h-[400px]">
         <AnimatePresence mode="wait">
-          {currentDayData && currentDayData.templateId && (
+          {currentDayData && currentDayData.templateId ? (
             <motion.div
-              key={currentDayData.dayNumber}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
+              key={`day-${currentDayData.dayNumber}`}
+              initial={{ opacity: 0, x: 20, filter: "blur(4px)" }}
+              animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
+              exit={{ opacity: 0, x: -20, filter: "blur(4px)" }}
               transition={{ duration: 0.3, ease: "easeInOut" }}
               className="p-6 md:p-8"
             >
-              <div className="mb-8">
-                <h4 className="text-2xl font-black uppercase tracking-tighter italic text-white">
-                  {currentDayData.templateId.name}
-                </h4>
-                <p className="text-[10px] text-amber-500 uppercase tracking-widest mt-1 font-bold">
-                  {currentDayData.templateId.steps.length} Protocol Steps
-                </p>
+              <div className="mb-8 flex justify-between items-end">
+                <div>
+                  <h4 className="text-2xl md:text-3xl font-black uppercase tracking-tighter italic text-white leading-none">
+                    {currentDayData.templateId.name}
+                  </h4>
+                  <p className="text-[10px] text-amber-500 uppercase tracking-widest mt-2 font-bold">
+                    Day {currentDayData.dayNumber} •{" "}
+                    {currentDayData.templateId.steps.length} Steps
+                  </p>
+                </div>
               </div>
 
               <div className="space-y-4">
                 {currentDayData.templateId.steps.map((step) => {
                   const scopedStepId = `${currentDayData.dayNumber}-${step._id}`;
+                  const isDayCompleteByDB = progress?.completedDays?.includes(
+                    currentDayData.dayNumber,
+                  );
+
+                  // 🚀 THE FIX: If the whole day is marked complete, force all individual circles to turn green!
                   const isStepComplete =
-                    progress?.completedSteps?.includes(scopedStepId);
+                    progress?.completedSteps?.includes(scopedStepId) ||
+                    isDayCompleteByDB;
 
                   return (
                     <div
@@ -241,12 +309,12 @@ export default function StructuredCoursePlayer({
                         >
                           {isStepComplete ? (
                             <CheckCircle
-                              size={20}
+                              size={22}
                               className="text-emerald-500 drop-shadow-[0_0_8px_rgba(16,185,129,0.4)]"
                             />
                           ) : (
                             <Circle
-                              size={20}
+                              size={22}
                               className="text-[#8A94A6]/50 group-hover:text-amber-500/50"
                             />
                           )}
@@ -260,7 +328,7 @@ export default function StructuredCoursePlayer({
                           </p>
                         </div>
                       </div>
-                      <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center shrink-0 group-hover:bg-amber-500 group-hover:text-black text-amber-500 transition-all">
+                      <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center shrink-0 group-hover:bg-amber-500 group-hover:text-black text-amber-500 transition-all shadow-inner">
                         <PlayCircle
                           size={20}
                           className={!isStepComplete ? "animate-pulse" : ""}
@@ -271,7 +339,7 @@ export default function StructuredCoursePlayer({
                 })}
               </div>
 
-              {/* Day Completion Logic */}
+              {/* Day Completion Button Logic */}
               {(() => {
                 const allSteps = currentDayData.templateId.steps || [];
                 const areAllStepsChecked =
@@ -300,6 +368,17 @@ export default function StructuredCoursePlayer({
                 return null;
               })()}
             </motion.div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="p-10 flex flex-col items-center justify-center text-center min-h-[400px]"
+            >
+              <Circle size={48} className="text-white/10 mb-4 animate-pulse" />
+              <p className="text-[#8A94A6] font-black uppercase tracking-widest text-xs">
+                Rest Day or No Protocol Assigned
+              </p>
+            </motion.div>
           )}
         </AnimatePresence>
       </div>
@@ -313,7 +392,6 @@ export default function StructuredCoursePlayer({
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-[#0B0F14]/95 backdrop-blur-2xl"
           >
-            {/* Close Button */}
             <button
               onClick={() => setIsVideoModalOpen(false)}
               className="absolute top-6 right-6 md:top-10 md:right-10 w-12 h-12 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full flex items-center justify-center text-white backdrop-blur-md transition-all active:scale-90 z-10"
@@ -321,7 +399,6 @@ export default function StructuredCoursePlayer({
               <X size={24} />
             </button>
 
-            {/* Vertical Video Container (9:16 Aspect Ratio) */}
             <motion.div
               initial={{ scale: 0.9, y: 50 }}
               animate={{ scale: 1, y: 0 }}
@@ -345,58 +422,20 @@ export default function StructuredCoursePlayer({
 }
 
 // ==========================================
-// 🛠️ UPGRADED SINGLE VIDEO PLAYER
+// 🛠️ EMPTY STATE FALLBACK
 // ==========================================
-function ClassicSingleVideoPlayer({ courseId }: { courseId: string }) {
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    api
-      .get("/course-purchase/my")
-      .then((res) => {
-        const purchase = res.data.data.find(
-          (p: PurchaseRecord) => p.course._id === courseId,
-        );
-        if (purchase) {
-          const rawVideo =
-            purchase.course.meta?.videoUrl || purchase.course.videoUrl;
-          if (rawVideo) setVideoUrl(rawVideo);
-        }
-      })
-      .catch((err) => console.error("Failed to fetch legacy video URL", err))
-      .finally(() => setIsLoading(false));
-  }, [courseId]);
-
+function ClassicSingleVideoPlayer() {
   return (
     <div className="max-w-4xl mx-auto p-6 animate-in fade-in duration-700">
-      <div className="aspect-video bg-[#0B0F14] rounded-2xl overflow-hidden border border-white/10 relative shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
-        {isLoading ? (
-          <div className="absolute inset-0 flex items-center justify-center flex-col text-[#8A94A6]">
-            <div className="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mb-4 shadow-[0_0_15px_rgba(245,158,11,0.4)]" />
-            <p className="font-black uppercase tracking-widest text-xs">
-              Decrypting Video Stream...
-            </p>
-          </div>
-        ) : videoUrl ? (
-          <video
-            src={videoUrl}
-            controls
-            autoPlay
-            className="w-full h-full object-contain"
-          />
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center flex-col text-[#8A94A6] bg-black/40">
-            <PlayCircle size={48} className="mb-4 opacity-20" />
-            <p className="font-black uppercase tracking-widest text-xs text-amber-500 mb-2">
-              Media Stream Unavailable
-            </p>
-            <p className="text-[10px] text-[#8A94A6] max-w-xs text-center leading-relaxed">
-              No content has been uploaded to this protocol yet. Please wait for
-              the administrator to deploy the Day-by-Day schedule.
-            </p>
-          </div>
-        )}
+      <div className="aspect-video bg-[#0B0F14] rounded-2xl overflow-hidden border border-white/10 relative shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center justify-center flex-col text-[#8A94A6]">
+        <PlayCircle size={48} className="mb-4 opacity-20" />
+        <p className="font-black uppercase tracking-widest text-xs text-amber-500 mb-2">
+          Protocol Pending Deployment
+        </p>
+        <p className="text-[10px] text-[#8A94A6] max-w-xs text-center leading-relaxed">
+          The administrator is currently configuring your Day-by-Day training
+          schedule. Please stand by.
+        </p>
       </div>
     </div>
   );

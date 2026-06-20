@@ -9,6 +9,7 @@ import {
   Database,
   LayoutTemplate,
   Network,
+  Video,
 } from "lucide-react";
 
 import CreateStepModal from "./CreateStepModal";
@@ -23,14 +24,18 @@ interface Protocol {
     tier: string;
     targetDeficit: string;
     coverImageUrl: string;
+    videoUrl?: string; // 🚀 Added Intro Video URL support
   };
 }
 
 export default function AdminCourses() {
   const [protocols, setProtocols] = useState<Protocol[]>([]);
   const [showModal, setShowModal] = useState(false);
+
+  // Unified Upload State
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadStatusText, setUploadStatusText] = useState("");
 
   const [showStepModal, setShowStepModal] = useState(false);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
@@ -46,8 +51,12 @@ export default function AdminCourses() {
     description: "",
   });
 
+  // Media States
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [thumbPreview, setThumbPreview] = useState<string | null>(null);
+
+  // 🚀 NEW: Intro Video State
+  const [videoFile, setVideoFile] = useState<File | null>(null);
 
   const [actionModal, setActionModal] = useState<{
     isOpen: boolean;
@@ -78,11 +87,19 @@ export default function AdminCourses() {
     }
   };
 
-  const uploadThumbnailToR2 = async (file: File) => {
+  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setVideoFile(file);
+    }
+  };
+
+  // 🚀 UPGRADED: A unified function to handle both Images and Videos dynamically
+  const uploadMediaToR2 = async (file: File, folderName: string) => {
     const { data } = await api.post("/courses/get-upload-url", {
       fileName: file.name,
       contentType: file.type,
-      folder: "thumbnails",
+      folder: folderName,
     });
 
     const { uploadUrl, publicUrl } = data.data;
@@ -110,7 +127,19 @@ export default function AdminCourses() {
     try {
       setIsUploading(true);
 
-      const thumbUrl = await uploadThumbnailToR2(thumbnailFile);
+      // 1. Upload Thumbnail
+      setUploadStatusText("Transmitting Visual Cover...");
+      const thumbUrl = await uploadMediaToR2(thumbnailFile, "thumbnails");
+
+      // 2. Upload Intro Video (If provided)
+      let videoUrl = "";
+      if (videoFile) {
+        setUploadProgress(0); // Reset progress bar for the video
+        setUploadStatusText("Transmitting Intro Reel...");
+        videoUrl = await uploadMediaToR2(videoFile, "videos");
+      }
+
+      setUploadStatusText("Finalizing Deployment...");
       setUploadProgress(100);
 
       const finalTitle = `${formData.level} ${formData.deficit} Track: ${formData.customTitle}`;
@@ -122,8 +151,10 @@ export default function AdminCourses() {
           tier: formData.level,
           targetDeficit: formData.deficit,
           coverImageUrl: thumbUrl,
+          videoUrl: videoUrl, // 🚀 Saves the Intro Reel directly into the meta object!
         },
       });
+
       setShowModal(false);
       resetForm();
       fetchProtocols();
@@ -133,7 +164,6 @@ export default function AdminCourses() {
         response?: { data?: { message?: string } };
         message?: string;
       };
-
       console.error("Deployment Error:", error.response?.data || error.message);
       toast.error(
         error.response?.data?.message ||
@@ -142,6 +172,7 @@ export default function AdminCourses() {
     } finally {
       setIsUploading(false);
       setUploadProgress(0);
+      setUploadStatusText("");
     }
   };
 
@@ -173,6 +204,7 @@ export default function AdminCourses() {
     });
     setThumbnailFile(null);
     setThumbPreview(null);
+    setVideoFile(null); // Clear video
   };
 
   return (
@@ -222,16 +254,30 @@ export default function AdminCourses() {
               key={protocol._id}
               className="group bg-[#121821] border border-white/5 p-4 rounded-[2rem] transition-all duration-300 hover:border-amber-500/40 hover:shadow-[0_0_30px_rgba(245,158,11,0.05)] flex flex-col"
             >
-              <div className="relative aspect-video rounded-2xl overflow-hidden mb-4">
-                <img
-                  src={protocol.meta?.coverImageUrl?.replace(
-                    "http://",
-                    "https://",
-                  )}
-                  alt={protocol.meta?.title || "Protocol Thumbnail"}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
+              <div className="relative aspect-video rounded-2xl overflow-hidden mb-4 bg-black">
+                {protocol.meta?.coverImageUrl ? (
+                  <img
+                    src={protocol.meta.coverImageUrl.replace(
+                      "http://",
+                      "https://",
+                    )}
+                    alt="Thumbnail"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-80"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-white/10">
+                    <LayoutTemplate size={48} />
+                  </div>
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F14] to-transparent opacity-60" />
+
+                {/* 🚀 Show a small Video icon if an Intro Reel exists! */}
+                {protocol.meta?.videoUrl && (
+                  <div className="absolute top-3 right-3 p-2 rounded-full bg-amber-500/20 backdrop-blur-md border border-amber-500/50 text-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.5)]">
+                    <Video size={12} />
+                  </div>
+                )}
+
                 <div className="absolute top-3 left-3 px-3 py-1.5 rounded-lg bg-black/60 backdrop-blur-md border border-white/10 text-[9px] font-black text-amber-500 uppercase tracking-widest">
                   {protocol.meta?.tier || "LEVEL"} •{" "}
                   {protocol.meta?.targetDeficit || "DEFICIT"}
@@ -256,7 +302,7 @@ export default function AdminCourses() {
                       setActionModal({
                         isOpen: true,
                         courseId: protocol._id,
-                        courseTitle: protocol.meta?.title,
+                        courseTitle: protocol.meta?.title || "",
                       })
                     }
                     className="p-2 rounded-xl bg-[#0B0F14] border border-white/5 text-red-500/50 hover:text-red-500 hover:border-red-500/30 transition-all"
@@ -270,13 +316,12 @@ export default function AdminCourses() {
                   onClick={() =>
                     setArchitectCourse({
                       id: protocol._id,
-                      name: protocol.meta?.title,
+                      name: protocol.meta?.title || "",
                     })
                   }
                   className="w-full flex items-center justify-center gap-2 py-3 bg-amber-500/10 hover:bg-amber-500 text-amber-500 hover:text-black border border-amber-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300"
                 >
-                  <Network size={14} />
-                  Architect Plan
+                  <Network size={14} /> Architect Plan
                 </button>
               </div>
             </div>
@@ -284,10 +329,10 @@ export default function AdminCourses() {
         </div>
       </div>
 
-      {/* 🚀 RESTORED: Create New Protocol Modal */}
+      {/* 🚀 Deploy Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-xl flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <div className="bg-[#0F1724]/90 border border-white/10 p-6 md:p-10 rounded-[24px] max-w-lg w-[95vw] md:w-full space-y-6 shadow-[0_20px_50px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.04)] relative overflow-hidden my-auto">
+          <div className="bg-[#0F1724]/90 border border-white/10 p-6 md:p-10 rounded-[24px] max-w-lg w-[95vw] md:w-full space-y-6 shadow-[0_20px_50px_rgba(0,0,0,0.5)] relative overflow-hidden my-auto">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-amber-500 to-transparent opacity-40" />
 
             <div className="space-y-1 pt-2">
@@ -295,58 +340,56 @@ export default function AdminCourses() {
                 Protocol <span className="text-amber-500">Deployment</span>
               </h2>
               <p className="text-[8px] md:text-[9px] text-[#8A94A6] font-black uppercase tracking-[0.3em] opacity-60">
-                Container Initialization Protocol
+                Container Initialization
               </p>
             </div>
 
             <div className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8A94A6] ml-2">
-                  Target Level
-                </label>
-                <select
-                  className="w-full bg-black/40 border border-white/[0.05] p-4 rounded-[12px] text-sm text-[#E5E7EB] focus:border-amber-500/50 outline-none transition-all appearance-none"
-                  value={formData.level}
-                  onChange={(e) =>
-                    setFormData({ ...formData, level: e.target.value })
-                  }
-                >
-                  <option value="Beginner">
-                    Level 1 - Foundation (Beginner)
-                  </option>
-                  <option value="Intermediate">
-                    Level 2 - Performance (Intermediate)
-                  </option>
-                  <option value="Advanced">Level 3 - Elite (Advanced)</option>
-                </select>
+              {/* Dropsdowns... */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black uppercase tracking-[0.2em] text-[#8A94A6] ml-1">
+                    Target Level
+                  </label>
+                  <select
+                    className="w-full bg-black/40 border border-white/[0.05] p-3 rounded-xl text-xs text-[#E5E7EB] focus:border-amber-500/50 outline-none appearance-none"
+                    value={formData.level}
+                    onChange={(e) =>
+                      setFormData({ ...formData, level: e.target.value })
+                    }
+                  >
+                    <option value="Beginner">Level 1 - Foundation</option>
+                    <option value="Intermediate">Level 2 - Performance</option>
+                    <option value="Advanced">Level 3 - Elite</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black uppercase tracking-[0.2em] text-[#8A94A6] ml-1">
+                    Target Deficit
+                  </label>
+                  <select
+                    className="w-full bg-black/40 border border-white/[0.05] p-3 rounded-xl text-xs text-[#E5E7EB] focus:border-amber-500/50 outline-none appearance-none"
+                    value={formData.deficit}
+                    onChange={(e) =>
+                      setFormData({ ...formData, deficit: e.target.value })
+                    }
+                  >
+                    <option value="Strength">Strength Deficit</option>
+                    <option value="Power">Power Deficit</option>
+                    <option value="Mobility">Mobility Deficit</option>
+                    <option value="Technique">Technique Deficit</option>
+                  </select>
+                </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8A94A6] ml-2">
-                  Target Deficit
-                </label>
-                <select
-                  className="w-full bg-black/40 border border-white/[0.05] p-4 rounded-[12px] text-sm text-[#E5E7EB] focus:border-amber-500/50 outline-none transition-all appearance-none"
-                  value={formData.deficit}
-                  onChange={(e) =>
-                    setFormData({ ...formData, deficit: e.target.value })
-                  }
-                >
-                  <option value="Strength">Strength Deficit</option>
-                  <option value="Power">Power Deficit</option>
-                  <option value="Mobility">Mobility Deficit</option>
-                  <option value="Technique">Technique Deficit</option>
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8A94A6] ml-2">
-                  Module Descriptor (Appended)
+                <label className="text-[9px] font-black uppercase tracking-[0.2em] text-[#8A94A6] ml-1">
+                  Module Descriptor
                 </label>
                 <input
                   type="text"
                   placeholder="e.g., Tactical Movement Alpha"
-                  className="w-full bg-black/40 border border-white/[0.05] p-4 rounded-[12px] text-sm text-[#E5E7EB] focus:border-amber-500/50 outline-none transition-all placeholder:text-white/5 font-medium"
+                  className="w-full bg-black/40 border border-white/[0.05] p-3 rounded-xl text-xs text-[#E5E7EB] focus:border-amber-500/50 outline-none placeholder:text-white/10"
                   value={formData.customTitle}
                   onChange={(e) =>
                     setFormData({ ...formData, customTitle: e.target.value })
@@ -355,12 +398,12 @@ export default function AdminCourses() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8A94A6] ml-2">
+                <label className="text-[9px] font-black uppercase tracking-[0.2em] text-[#8A94A6] ml-1">
                   Instructional Summary
                 </label>
                 <textarea
-                  placeholder="Describe the training objectives..."
-                  className="w-full bg-black/40 border border-white/[0.05] p-4 rounded-[12px] text-sm h-24 text-[#E5E7EB] focus:border-amber-500/50 outline-none resize-none transition-all placeholder:text-white/5 font-medium"
+                  placeholder="Describe the objectives..."
+                  className="w-full bg-black/40 border border-white/[0.05] p-3 rounded-xl text-xs h-20 text-[#E5E7EB] focus:border-amber-500/50 outline-none resize-none placeholder:text-white/10"
                   value={formData.description}
                   onChange={(e) =>
                     setFormData({ ...formData, description: e.target.value })
@@ -368,75 +411,116 @@ export default function AdminCourses() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <p className="text-[10px] font-black uppercase tracking-widest text-[#8A94A6] text-center">
-                  Visual Cover
-                </p>
-                <div className="relative h-32 md:h-40 w-full border-2 border-dashed border-white/5 rounded-[16px] bg-black/40 overflow-hidden group transition-all hover:border-amber-500/30">
-                  {thumbPreview ? (
-                    <>
-                      <img
-                        src={thumbPreview}
-                        alt="Preview"
-                        className="w-full h-full object-cover opacity-70"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setThumbnailFile(null);
-                          setThumbPreview(null);
-                        }}
-                        className="absolute top-2 right-2 bg-red-500/20 hover:bg-red-500 text-red-500 hover:text-white px-3 py-1.5 rounded-md text-[8px] font-black uppercase transition-all backdrop-blur-md"
-                      >
-                        Reset Cover
-                      </button>
-                    </>
-                  ) : (
-                    <label className="flex flex-col items-center justify-center w-full h-full cursor-pointer">
-                      <div className="h-10 w-10 rounded-full bg-white/5 flex items-center justify-center mb-3 group-hover:bg-amber-500/20 transition-all">
-                        <span className="text-amber-500 text-xl">+</span>
+              {/* 🚀 MEDIA UPLOADS: Image & Video Side-by-Side */}
+              <div className="grid grid-cols-2 gap-4 pt-2">
+                <div className="space-y-2">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-[#8A94A6] text-center">
+                    Visual Cover *
+                  </p>
+                  <div className="relative h-28 w-full border-2 border-dashed border-white/5 rounded-xl bg-black/40 overflow-hidden group hover:border-amber-500/30 transition-all">
+                    {thumbPreview ? (
+                      <>
+                        <img
+                          src={thumbPreview}
+                          alt="Preview"
+                          className="w-full h-full object-cover opacity-70"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setThumbnailFile(null);
+                            setThumbPreview(null);
+                          }}
+                          className="absolute inset-0 bg-red-500/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-black uppercase"
+                        >
+                          Remove
+                        </button>
+                      </>
+                    ) : (
+                      <label className="flex flex-col items-center justify-center w-full h-full cursor-pointer p-2 text-center">
+                        <div className="h-8 w-8 rounded-full bg-white/5 flex items-center justify-center mb-2 group-hover:bg-amber-500/20 transition-all text-amber-500">
+                          +
+                        </div>
+                        <span className="text-[8px] font-black uppercase tracking-widest text-white/40">
+                          Upload Cover
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleThumbChange}
+                          className="hidden"
+                        />
+                      </label>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-[#8A94A6] text-center">
+                    Intro Reel (Optional)
+                  </p>
+                  <div className="relative h-28 w-full border-2 border-dashed border-white/5 rounded-xl bg-black/40 overflow-hidden group hover:border-amber-500/30 transition-all">
+                    {videoFile ? (
+                      <div className="flex flex-col items-center justify-center w-full h-full bg-amber-500/10">
+                        <Video className="text-amber-500 mb-2" size={24} />
+                        <span className="text-[8px] font-black uppercase text-amber-500 px-2 text-center truncate w-full">
+                          {videoFile.name}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setVideoFile(null)}
+                          className="absolute inset-0 bg-red-500/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-black uppercase"
+                        >
+                          Remove
+                        </button>
                       </div>
-                      <span className="text-[10px] font-black uppercase tracking-widest text-white/40">
-                        Upload Display Thumbnail
-                      </span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleThumbChange}
-                        className="hidden"
-                      />
-                    </label>
-                  )}
+                    ) : (
+                      <label className="flex flex-col items-center justify-center w-full h-full cursor-pointer p-2 text-center">
+                        <div className="h-8 w-8 rounded-full bg-white/5 flex items-center justify-center mb-2 group-hover:bg-amber-500/20 transition-all text-amber-500">
+                          <Video size={14} />
+                        </div>
+                        <span className="text-[8px] font-black uppercase tracking-widest text-white/40">
+                          Upload Reel
+                        </span>
+                        <input
+                          type="file"
+                          accept="video/*"
+                          onChange={handleVideoChange}
+                          className="hidden"
+                        />
+                      </label>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
 
             {isUploading && (
-              <div className="space-y-3 bg-black/40 p-4 rounded-[12px] border border-white/5">
+              <div className="space-y-3 bg-black/40 p-4 rounded-xl border border-white/5">
                 <div className="flex justify-between text-[9px] text-amber-500 font-black tracking-[0.2em] uppercase">
                   <span className="flex items-center gap-2">
-                    <div className="h-1 w-1 rounded-full bg-amber-500 animate-ping" />
-                    Transmitting to R2 Node
+                    <div className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-ping" />
+                    {uploadStatusText}
                   </span>
                   <span>{uploadProgress}%</span>
                 </div>
-                <div className="w-full bg-white/5 h-1 rounded-full overflow-hidden">
+                <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
                   <div
-                    className="bg-amber-500 h-full transition-all duration-500 shadow-[0_0_15px_rgba(245,158,11,0.4)]"
+                    className="bg-amber-500 h-full transition-all duration-300 shadow-[0_0_10px_rgba(245,158,11,0.5)]"
                     style={{ width: `${uploadProgress}%` }}
                   />
                 </div>
               </div>
             )}
 
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4 border-t border-white/[0.05]">
+            <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-white/[0.05]">
               <button
                 type="button"
                 onClick={() => {
                   setShowModal(false);
                   resetForm();
                 }}
-                className="w-full sm:flex-1 text-[10px] py-4 uppercase font-black tracking-widest text-[#8A94A6] hover:text-white border border-white/5 rounded-[12px] transition-all hover:bg-white/5"
+                className="w-full sm:flex-1 text-[10px] py-4 uppercase font-black tracking-widest text-[#8A94A6] hover:text-white border border-white/5 rounded-xl transition-all hover:bg-white/5"
               >
                 Abort
               </button>
@@ -445,16 +529,16 @@ export default function AdminCourses() {
                 disabled={
                   isUploading || !formData.customTitle || !thumbnailFile
                 }
-                className="w-full sm:flex-[2] bg-amber-500 py-4 rounded-[12px] text-[10px] font-black uppercase tracking-[0.2em] text-black disabled:opacity-20 hover:bg-amber-400 transition-all shadow-[0_10px_20px_rgba(245,158,11,0.2)] active:scale-95"
+                className="w-full sm:flex-[2] bg-amber-500 py-4 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] text-black disabled:opacity-20 hover:bg-amber-400 transition-all active:scale-95"
               >
-                {isUploading ? "Executing Upload..." : "Authorize Deployment"}
+                {isUploading ? "Executing..." : "Authorize Deployment"}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Action Modals */}
+      {/* ... Action Modals remain exactly the same ... */}
       {actionModal.isOpen && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-xl flex items-center justify-center p-4 z-[60] animate-in fade-in">
           <div className="bg-[#121821] border border-white/10 p-6 md:p-8 rounded-[2rem] max-w-sm w-[95vw] md:w-full shadow-2xl relative overflow-hidden">
@@ -486,7 +570,6 @@ export default function AdminCourses() {
               <p className="text-base md:text-lg font-black text-white italic tracking-tight">
                 "{actionModal.courseTitle}"
               </p>
-
               <div className="mt-4 p-4 rounded-xl border bg-red-500/10 border-red-500/20 text-red-500">
                 <p className="text-[9px] font-black uppercase tracking-widest leading-relaxed">
                   CRITICAL WARNING: This will permanently purge the protocol. Do
@@ -509,7 +592,6 @@ export default function AdminCourses() {
               >
                 Abort
               </button>
-
               <button
                 onClick={handleConfirmDelete}
                 disabled={isProcessingAction}
@@ -528,14 +610,12 @@ export default function AdminCourses() {
           onSuccess={() => {}}
         />
       )}
-
       {showTemplateModal && (
         <CreateTemplateModal
           onClose={() => setShowTemplateModal(false)}
           onSuccess={() => {}}
         />
       )}
-
       {architectCourse && (
         <CourseArchitectModal
           courseId={architectCourse.id}
