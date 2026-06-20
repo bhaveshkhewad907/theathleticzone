@@ -12,6 +12,9 @@ import {
   Video,
   Activity,
   X,
+  Zap,
+  Timer,
+  Dumbbell,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -28,16 +31,27 @@ interface Athlete {
   };
 }
 interface AssessmentData {
-  // targetEvent and pastInjuries removed!
   physical?: {
     age?: number;
     bodyweightKg?: number;
     heightCm?: number;
-    trainingAgeYears?: number; // 🚀 Added this instead!
+    trainingAgeYears?: number;
   };
   metrics?: {
+    mobility?: {
+      kneeToWallCm?: number;
+      deepSquatHold?: string;
+    };
+    power?: {
+      broadJumpMeters?: number;
+      verticalJumpCm?: number;
+    };
     sprinting?: {
+      sprint30mSeconds?: number;
       sprintVideoUrl?: string;
+    };
+    strength?: {
+      backSquatMaxKg?: number;
     };
   };
 }
@@ -341,73 +355,205 @@ export default function AdminAthletes() {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* Left: The Sprint Video */}
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-2 text-amber-500 text-[10px] font-black uppercase tracking-widest">
-                        <Video size={14} /> Sprint Footage
+                    <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+                      {/* 👈 Left Column: Sticky Sprint Video (Takes up 2 columns) */}
+                      <div className="lg:col-span-2 space-y-4">
+                        <div className="flex items-center gap-2 text-amber-500 text-[10px] font-black uppercase tracking-widest">
+                          <Video size={14} /> Sprint Footage
+                        </div>
+                        <div className="aspect-[9/16] md:aspect-video bg-black rounded-2xl border border-white/10 overflow-hidden relative group lg:sticky lg:top-0 shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
+                          {/* 🚀 THE VIDEO FIX: Construct the full URL if it's just a file key */}
+                          {(() => {
+                            const rawUrl =
+                              assessmentData.metrics?.sprinting?.sprintVideoUrl;
+                            if (!rawUrl)
+                              return (
+                                <div className="absolute inset-0 flex items-center justify-center text-white/20 text-xs font-black uppercase tracking-widest">
+                                  No Tape Provided
+                                </div>
+                              );
+
+                            // If rawUrl is just a key, attach your CDN. If it's already a full HTTP url, use it.
+                            // ⚠️ IMPORTANT: REPLACE THE DOMAIN BELOW WITH YOUR ACTUAL CLOUDFLARE R2 PUBLIC DOMAIN
+                            const R2_PUBLIC_DOMAIN =
+                              "https://pub-bb786bf7d0694660bdaf27d408482fbb.r2.dev";
+                            const videoSrc = rawUrl.startsWith("http")
+                              ? rawUrl
+                              : `${R2_PUBLIC_DOMAIN}/${rawUrl}`;
+
+                            return (
+                              <video
+                                src={videoSrc}
+                                controls
+                                playsInline
+                                className="w-full h-full object-contain bg-black"
+                              />
+                            );
+                          })()}
+                        </div>
                       </div>
-                      <div className="aspect-video bg-black rounded-2xl border border-white/10 overflow-hidden relative group">
-                        {/* 🚀 FIXED: Pointed to metrics.sprinting.sprintVideoUrl */}
-                        {assessmentData.metrics?.sprinting?.sprintVideoUrl ? (
-                          <video
-                            src={
-                              assessmentData.metrics.sprinting.sprintVideoUrl
-                            }
-                            controls
-                            className="w-full h-full object-contain"
-                          />
-                        ) : (
-                          <div className="absolute inset-0 flex items-center justify-center text-white/20 text-xs font-black uppercase tracking-widest">
-                            No Video Provided
+
+                      {/* 👉 Right Column: Scrollable Metrics (Takes up 3 columns) */}
+                      <div className="lg:col-span-3 space-y-8 pr-2 pb-8 lg:max-h-[60vh] overflow-y-auto custom-scrollbar">
+                        {/* PHASE 1: Physical Metrics */}
+                        <div>
+                          <div className="flex items-center gap-2 text-white text-[10px] font-black uppercase tracking-widest border-b border-white/10 pb-2 mb-4">
+                            <FileText size={14} className="text-amber-500" /> 1.
+                            Physical Profile
                           </div>
-                        )}
-                      </div>
-                    </div>
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            <div className="bg-black/40 border border-white/5 p-4 rounded-xl shadow-inner">
+                              <p className="text-[9px] font-black text-[#8A94A6] uppercase tracking-[0.2em] mb-1">
+                                Age
+                              </p>
+                              <p className="text-sm font-black text-white">
+                                {assessmentData.physical?.age || "--"} Yrs
+                              </p>
+                            </div>
+                            <div className="bg-black/40 border border-white/5 p-4 rounded-xl shadow-inner">
+                              <p className="text-[9px] font-black text-[#8A94A6] uppercase tracking-[0.2em] mb-1">
+                                Weight
+                              </p>
+                              <p className="text-sm font-black text-white">
+                                {assessmentData.physical?.bodyweightKg || "--"}{" "}
+                                KG
+                              </p>
+                            </div>
+                            <div className="bg-black/40 border border-white/5 p-4 rounded-xl shadow-inner">
+                              <p className="text-[9px] font-black text-[#8A94A6] uppercase tracking-[0.2em] mb-1">
+                                Height
+                              </p>
+                              <p className="text-sm font-black text-white">
+                                {assessmentData.physical?.heightCm || "--"} CM
+                              </p>
+                            </div>
+                            <div className="bg-black/40 border border-white/5 p-4 rounded-xl shadow-inner">
+                              <p className="text-[9px] font-black text-[#8A94A6] uppercase tracking-[0.2em] mb-1">
+                                Training
+                              </p>
+                              <p className="text-sm font-black text-white">
+                                {assessmentData.physical?.trainingAgeYears ||
+                                  "0"}{" "}
+                                Yrs
+                              </p>
+                            </div>
+                          </div>
+                        </div>
 
-                    {/* Right: The Data Points */}
-                    <div className="space-y-6">
-                      <div className="flex items-center gap-2 text-amber-500 text-[10px] font-black uppercase tracking-widest">
-                        <FileText size={14} /> Physical Metrics
-                      </div>
+                        {/* PHASE 2: Mobility */}
+                        <div>
+                          <div className="flex items-center gap-2 text-white text-[10px] font-black uppercase tracking-widest border-b border-white/10 pb-2 mb-4">
+                            <Activity size={14} className="text-amber-500" /> 2.
+                            Mobility
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="bg-[#0F1724]/60 border border-white/5 p-4 rounded-xl shadow-inner">
+                              <p className="text-[9px] font-black text-[#8A94A6] uppercase tracking-[0.2em] mb-1">
+                                Knee-to-Wall
+                              </p>
+                              <p className="text-lg font-black text-white">
+                                {assessmentData.metrics?.mobility
+                                  ?.kneeToWallCm || "--"}{" "}
+                                <span className="text-xs text-white/40">
+                                  CM
+                                </span>
+                              </p>
+                            </div>
+                            <div className="bg-[#0F1724]/60 border border-white/5 p-4 rounded-xl shadow-inner">
+                              <p className="text-[9px] font-black text-[#8A94A6] uppercase tracking-[0.2em] mb-1">
+                                Deep Squat
+                              </p>
+                              <p
+                                className={`text-sm font-black uppercase tracking-widest ${
+                                  assessmentData.metrics?.mobility
+                                    ?.deepSquatHold === "Good"
+                                    ? "text-green-500"
+                                    : assessmentData.metrics?.mobility
+                                          ?.deepSquatHold === "Acceptable"
+                                      ? "text-amber-500"
+                                      : "text-red-500"
+                                }`}
+                              >
+                                {assessmentData.metrics?.mobility
+                                  ?.deepSquatHold || "--"}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
 
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-black/30 border border-white/5 p-4 rounded-xl">
-                          <p className="text-[9px] font-black text-[#8A94A6] uppercase tracking-[0.2em] mb-1">
-                            Age
-                          </p>
-                          <p className="text-lg font-black text-white">
-                            {assessmentData.physical?.age || "--"} Yrs
-                          </p>
+                        {/* PHASE 3: Power */}
+                        <div>
+                          <div className="flex items-center gap-2 text-white text-[10px] font-black uppercase tracking-widest border-b border-white/10 pb-2 mb-4">
+                            <Zap size={14} className="text-amber-500" /> 3.
+                            Power
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="bg-[#0F1724]/60 border border-white/5 p-4 rounded-xl shadow-inner">
+                              <p className="text-[9px] font-black text-[#8A94A6] uppercase tracking-[0.2em] mb-1">
+                                Broad Jump
+                              </p>
+                              <p className="text-lg font-black text-white">
+                                {assessmentData.metrics?.power
+                                  ?.broadJumpMeters || "--"}{" "}
+                                <span className="text-xs text-white/40">M</span>
+                              </p>
+                            </div>
+                            <div className="bg-[#0F1724]/60 border border-white/5 p-4 rounded-xl shadow-inner">
+                              <p className="text-[9px] font-black text-[#8A94A6] uppercase tracking-[0.2em] mb-1">
+                                Vertical Jump
+                              </p>
+                              <p className="text-lg font-black text-white">
+                                {assessmentData.metrics?.power
+                                  ?.verticalJumpCm || "--"}{" "}
+                                <span className="text-xs text-white/40">
+                                  CM
+                                </span>
+                              </p>
+                            </div>
+                          </div>
                         </div>
-                        <div className="bg-black/30 border border-white/5 p-4 rounded-xl">
-                          <p className="text-[9px] font-black text-[#8A94A6] uppercase tracking-[0.2em] mb-1">
-                            Weight
-                          </p>
-                          <p className="text-lg font-black text-white">
-                            {assessmentData.physical?.bodyweightKg || "--"} KG
-                          </p>
-                        </div>
-                        <div className="bg-black/30 border border-white/5 p-4 rounded-xl">
-                          <p className="text-[9px] font-black text-[#8A94A6] uppercase tracking-[0.2em] mb-1">
-                            Height
-                          </p>
-                          <p className="text-lg font-black text-white">
-                            {assessmentData.physical?.heightCm || "--"} CM
-                          </p>
-                        </div>
-                        <div className="bg-black/30 border border-white/5 p-4 rounded-xl">
-                          <p className="text-[9px] font-black text-[#8A94A6] uppercase tracking-[0.2em] mb-1">
-                            Training Age
-                          </p>
-                          {/* 🚀 Swapped Focus Event for Training Age */}
-                          <p className="text-lg font-black text-white">
-                            {assessmentData.physical?.trainingAgeYears || "0"}{" "}
-                            Yrs
-                          </p>
+
+                        {/* PHASE 4 & 5: Sprint & Strength */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                          <div>
+                            <div className="flex items-center gap-2 text-white text-[10px] font-black uppercase tracking-widest border-b border-white/10 pb-2 mb-4">
+                              <Timer size={14} className="text-amber-500" /> 4.
+                              Speed
+                            </div>
+                            <div className="bg-amber-500/10 border border-amber-500/20 p-5 rounded-xl shadow-inner">
+                              <p className="text-[9px] font-black text-amber-500/80 uppercase tracking-[0.2em] mb-1">
+                                30m Sprint Time
+                              </p>
+                              <p className="text-2xl font-black italic text-amber-500">
+                                {assessmentData.metrics?.sprinting
+                                  ?.sprint30mSeconds || "--"}{" "}
+                                <span className="text-sm text-amber-500/50 not-italic">
+                                  SEC
+                                </span>
+                              </p>
+                            </div>
+                          </div>
+
+                          <div>
+                            <div className="flex items-center gap-2 text-white text-[10px] font-black uppercase tracking-widest border-b border-white/10 pb-2 mb-4">
+                              <Dumbbell size={14} className="text-amber-500" />{" "}
+                              5. Strength
+                            </div>
+                            <div className="bg-[#0F1724]/60 border border-white/5 p-5 rounded-xl shadow-inner">
+                              <p className="text-[9px] font-black text-[#8A94A6] uppercase tracking-[0.2em] mb-1">
+                                Back Squat Max
+                              </p>
+                              <p className="text-2xl font-black italic text-white">
+                                {assessmentData.metrics?.strength
+                                  ?.backSquatMaxKg || "--"}{" "}
+                                <span className="text-sm text-white/40 not-italic">
+                                  KG
+                                </span>
+                              </p>
+                            </div>
+                          </div>
                         </div>
                       </div>
-
-                      {/* Note: The Past Injuries block has been completely removed! */}
                     </div>
                   </div>
                 )}
