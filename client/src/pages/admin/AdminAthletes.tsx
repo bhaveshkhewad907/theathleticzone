@@ -8,7 +8,12 @@ import {
   AlertTriangle,
   ShieldCheck,
   Tag,
+  FileText,
+  Video,
+  Activity,
+  X,
 } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 
 interface Athlete {
   _id: string;
@@ -22,11 +27,55 @@ interface Athlete {
     usedCoupon: string | null;
   };
 }
-
+interface AssessmentData {
+  // targetEvent and pastInjuries removed!
+  physical?: {
+    age?: number;
+    bodyweightKg?: number;
+    heightCm?: number;
+    trainingAgeYears?: number; // 🚀 Added this instead!
+  };
+  metrics?: {
+    sprinting?: {
+      sprintVideoUrl?: string;
+    };
+  };
+}
 export default function AdminAthletes() {
   const [athletes, setAthletes] = useState<Athlete[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+
+  const [selectedAthlete, setSelectedAthlete] = useState<Athlete | null>(null);
+  const [assessmentData, setAssessmentData] = useState<AssessmentData | null>(
+    null,
+  );
+  const [loadingAssessment, setLoadingAssessment] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // 🚀 NEW: Fetch Assessment Function
+  const openAssessmentReview = async (athlete: Athlete) => {
+    setSelectedAthlete(athlete);
+    setIsModalOpen(true);
+    setLoadingAssessment(true);
+    setAssessmentData(null);
+
+    try {
+      // Fetch the latest assessment for this specific user
+      // Update this endpoint string if your routes are structured differently!
+      const res = await api.get(`/assessments/user/${athlete._id}`);
+
+      // Handle the response whether it returns an array of assessments or a single object
+      const data = Array.isArray(res.data.data)
+        ? res.data.data[0]
+        : res.data.data;
+      setAssessmentData(data);
+    } catch (error) {
+      console.error("Failed to fetch assessment for review", error);
+    } finally {
+      setLoadingAssessment(false);
+    }
+  };
 
   useEffect(() => {
     fetchAthletes();
@@ -146,9 +195,14 @@ export default function AdminAthletes() {
                     className="border-b border-white/5 hover:bg-white/[0.02] transition-colors group"
                   >
                     {/* Athlete Identity */}
+
                     <td className="py-4 px-6">
-                      <div className="flex items-center gap-4">
-                        <div className="h-10 w-10 rounded-xl bg-black/50 border border-white/10 flex items-center justify-center overflow-hidden">
+                      {/* 🚀 NEW: Wrapped in a button to trigger the modal */}
+                      <button
+                        onClick={() => openAssessmentReview(athlete)}
+                        className="flex items-center gap-4 text-left group/btn cursor-pointer transition-all w-full"
+                      >
+                        <div className="h-10 w-10 rounded-xl bg-black/50 border border-white/10 flex items-center justify-center overflow-hidden group-hover/btn:border-amber-500/50 group-hover/btn:shadow-[0_0_15px_rgba(245,158,11,0.3)] transition-all">
                           {athlete.profileImage ? (
                             <img
                               src={athlete.profileImage}
@@ -160,14 +214,14 @@ export default function AdminAthletes() {
                           )}
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-white uppercase tracking-tight">
+                          <p className="text-sm font-bold text-white uppercase tracking-tight group-hover/btn:text-amber-500 transition-colors">
                             {athlete.name}
                           </p>
                           <p className="text-[10px] font-black tracking-widest text-[#8A94A6] uppercase mt-0.5">
                             {athlete.email}
                           </p>
                         </div>
-                      </div>
+                      </button>
                     </td>
 
                     {/* Join Date */}
@@ -217,6 +271,147 @@ export default function AdminAthletes() {
           </div>
         )}
       </div>
+      {/* 🚀 NEW: THE ASSESSMENT REVIEW MODAL */}
+      <AnimatePresence>
+        {isModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6">
+            {/* Dark Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsModalOpen(false)}
+              className="absolute inset-0 bg-[#0B0F14]/90 backdrop-blur-md cursor-pointer"
+            />
+
+            {/* Modal Card */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-4xl bg-[#121821] border border-white/10 rounded-[2rem] shadow-[0_30px_60px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col max-h-[90vh]"
+            >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between p-6 border-b border-white/5 bg-black/20">
+                <div className="flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500">
+                    <Activity size={24} />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-black italic uppercase tracking-tighter text-white">
+                      Assessment <span className="text-amber-500">Review</span>
+                    </h3>
+                    <p className="text-[10px] font-black text-[#8A94A6] uppercase tracking-[0.2em] mt-1">
+                      Athlete: {selectedAthlete?.name}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/50 hover:bg-white/10 hover:text-white transition-colors"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="p-6 md:p-8 overflow-y-auto custom-scrollbar">
+                {loadingAssessment ? (
+                  <div className="h-64 flex flex-col items-center justify-center gap-4">
+                    <div className="w-8 h-8 border-2 border-amber-500/30 border-t-amber-500 rounded-full animate-spin" />
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8A94A6]">
+                      Retrieving Assessment Files...
+                    </p>
+                  </div>
+                ) : !assessmentData ? (
+                  <div className="h-64 flex flex-col items-center justify-center text-center space-y-4">
+                    <AlertTriangle size={48} className="text-red-500/30" />
+                    <div>
+                      <p className="text-sm font-bold text-white uppercase tracking-widest">
+                        No Assessment Found
+                      </p>
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8A94A6] mt-2">
+                        This athlete has not completed their form yet.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {/* Left: The Sprint Video */}
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2 text-amber-500 text-[10px] font-black uppercase tracking-widest">
+                        <Video size={14} /> Sprint Footage
+                      </div>
+                      <div className="aspect-video bg-black rounded-2xl border border-white/10 overflow-hidden relative group">
+                        {/* 🚀 FIXED: Pointed to metrics.sprinting.sprintVideoUrl */}
+                        {assessmentData.metrics?.sprinting?.sprintVideoUrl ? (
+                          <video
+                            src={
+                              assessmentData.metrics.sprinting.sprintVideoUrl
+                            }
+                            controls
+                            className="w-full h-full object-contain"
+                          />
+                        ) : (
+                          <div className="absolute inset-0 flex items-center justify-center text-white/20 text-xs font-black uppercase tracking-widest">
+                            No Video Provided
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Right: The Data Points */}
+                    <div className="space-y-6">
+                      <div className="flex items-center gap-2 text-amber-500 text-[10px] font-black uppercase tracking-widest">
+                        <FileText size={14} /> Physical Metrics
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-black/30 border border-white/5 p-4 rounded-xl">
+                          <p className="text-[9px] font-black text-[#8A94A6] uppercase tracking-[0.2em] mb-1">
+                            Age
+                          </p>
+                          <p className="text-lg font-black text-white">
+                            {assessmentData.physical?.age || "--"} Yrs
+                          </p>
+                        </div>
+                        <div className="bg-black/30 border border-white/5 p-4 rounded-xl">
+                          <p className="text-[9px] font-black text-[#8A94A6] uppercase tracking-[0.2em] mb-1">
+                            Weight
+                          </p>
+                          <p className="text-lg font-black text-white">
+                            {assessmentData.physical?.bodyweightKg || "--"} KG
+                          </p>
+                        </div>
+                        <div className="bg-black/30 border border-white/5 p-4 rounded-xl">
+                          <p className="text-[9px] font-black text-[#8A94A6] uppercase tracking-[0.2em] mb-1">
+                            Height
+                          </p>
+                          <p className="text-lg font-black text-white">
+                            {assessmentData.physical?.heightCm || "--"} CM
+                          </p>
+                        </div>
+                        <div className="bg-black/30 border border-white/5 p-4 rounded-xl">
+                          <p className="text-[9px] font-black text-[#8A94A6] uppercase tracking-[0.2em] mb-1">
+                            Training Age
+                          </p>
+                          {/* 🚀 Swapped Focus Event for Training Age */}
+                          <p className="text-lg font-black text-white">
+                            {assessmentData.physical?.trainingAgeYears || "0"}{" "}
+                            Yrs
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Note: The Past Injuries block has been completely removed! */}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
