@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import type { Variants } from "framer-motion";
 import {
   Activity,
   BarChart3,
@@ -84,24 +85,41 @@ const JOURNEY_STEPS = [
 ];
 
 // Cinematic Framer Motion Variants
-const staggerContainer = {
-  hidden: { opacity: 0 },
+const staggerContainer: Variants = {
+  hidden: { opacity: 1 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.15, delayChildren: 0.1 },
+    transition: {
+      staggerChildren: 0.2,
+      delayChildren: 0.3,
+    },
   },
 };
 
-const cinematicReveal = {
-  hidden: { opacity: 0, y: 40, filter: "blur(10px)" },
+// The "Masked Reveal" effect
+const maskedReveal: Variants = {
+  hidden: {
+    y: "120%",
+    opacity: 0,
+    filter: "blur(10px)",
+  },
+  visible: {
+    y: "0%",
+    opacity: 1,
+    filter: "blur(0px)",
+    transition: {
+      duration: 1.2,
+      ease: [0.22, 1, 0.36, 1],
+    },
+  },
+};
+
+const fadeUp: Variants = {
+  hidden: { opacity: 0, y: 30 },
   visible: {
     opacity: 1,
     y: 0,
-    filter: "blur(0px)",
-    transition: {
-      duration: 1,
-      ease: [0.16, 1, 0.3, 1] as [number, number, number, number],
-    },
+    transition: { duration: 1, delay: 1.2, ease: "easeOut" },
   },
 };
 
@@ -208,10 +226,13 @@ export default function LandingPage() {
       </nav>
 
       {/* 🎬 SECTION 1: HERO */}
-      <section className="relative min-h-screen flex items-center justify-center pt-24 overflow-hidden">
-        {/* Unique Background Image */}
-        <div className="absolute inset-0 z-0">
-          <img
+      <section className="relative min-h-screen flex items-center justify-center pt-24 overflow-hidden bg-[#0B0F14]">
+        {/* 1. Breathing Background Effect */}
+        <div className="absolute inset-0 z-0 overflow-hidden">
+          <motion.img
+            initial={{ scale: 1.15 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 12, ease: "easeOut" }}
             src="https://images.unsplash.com/photo-1461896836934-ffe607ba8211?q=80&w=2070&auto=format&fit=crop"
             alt="Starting Blocks"
             className="w-full h-full object-cover opacity-30 mix-blend-luminosity"
@@ -220,51 +241,65 @@ export default function LandingPage() {
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-6 text-center space-y-8">
+          {/* 2. The Floating Badge */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7 }}
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{
+              duration: 0.8,
+              delay: 0.2,
+              type: "spring",
+              stiffness: 100,
+            }}
             className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full bg-black/40 backdrop-blur-xl border border-white/10 text-[10px] font-black text-amber-500 uppercase tracking-[0.3em] shadow-inner"
           >
             <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse shadow-[0_0_10px_rgba(245,158,11,0.8)]" />
             Online Sprint Training Hub
           </motion.div>
 
+          {/* 3. The Masked Title Reveal */}
           <motion.h1
             variants={staggerContainer}
             initial="hidden"
             animate="visible"
-            className="text-6xl md:text-8xl lg:text-[10rem] font-black uppercase italic tracking-tighter leading-[0.85] text-white"
+            className="text-6xl md:text-8xl lg:text-[10rem] font-black uppercase italic tracking-tighter leading-[0.85] text-white flex flex-col items-center"
           >
-            <motion.span
-              variants={cinematicReveal}
-              className="block drop-shadow-2xl"
-            >
-              Dominate
-            </motion.span>
-            <motion.span
-              variants={cinematicReveal}
-              className="block text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-yellow-200 drop-shadow-[0_0_40px_rgba(245,158,11,0.3)]"
-            >
-              Your Sprint.
-            </motion.span>
+            {/* The overflow-hidden div creates the "invisible box" it slides out of */}
+            <div className="overflow-hidden pb-4 md:pb-6">
+              <motion.span
+                variants={maskedReveal}
+                className="block drop-shadow-2xl"
+              >
+                Dominate
+              </motion.span>
+            </div>
+            <div className="overflow-hidden pb-4 md:pb-6">
+              <motion.span
+                variants={maskedReveal}
+                className="block text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-yellow-200 drop-shadow-[0_0_40px_rgba(245,158,11,0.3)]"
+              >
+                Your Sprint.
+              </motion.span>
+            </div>
           </motion.h1>
 
+          {/* 4. The Subtitle Fade */}
           <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 0.8 }}
-            className="max-w-2xl mx-auto text-[11px] md:text-sm text-gray-300 font-bold uppercase tracking-[0.2em] leading-loose drop-shadow-md"
+            variants={fadeUp}
+            initial="hidden"
+            animate="visible"
+            className="max-w-2xl mx-auto text-[11px] md:text-sm text-[#8A94A6] font-bold uppercase tracking-[0.2em] leading-loose drop-shadow-md"
           >
             Expert coaching and smart training plans for the 100m & 200m track
             athlete. Built for sprinters who want to run faster and leave the
             competition behind.
           </motion.p>
 
+          {/* 5. The Scroll Indicator */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 1 }}
+            variants={fadeUp}
+            initial="hidden"
+            animate="visible"
             className="pt-12 flex justify-center"
           >
             <a
