@@ -12,7 +12,6 @@ import CourseProgress from "./courseProgress.model";
 import Course from "./course.model";
 import User from "../user/user.model";
 import { AuthenticatedRequest } from "../../types/auth.types";
-// 🚀 THE SCREENSHOT FIX: Import getPresignedUrl for viewing, NOT generatePresignedUrl
 import { getPresignedUrl } from "../../services/r2.service";
 
 export const create: RequestHandler = async (req, res, next) => {
@@ -34,6 +33,7 @@ export const update: RequestHandler = async (req, res, next) => {
     if (!parsed.success)
       throw new ApiError(400, parsed.error.issues[0].message);
 
+    // 🚀 FIX: Strongly typed ID
     const courseId = req.params.id as string;
     const course = await updateCourse(courseId, parsed.data as any);
     res.status(200).json({ success: true, data: course });
@@ -62,6 +62,7 @@ export const getPublic: RequestHandler = async (_req, res, next) => {
 
 export const softDelete: RequestHandler = async (req, res, next) => {
   try {
+    // 🚀 FIX: Strongly typed ID
     const courseId = req.params.id as string;
     await deleteCourseSoft(courseId);
     res
@@ -72,7 +73,6 @@ export const softDelete: RequestHandler = async (req, res, next) => {
   }
 };
 
-// 🛡️ Secure Access Gate for R2 Videos
 export const getSecureCourseAccess: RequestHandler = async (
   req: Request,
   res: Response,
@@ -81,7 +81,8 @@ export const getSecureCourseAccess: RequestHandler = async (
   try {
     const authReq = req as AuthenticatedRequest;
     const userId = authReq.user.id;
-    const courseId = req.params.id;
+    // 🚀 FIX: Strongly typed ID
+    const courseId = req.params.id as string;
     const requestedVideoKey = req.query.videoKey as string;
 
     if (!requestedVideoKey) {
@@ -104,7 +105,6 @@ export const getSecureCourseAccess: RequestHandler = async (
       });
     }
 
-    // 🚀 THE SCREENSHOT FIX: Call the correct viewing function!
     const secureUrl = await getPresignedUrl(requestedVideoKey);
 
     res.status(200).json({
@@ -130,8 +130,11 @@ export const saveCourseProgress: RequestHandler = async (
     const { lastWatchedSeconds, progressPercentage } = req.body;
     const isCompleted = progressPercentage >= 95;
 
+    // 🚀 FIX: Strongly typed ID here prevents the Render crash on line 103!
+    const courseId = req.params.id as string;
+
     const progress = await CourseProgress.findOneAndUpdate(
-      { user: authReq.user.id, course: req.params.id },
+      { user: authReq.user.id, course: courseId },
       { $set: { lastWatchedSeconds, progressPercentage, isCompleted } },
       { new: true, upsert: true },
     );
