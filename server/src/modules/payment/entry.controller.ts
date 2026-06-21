@@ -1,7 +1,9 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction, RequestHandler } from "express";
 import Razorpay from "razorpay";
 import crypto from "crypto";
 import User from "../user/user.model";
+import ApiError from "../../utils/apiError";
+import { AuthenticatedRequest } from "../../types/auth.types"; // Adjust path if needed
 
 // 🚀 YOUR INFLUENCER CODES (Hardcoded discounts in percentage)
 const COUPONS: Record<string, number> = {
@@ -10,7 +12,17 @@ const COUPONS: Record<string, number> = {
 
 const BASE_PRICE_INR = 10; // Base cost of the program
 
-export const createEntryOrder = async (req: any, res: Response) => {
+// 🚀 PERFORMANCE FIX: Instantiate the SDK once at server boot, not on every request
+const razorpayInstance = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID || "",
+  key_secret: process.env.RAZORPAY_KEY_SECRET || "",
+});
+
+export const createEntryOrder: RequestHandler = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const { couponCode } = req.body;
     let price = BASE_PRICE_INR;
@@ -23,35 +35,37 @@ export const createEntryOrder = async (req: any, res: Response) => {
       appliedCoupon = couponCode.toUpperCase();
     }
 
-    const instance = new Razorpay({
-      key_id: process.env.RAZORPAY_KEY_ID || "",
-      key_secret: process.env.RAZORPAY_KEY_SECRET || "",
-    });
-
     const options = {
       amount: Math.round(price * 100), // Razorpay expects paise
       currency: "INR",
-      receipt: `entry_${Date.now()}`,
+      receipt: `entry_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+      notes: {
+        userId: (req as AuthenticatedRequest).user.id,
+        appliedCoupon: appliedCoupon || "NONE",
+      },
     };
 
-    const order = await instance.orders.create(options);
+    const order = await razorpayInstance.orders.create(options);
 
     res.status(200).json({
       success: true,
       order,
       price,
       appliedCoupon,
-      // 🚀 THE FIX: Sending the Live API Key to the frontend so it stops using the Test key!
-      key: process.env.RAZORPAY_KEY_ID,
+      key: process.env.RAZORPAY_KEY_ID, // Safe to expose public key to frontend
     });
   } catch (error) {
-    console.error("Entry Order Error:", error);
-    res.status(500).json({ success: false, message: "Order creation failed" });
+    next(new ApiError(500, "Failed to initialize secure payment gateway."));
   }
 };
 
-export const verifyEntryPayment = async (req: any, res: Response) => {
+export const verifyEntryPayment: RequestHandler = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
+    const authReq = req as AuthenticatedRequest;
     const {
       razorpay_order_id,
       razorpay_payment_id,
@@ -59,20 +73,34 @@ export const verifyEntryPayment = async (req: any, res: Response) => {
       appliedCoupon,
     } = req.body;
 
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      throw new ApiError(
+        400,
+        "Missing required payment verification parameters.",
+      );
+    }
+
     const body = razorpay_order_id + "|" + razorpay_payment_id;
     const expectedSignature = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET || "")
       .update(body.toString())
       .digest("hex");
 
-    if (expectedSignature !== razorpay_signature) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid signature" });
+    // 🚀 SECURITY FIX: Use timingSafeEqual to prevent cryptographic timing attacks
+    const isSignatureValid = crypto.timingSafeEqual(
+      Buffer.from(expectedSignature),
+      Buffer.from(razorpay_signature),
+    );
+
+    if (!isSignatureValid) {
+      throw new ApiError(
+        400,
+        "Digital signature verification failed. Payment rejected.",
+      );
     }
 
     // 🚀 PAYMENT SUCCESS: Unlock the assessment and record the influencer code!
-    await User.findByIdAndUpdate(req.user.id, {
+    await User.findByIdAndUpdate(authReq.user.id, {
       $set: {
         "platformState.hasPaidEntryFee": true,
         "platformState.usedCoupon": appliedCoupon || null,
@@ -83,7 +111,6 @@ export const verifyEntryPayment = async (req: any, res: Response) => {
       .status(200)
       .json({ success: true, message: "Welcome to the Elite Track." });
   } catch (error) {
-    console.error("Verification Error:", error);
-    res.status(500).json({ success: false, message: "Verification failed" });
+    next(error);
   }
 };

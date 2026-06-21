@@ -1,5 +1,14 @@
 import { useState, useEffect } from "react";
-import { PlayCircle, CheckCircle, Circle, X } from "lucide-react";
+import {
+  PlayCircle,
+  CheckCircle,
+  Circle,
+  X,
+  Activity,
+  Zap,
+  Timer,
+  BookOpen,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import api from "../../services/api";
 
@@ -13,10 +22,18 @@ interface Step {
   videoUrl: string;
 }
 
+// 🚀 UPGRADED: Added sets and reps to the template interface
+interface TemplateStep {
+  _id?: string;
+  step: Step;
+  sets: string;
+  reps: string;
+}
+
 interface DayTemplate {
   _id: string;
   name: string;
-  steps: Step[];
+  steps: TemplateStep[];
 }
 
 interface CourseDay {
@@ -42,7 +59,7 @@ interface StructuredCoursePlayerProps {
 }
 
 // ==========================================
-// 🧠 HELPERS: TWO-TIER MATH CONVERTERS
+// 🧠 HELPERS
 // ==========================================
 const getWeekNumber = (dayNumber: number) => Math.ceil(dayNumber / 7);
 
@@ -68,11 +85,9 @@ export default function StructuredCoursePlayer({
   const [plan, setPlan] = useState<CoursePlan | null>(null);
   const [progress, setProgress] = useState<UserProgress | null>(null);
 
-  // Modal State
   const [activeVideo, setActiveVideo] = useState<string | null>(null);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
 
-  // 🚀 NEW: Two-Tier Tab State
   const [activeWeek, setActiveWeek] = useState<number>(1);
   const [activeDay, setActiveDay] = useState<number | null>(null);
 
@@ -84,12 +99,10 @@ export default function StructuredCoursePlayer({
 
         if (Array.isArray(planData) && planData.length > 0)
           planData = planData[0];
-
         if (!planData || !planData.days || planData.days.length === 0) return;
 
         setPlan(planData);
 
-        // Auto-select the first available week and day
         if (planData.days.length > 0) {
           const firstDay = planData.days[0].dayNumber;
           setActiveWeek(getWeekNumber(firstDay));
@@ -131,19 +144,14 @@ export default function StructuredCoursePlayer({
     });
     setProgress(res.data.data);
 
-    // 🚀 THE FIX: Smart Auto-Advance that skips rest days!
     if (plan?.days) {
-      // Sort the days to ensure they are in numerical order
       const sortedDays = [...plan.days].sort(
         (a, b) => a.dayNumber - b.dayNumber,
       );
-
-      // Find where we currently are in the array
       const currentIndex = sortedDays.findIndex(
         (d) => d.dayNumber === dayNumber,
       );
 
-      // If there is another training day in the schedule, slide directly to it!
       if (currentIndex !== -1 && currentIndex < sortedDays.length - 1) {
         const nextDay = sortedDays[currentIndex + 1];
         setActiveDay(nextDay.dayNumber);
@@ -152,7 +160,6 @@ export default function StructuredCoursePlayer({
     }
   };
 
-  // 🚀 Smart Week Switcher: Auto-selects the first day of the new week clicked
   const handleWeekSwitch = (weekNum: number) => {
     setActiveWeek(weekNum);
     const firstDayOfSelectedWeek = plan?.days.find(
@@ -171,15 +178,28 @@ export default function StructuredCoursePlayer({
   if (!plan) return <ClassicSingleVideoPlayer />;
 
   const currentDayData = plan.days.find((d) => d.dayNumber === activeDay);
-
-  // Extract unique weeks from the plan data
   const uniqueWeeks = Array.from(
     new Set(plan.days.map((d) => getWeekNumber(d.dayNumber))),
   ).sort((a, b) => a - b);
-  // Filter days to ONLY show the ones in the currently active week
   const daysInActiveWeek = plan.days.filter(
     (d) => getWeekNumber(d.dayNumber) === activeWeek,
   );
+
+  // 🚀 NEW: Categories configuration for visual grouping
+  const stepCategories = [
+    { id: "WARMUP", label: "1. Warmup Protocol", icon: <Activity size={16} /> },
+    { id: "EXERCISE", label: "2. Primary Block", icon: <Zap size={16} /> },
+    {
+      id: "COOLDOWN",
+      label: "3. Cooldown & Recovery",
+      icon: <Timer size={16} />,
+    },
+    {
+      id: "EDUCATION",
+      label: "4. Education & Briefing",
+      icon: <BookOpen size={16} />,
+    },
+  ];
 
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-6 animate-in fade-in duration-700 relative">
@@ -188,7 +208,7 @@ export default function StructuredCoursePlayer({
           Protocol <span className="text-amber-500">Navigator</span>
         </h3>
 
-        {/* 🚀 TIER 1: THE WEEK SELECTOR (Framer Motion Sliding Underline) */}
+        {/* TIER 1: THE WEEK SELECTOR */}
         <div className="flex overflow-x-auto gap-8 border-b border-white/10 pb-3 snap-x [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {uniqueWeeks.map((week) => {
             const isActiveWeek = activeWeek === week;
@@ -215,19 +235,21 @@ export default function StructuredCoursePlayer({
           })}
         </div>
 
-        {/* 🚀 TIER 2: THE DAY SELECTOR (Filtered by activeWeek) */}
+        {/* TIER 2: THE DAY SELECTOR */}
         <div className="flex overflow-x-auto gap-3 pb-2 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {daysInActiveWeek.map((day) => {
             const isActive = activeDay === day.dayNumber;
             const isDayCompleteByDB = progress?.completedDays?.includes(
               day.dayNumber,
             );
+
+            // Note: Update to use item.step._id instead of just step._id
             const allSteps = day.templateId?.steps || [];
             const areAllStepsChecked =
               allSteps.length > 0 &&
-              allSteps.every((step) =>
+              allSteps.every((item) =>
                 progress?.completedSteps?.includes(
-                  `${day.dayNumber}-${step._id}`,
+                  `${day.dayNumber}-${item.step?._id}`,
                 ),
               );
             const isFullyComplete = isDayCompleteByDB || areAllStepsChecked;
@@ -257,7 +279,7 @@ export default function StructuredCoursePlayer({
         </div>
       </div>
 
-      {/* 🚀 CARD SWAPPING CONTAINER (Protocol Steps) */}
+      {/* CARD SWAPPING CONTAINER (Protocol Steps) */}
       <div className="relative overflow-hidden bg-[#0F1724]/60 backdrop-blur-xl border border-white/[0.05] rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] min-h-[400px]">
         <AnimatePresence mode="wait">
           {currentDayData && currentDayData.templateId ? (
@@ -269,70 +291,109 @@ export default function StructuredCoursePlayer({
               transition={{ duration: 0.3, ease: "easeInOut" }}
               className="p-6 md:p-8"
             >
-              <div className="mb-8 flex justify-between items-end">
-                <div>
-                  <h4 className="text-2xl md:text-3xl font-black uppercase tracking-tighter italic text-white leading-none">
-                    {currentDayData.templateId.name}
-                  </h4>
-                  <p className="text-[10px] text-amber-500 uppercase tracking-widest mt-2 font-bold">
-                    Day {currentDayData.dayNumber} •{" "}
-                    {currentDayData.templateId.steps.length} Steps
-                  </p>
-                </div>
+              <div className="mb-8">
+                <h4 className="text-2xl md:text-3xl font-black uppercase tracking-tighter italic text-white leading-none">
+                  {currentDayData.templateId.name}
+                </h4>
+                <p className="text-[10px] text-amber-500 uppercase tracking-widest mt-2 font-bold">
+                  Day {currentDayData.dayNumber} •{" "}
+                  {currentDayData.templateId.steps.length} Actions Required
+                </p>
               </div>
 
-              <div className="space-y-4">
-                {currentDayData.templateId.steps.map((step) => {
-                  const scopedStepId = `${currentDayData.dayNumber}-${step._id}`;
-                  const isDayCompleteByDB = progress?.completedDays?.includes(
-                    currentDayData.dayNumber,
-                  );
+              <div className="space-y-8">
+                {/* 🚀 NEW: Render steps visually grouped by Category */}
+                {stepCategories.map((category) => {
+                  const stepsInCategory =
+                    currentDayData.templateId.steps.filter(
+                      (item) => item.step?.type === category.id,
+                    );
 
-                  // 🚀 THE FIX: If the whole day is marked complete, force all individual circles to turn green!
-                  const isStepComplete =
-                    progress?.completedSteps?.includes(scopedStepId) ||
-                    isDayCompleteByDB;
+                  if (stepsInCategory.length === 0) return null;
 
                   return (
-                    <div
-                      key={step._id}
-                      onClick={() => openVideo(step.videoUrl)}
-                      className="p-4 rounded-[16px] bg-black/40 border border-white/5 hover:border-amber-500/40 hover:bg-[#121821] transition-all cursor-pointer flex items-center justify-between group shadow-inner"
-                    >
-                      <div className="flex items-center gap-4 overflow-hidden">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleStepComplete(scopedStepId);
-                          }}
-                          className="active:scale-90 transition-transform shrink-0"
-                        >
-                          {isStepComplete ? (
-                            <CheckCircle
-                              size={22}
-                              className="text-emerald-500 drop-shadow-[0_0_8px_rgba(16,185,129,0.4)]"
-                            />
-                          ) : (
-                            <Circle
-                              size={22}
-                              className="text-[#8A94A6]/50 group-hover:text-amber-500/50"
-                            />
-                          )}
-                        </button>
-                        <div className="truncate">
-                          <p className="text-sm font-black uppercase tracking-widest text-white truncate group-hover:text-amber-500 transition-colors">
-                            {step.title}
-                          </p>
-                          <p className="text-[10px] text-[#8A94A6] uppercase tracking-wider mt-0.5">
-                            {step.type}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center shrink-0 group-hover:bg-amber-500 group-hover:text-black text-amber-500 transition-all shadow-inner">
-                        <PlayCircle
-                          size={20}
-                          className={!isStepComplete ? "animate-pulse" : ""}
-                        />
+                    <div key={category.id}>
+                      {/* Section Header */}
+                      <h5 className="flex items-center gap-2 text-amber-500 font-black text-[10px] md:text-xs uppercase tracking-widest mb-4 border-b border-white/5 pb-2">
+                        {category.icon} {category.label}
+                      </h5>
+
+                      <div className="space-y-3">
+                        {stepsInCategory.map((item) => {
+                          // Handle cases where backend might send incomplete data
+                          if (!item || !item.step) return null;
+
+                          const scopedStepId = `${currentDayData.dayNumber}-${item.step._id}`;
+                          const isDayCompleteByDB =
+                            progress?.completedDays?.includes(
+                              currentDayData.dayNumber,
+                            );
+                          const isStepComplete =
+                            progress?.completedSteps?.includes(scopedStepId) ||
+                            isDayCompleteByDB;
+
+                          return (
+                            <div
+                              key={scopedStepId}
+                              onClick={() => openVideo(item.step.videoUrl)}
+                              className="p-4 rounded-[16px] bg-black/40 border border-white/5 hover:border-amber-500/40 hover:bg-[#121821] transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 group shadow-inner"
+                            >
+                              <div className="flex items-center gap-4 overflow-hidden flex-1">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleStepComplete(scopedStepId);
+                                  }}
+                                  className="active:scale-90 transition-transform shrink-0"
+                                >
+                                  {isStepComplete ? (
+                                    <CheckCircle
+                                      size={22}
+                                      className="text-emerald-500 drop-shadow-[0_0_8px_rgba(16,185,129,0.4)]"
+                                    />
+                                  ) : (
+                                    <Circle
+                                      size={22}
+                                      className="text-[#8A94A6]/50 group-hover:text-amber-500/50"
+                                    />
+                                  )}
+                                </button>
+                                <div className="truncate">
+                                  <p className="text-sm md:text-base font-black uppercase tracking-widest text-white truncate group-hover:text-amber-500 transition-colors">
+                                    {item.step.title}
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center justify-between sm:justify-end gap-4 pl-10 sm:pl-0">
+                                {/* 🚀 NEW: Sets & Reps Badge */}
+                                {(item.sets !== "-" || item.reps !== "-") && (
+                                  <div className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-center shrink-0">
+                                    <p className="text-[8px] text-[#8A94A6] font-black uppercase tracking-widest leading-none mb-1">
+                                      Target
+                                    </p>
+                                    <p className="text-xs font-black text-white leading-none">
+                                      {item.sets}{" "}
+                                      <span className="text-amber-500 mx-0.5">
+                                        x
+                                      </span>{" "}
+                                      {item.reps}
+                                    </p>
+                                  </div>
+                                )}
+
+                                <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center shrink-0 group-hover:bg-amber-500 group-hover:text-black text-amber-500 transition-all shadow-inner">
+                                  <PlayCircle
+                                    size={20}
+                                    className={
+                                      !isStepComplete ? "animate-pulse" : ""
+                                    }
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   );
@@ -344,9 +405,9 @@ export default function StructuredCoursePlayer({
                 const allSteps = currentDayData.templateId.steps || [];
                 const areAllStepsChecked =
                   allSteps.length > 0 &&
-                  allSteps.every((step) =>
+                  allSteps.every((item) =>
                     progress?.completedSteps?.includes(
-                      `${currentDayData.dayNumber}-${step._id}`,
+                      `${currentDayData.dayNumber}-${item.step?._id}`,
                     ),
                   );
                 const isDayCompleteByDB = progress?.completedDays?.includes(
@@ -407,7 +468,11 @@ export default function StructuredCoursePlayer({
               className="relative w-full max-w-[45vh] aspect-[9/16] bg-black rounded-[2rem] overflow-hidden border border-white/10 shadow-[0_40px_100px_rgba(0,0,0,0.8)]"
             >
               <video
-                src={activeVideo}
+                src={
+                  activeVideo.startsWith("http")
+                    ? activeVideo
+                    : `https://pub-your-r2-domain.r2.dev/${activeVideo}`
+                }
                 controls
                 autoPlay
                 playsInline

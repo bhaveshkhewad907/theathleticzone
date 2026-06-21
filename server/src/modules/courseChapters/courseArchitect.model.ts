@@ -24,13 +24,27 @@ export const Step = mongoose.model<IStep>("Step", stepSchema);
 export interface ITemplate extends Document {
   name: string;
   description?: string;
-  steps: mongoose.Types.ObjectId[];
+  steps: {
+    step: mongoose.Types.ObjectId;
+    sets?: string;
+    reps?: string;
+  }[];
 }
 const templateSchema = new Schema<ITemplate>(
   {
     name: { type: String, required: true },
     description: { type: String },
-    steps: [{ type: mongoose.Schema.Types.ObjectId, ref: "Step" }],
+    steps: [
+      {
+        step: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Step",
+          required: true,
+        },
+        sets: { type: String, default: "-" },
+        reps: { type: String, default: "-" },
+      },
+    ],
   },
   { timestamps: true },
 );

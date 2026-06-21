@@ -1,6 +1,5 @@
 import mongoose, { Schema, Document } from "mongoose";
 
-// Sub-interfaces for the deeply nested Curriculum
 interface IWorkout {
   videoUrl: string;
   title: string;
@@ -25,19 +24,15 @@ export interface ICourse extends Document {
     title: string;
     description: string;
     coverImageUrl: string;
-    tier: "Beginner" | "Intermediate" | "Elite";
+    videoUrl?: string; // 🚀 FIX: Added Intro Reel URL support
+    tier: "Beginner" | "Intermediate" | "Advanced"; // 🚀 FIX: Aligned with frontend
     targetDeficit: "Strength" | "Power" | "Mobility" | "Technique" | "Seasonal";
   };
 
   isDeleted: boolean;
-
-  // Progression Logic
   cycleType: "Linear" | "Off-Season" | "Pre-Season" | "In-Season";
-  defaultNextCourseId?: mongoose.Types.ObjectId;
-
-  // The Actual Curriculum
+  defaultNextCourseId?: mongoose.Schema.Types.ObjectId;
   weeks: IWeek[];
-
   createdAt: Date;
   updatedAt: Date;
 }
@@ -48,9 +43,10 @@ const courseSchema = new Schema<ICourse>(
       title: { type: String, required: true, trim: true },
       description: { type: String, required: true },
       coverImageUrl: { type: String, required: true },
+      videoUrl: { type: String }, // 🚀 FIX: Database will now save this
       tier: {
         type: String,
-        enum: ["Beginner", "Intermediate", "Elite"],
+        enum: ["Beginner", "Intermediate", "Advanced"], // 🚀 FIX: Elite -> Advanced
         required: true,
       },
       targetDeficit: {
@@ -96,7 +92,7 @@ const courseSchema = new Schema<ICourse>(
   { timestamps: true },
 );
 
-courseSchema.index({ isActive: 1, isDeleted: 1 });
+courseSchema.index({ isDeleted: 1 });
 courseSchema.index({ "meta.tier": 1, "meta.targetDeficit": 1 });
 
 const Course = mongoose.model<ICourse>("Course", courseSchema, "courses");

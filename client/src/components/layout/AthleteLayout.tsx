@@ -1,5 +1,12 @@
 import { useState, useContext } from "react";
-import { Menu, LogOut, LayoutDashboard, User, Shield } from "lucide-react";
+import {
+  Menu,
+  LogOut,
+  LayoutDashboard,
+  User,
+  Shield,
+  MessageSquare,
+} from "lucide-react";
 import { motion } from "framer-motion";
 import { Outlet, NavLink, useLocation } from "react-router-dom";
 import AuthContext from "../../context/AuthContext";
@@ -19,6 +26,11 @@ export default function AthleteLayout() {
   const navItems = [
     { label: "Performance Hub", path: "/athlete", icon: LayoutDashboard },
     { label: "Personal Profile", path: "/athlete/profile", icon: User },
+    {
+      label: "Leave Review",
+      path: "/athlete/leave-review",
+      icon: MessageSquare,
+    },
   ];
 
   const userProfileImage = (auth.user as unknown as { profileImage?: string })

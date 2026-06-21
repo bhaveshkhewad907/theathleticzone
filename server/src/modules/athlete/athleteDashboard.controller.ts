@@ -1,9 +1,15 @@
-import { RequestHandler } from "express";
+import { Request, Response, NextFunction, RequestHandler } from "express";
 import { getAthleteDashboard } from "./athleteDashboard.service";
+import { AuthenticatedRequest } from "../../types/auth.types"; // Adjust path if needed
 
-export const dashboard: RequestHandler = async (req: any, res, next) => {
+export const dashboard: RequestHandler = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
-    const userId = req.user.id;
+    const authReq = req as AuthenticatedRequest;
+    const userId = authReq.user.id;
 
     // 1. Fetch dashboard data (Active Course & Progress) from the cleaned service
     const dashboardData = await getAthleteDashboard(userId);

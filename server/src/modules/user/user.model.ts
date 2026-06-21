@@ -28,7 +28,8 @@ export interface IUser extends Document {
     renewalDate?: Date;
   };
   platformState: {
-    status: "NEEDS_ASSESSMENT" | "ACTIVE_TRAINING";
+    // 🚀 FATAL FIX: Added COMPLETED_TRAINING to the TS interface
+    status: "NEEDS_ASSESSMENT" | "ACTIVE_TRAINING" | "COMPLETED_TRAINING";
     activeCourseId?: mongoose.Types.ObjectId;
     hasPaidEntryFee: boolean;
     usedCoupon: string | null;
@@ -71,7 +72,8 @@ const userSchema = new Schema<IUser>(
     platformState: {
       status: {
         type: String,
-        enum: ["NEEDS_ASSESSMENT", "ACTIVE_TRAINING"],
+        // 🚀 FATAL FIX: Added COMPLETED_TRAINING to the Database Schema
+        enum: ["NEEDS_ASSESSMENT", "ACTIVE_TRAINING", "COMPLETED_TRAINING"],
         default: "NEEDS_ASSESSMENT",
       },
       activeCourseId: { type: mongoose.Schema.Types.ObjectId, ref: "Course" },

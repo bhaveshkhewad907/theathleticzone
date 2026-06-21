@@ -1,29 +1,20 @@
 import { Router } from "express";
 import { requireAuth } from "../../middlewares/auth.middleware";
-import {
-  getMe,
-  updateProfile,
-  getProfileUploadUrl,
-  uploadProfilePicture,
-  completeTrainingCycle,
-} from "./user.controller";
-import multer from "multer";
+// 🚀 SECURITY FIX: Import the hardened Multer config with MIME-type protections
+import { uploadAvatar } from "../../middlewares/upload.middleware";
+import { getMe, updateProfile, uploadProfilePicture } from "./user.controller";
 
 const router = Router();
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
-});
 
 router.get("/me", requireAuth, getMe);
 router.put("/profile", requireAuth, updateProfile);
-router.post("/get-profile-upload-url", requireAuth, getProfileUploadUrl);
+
+// 🚀 SECURITY FIX: Replaced inline multer with the global uploadAvatar middleware
 router.post(
   "/upload-avatar",
   requireAuth,
-  upload.single("avatar"),
+  uploadAvatar.single("avatar"),
   uploadProfilePicture,
 );
-router.post("/cycle/complete", completeTrainingCycle);
 
 export default router;

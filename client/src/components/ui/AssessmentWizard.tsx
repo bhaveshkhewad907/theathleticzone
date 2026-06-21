@@ -8,16 +8,18 @@ import PowerStep from "../../pages/steps/PowerStep";
 import SprintStep from "../../pages/steps/SprintStep";
 import StrengthStep from "../../pages/steps/StrengthStep";
 
-// 🚀 THE FIX 1: Defined a strict interface to replace 'any'
+// 🚀 UPDATED: Expanded the interface to include all 4 specific pillar scores
 interface ScorePayload {
   engine: {
     assignedLevel?: string;
     identifiedDeficit?: string;
   };
   scores: {
-    base: number;
+    overall: number;
+    strength: number;
     power: number;
-    mechanics: number;
+    mobility: number;
+    technique: number;
   };
 }
 
@@ -25,7 +27,6 @@ export default function AssessmentWizard() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 🚀 Applied the strict interface here
   const [scoreData, setScoreData] = useState<ScorePayload | null>(null);
 
   const [formData, setFormData] = useState({
@@ -82,21 +83,32 @@ export default function AssessmentWizard() {
       const response = await api.post("/assessments", payload);
       toast.success("Assessment Processed! Algorithm Analysis Complete.");
 
-      // 🚀 THE FIX 2: Calculate the random math HERE, safely outside the render phase!
+      // 🚀 THE MATH: Calculating the Overall Score and the 4 Pillar Scores out of 100
       const trainingAge = payload.physical.trainingAgeYears || 0;
-      const calculatedBaseScore = Math.min(
+      const calculatedOverall = Math.min(
         96,
         45 + trainingAge * 12 + Math.floor(Math.random() * 8),
       );
-      const calculatedPowerScore = Math.min(99, calculatedBaseScore + 6);
-      const calculatedMechanicsScore = Math.min(99, calculatedBaseScore - 4);
+
+      const calculatedStrength = Math.min(
+        99,
+        calculatedOverall + Math.floor(Math.random() * 5),
+      );
+      const calculatedPower = Math.min(99, calculatedOverall + 6);
+      const calculatedMobility = Math.min(
+        99,
+        calculatedOverall - Math.floor(Math.random() * 4),
+      );
+      const calculatedTechnique = Math.min(99, calculatedOverall - 2);
 
       setScoreData({
         engine: response.data.data.engineResult,
         scores: {
-          base: calculatedBaseScore,
-          power: calculatedPowerScore,
-          mechanics: calculatedMechanicsScore,
+          overall: calculatedOverall,
+          strength: calculatedStrength,
+          power: calculatedPower,
+          mobility: calculatedMobility,
+          technique: calculatedTechnique,
         },
       });
     } catch (err) {
@@ -112,7 +124,7 @@ export default function AssessmentWizard() {
   if (scoreData) {
     return (
       <div className="min-h-[80vh] flex items-center justify-center p-6 animate-in fade-in zoom-in duration-700 w-full">
-        <div className="max-w-2xl w-full bg-[#121821]/90 backdrop-blur-2xl border border-amber-500/30 p-10 md:p-14 rounded-[2rem] shadow-[0_30px_60px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.05)] relative overflow-hidden">
+        <div className="max-w-4xl w-full bg-[#121821]/90 backdrop-blur-2xl border border-amber-500/30 p-10 md:p-14 rounded-[2rem] shadow-[0_30px_60px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.05)] relative overflow-hidden">
           {/* Ambient Glow */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[200px] bg-amber-500/10 blur-[80px] pointer-events-none rounded-full" />
 
@@ -129,53 +141,93 @@ export default function AssessmentWizard() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10 mb-12">
-            {/* The Main Score */}
-            <div className="md:col-span-1 bg-black/40 border border-white/5 rounded-[20px] p-6 flex flex-col items-center justify-center shadow-inner relative overflow-hidden group hover:border-amber-500/30 transition-colors">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 relative z-10 mb-12">
+            {/* 🎯 THE MAIN OVERALL SCORE */}
+            <div className="lg:col-span-1 bg-black/40 border border-white/5 rounded-[20px] p-8 flex flex-col items-center justify-center shadow-inner relative overflow-hidden group hover:border-amber-500/30 transition-colors">
               <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-amber-500/10 to-transparent opacity-50" />
-              <p className="text-[10px] font-black text-[#8A94A6] uppercase tracking-widest mb-2">
+              <p className="text-[10px] font-black text-[#8A94A6] uppercase tracking-widest mb-4">
                 Overall Rating
               </p>
-              <div className="text-6xl font-black italic text-white drop-shadow-[0_0_15px_rgba(245,158,11,0.4)]">
-                {scoreData.scores.base}
-                <span className="text-2xl text-[#8A94A6]">/100</span>
+              <div className="text-7xl md:text-8xl font-black italic text-white drop-shadow-[0_0_15px_rgba(245,158,11,0.4)]">
+                {scoreData.scores.overall}
               </div>
+              <p className="text-sm font-black text-[#8A94A6] uppercase tracking-widest mt-2">
+                Out of 100
+              </p>
             </div>
 
-            {/* Sub Metrics */}
-            <div className="md:col-span-2 grid grid-cols-2 gap-4">
-              <div className="bg-black/40 border border-white/5 rounded-[20px] p-6 flex flex-col justify-center shadow-inner">
-                <p className="text-[9px] font-black text-[#8A94A6] uppercase tracking-widest mb-1">
-                  Power Output
-                </p>
-                <div className="flex items-end gap-2">
-                  <span className="text-3xl font-black italic text-amber-500">
-                    {scoreData.scores.power}
-                  </span>
-                  <span className="text-xs text-[#8A94A6] font-bold mb-1 border-b border-amber-500/30 pb-0.5">
-                    / 100
-                  </span>
+            {/* 📊 THE 4 PILLAR METRICS & ASSIGNED PROTOCOL */}
+            <div className="lg:col-span-2 flex flex-col gap-4">
+              {/* 2x2 Grid for Pillar Scores */}
+              <div className="grid grid-cols-2 gap-4 flex-1">
+                {/* Strength */}
+                <div className="bg-black/40 border border-white/5 rounded-[20px] p-6 flex flex-col justify-center shadow-inner">
+                  <p className="text-[9px] font-black text-[#8A94A6] uppercase tracking-widest mb-1">
+                    Strength Base
+                  </p>
+                  <div className="flex items-end gap-2">
+                    <span className="text-3xl md:text-4xl font-black italic text-amber-500">
+                      {scoreData.scores.strength}
+                    </span>
+                    <span className="text-xs text-[#8A94A6] font-bold mb-1.5 border-b border-amber-500/30 pb-0.5">
+                      / 100
+                    </span>
+                  </div>
+                </div>
+
+                {/* Power */}
+                <div className="bg-black/40 border border-white/5 rounded-[20px] p-6 flex flex-col justify-center shadow-inner">
+                  <p className="text-[9px] font-black text-[#8A94A6] uppercase tracking-widest mb-1">
+                    Power Output
+                  </p>
+                  <div className="flex items-end gap-2">
+                    <span className="text-3xl md:text-4xl font-black italic text-amber-500">
+                      {scoreData.scores.power}
+                    </span>
+                    <span className="text-xs text-[#8A94A6] font-bold mb-1.5 border-b border-amber-500/30 pb-0.5">
+                      / 100
+                    </span>
+                  </div>
+                </div>
+
+                {/* Mobility */}
+                <div className="bg-black/40 border border-white/5 rounded-[20px] p-6 flex flex-col justify-center shadow-inner">
+                  <p className="text-[9px] font-black text-[#8A94A6] uppercase tracking-widest mb-1">
+                    Mobility
+                  </p>
+                  <div className="flex items-end gap-2">
+                    <span className="text-3xl md:text-4xl font-black italic text-amber-500">
+                      {scoreData.scores.mobility}
+                    </span>
+                    <span className="text-xs text-[#8A94A6] font-bold mb-1.5 border-b border-amber-500/30 pb-0.5">
+                      / 100
+                    </span>
+                  </div>
+                </div>
+
+                {/* Technique */}
+                <div className="bg-black/40 border border-white/5 rounded-[20px] p-6 flex flex-col justify-center shadow-inner">
+                  <p className="text-[9px] font-black text-[#8A94A6] uppercase tracking-widest mb-1">
+                    Technique
+                  </p>
+                  <div className="flex items-end gap-2">
+                    <span className="text-3xl md:text-4xl font-black italic text-amber-500">
+                      {scoreData.scores.technique}
+                    </span>
+                    <span className="text-xs text-[#8A94A6] font-bold mb-1.5 border-b border-amber-500/30 pb-0.5">
+                      / 100
+                    </span>
+                  </div>
                 </div>
               </div>
-              <div className="bg-black/40 border border-white/5 rounded-[20px] p-6 flex flex-col justify-center shadow-inner">
-                <p className="text-[9px] font-black text-[#8A94A6] uppercase tracking-widest mb-1">
-                  Biomechanics
-                </p>
-                <div className="flex items-end gap-2">
-                  <span className="text-3xl font-black italic text-amber-500">
-                    {scoreData.scores.mechanics}
-                  </span>
-                  <span className="text-xs text-[#8A94A6] font-bold mb-1 border-b border-amber-500/30 pb-0.5">
-                    / 100
-                  </span>
-                </div>
-              </div>
-              <div className="col-span-2 bg-amber-500/10 border border-amber-500/20 rounded-[20px] p-5 flex items-center justify-between shadow-inner">
+
+              {/* Protocol Assignment Banner */}
+              <div className="bg-amber-500/10 border border-amber-500/20 rounded-[20px] p-6 flex items-center justify-between shadow-inner shrink-0 mt-2">
                 <div>
                   <p className="text-[9px] font-black text-amber-500/80 uppercase tracking-widest mb-1">
-                    Assigned Protocol
+                    Assigned Training Protocol
                   </p>
-                  <p className="text-sm md:text-base font-black text-white uppercase tracking-wider">
+                  <p className="text-base md:text-lg font-black text-white uppercase tracking-wider">
                     {scoreData.engine?.assignedLevel}{" "}
                     {scoreData.engine?.identifiedDeficit} Track
                   </p>

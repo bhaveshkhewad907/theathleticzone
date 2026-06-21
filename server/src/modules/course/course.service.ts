@@ -1,21 +1,19 @@
 import Course from "./course.model";
 import ApiError from "../../utils/apiError";
-import CoursePurchase from "./coursePurchase.model";
-import { getPresignedUrl } from "../../utils/s3";
+// 🚀 FIX: Point to the actual R2 service we centralized in Batch 2
+import { getPresignedUrl } from "../../services/r2.service";
 
-// 🚀 THE FIX: Redefined the interface to perfectly match the nested Mongoose Schema
 export interface CreateCourseInput {
   meta: {
     title: string;
     description: string;
     coverImageUrl: string;
-    tier: "Beginner" | "Intermediate" | "Elite";
+    videoUrl?: string; // 🚀 FIX
+    tier: "Beginner" | "Intermediate" | "Advanced"; // 🚀 FIX
     targetDeficit: "Strength" | "Power" | "Mobility" | "Technique" | "Seasonal";
   };
 }
 
-// 🛡️ THE R2 INTERCEPTOR
-// Converts broken Cloudflare Dev URLs into highly secure, authenticated AWS Presigned URLs
 const enforceSecureUrl = async (url: string) => {
   if (!url) return url;
   try {
@@ -57,27 +55,11 @@ export const updateCourse = async (
   return course;
 };
 
-// 🚀 Safely neutered
-export const deactivateCourse = async (id: string) => {
-  throw new ApiError(
-    400,
-    "Offline toggling is deprecated. Use protocol deletion.",
-  );
-};
-
-// 🚀 Safely neutered
-export const reactivateCourse = async (id: string) => {
-  throw new ApiError(
-    400,
-    "Offline toggling is deprecated. Use protocol deletion.",
-  );
-};
+// 🚀 FIX: deactivateCourse and reactivateCourse purged entirely.
 
 export const getAllCoursesAdmin = async () => {
   const courses = await Course.aggregate([
-    {
-      $match: { isDeleted: { $ne: true } },
-    },
+    { $match: { isDeleted: { $ne: true } } },
     {
       $lookup: {
         from: "coursepurchases",
@@ -114,17 +96,10 @@ export const getAllCoursesAdmin = async () => {
         },
       },
     },
-    {
-      $project: {
-        purchases: 0,
-      },
-    },
-    {
-      $sort: { createdAt: -1 },
-    },
+    { $project: { purchases: 0 } },
+    { $sort: { createdAt: -1 } },
   ]);
 
-  // 🚀 THE FIX: Updated to securely sign the nested 'meta.coverImageUrl'
   return Promise.all(
     courses.map(async (course) => {
       if (course.meta && course.meta.coverImageUrl) {
@@ -138,43 +113,10 @@ export const getAllCoursesAdmin = async () => {
 };
 
 export const getActiveCourses = async () => {
-  const courses = await Course.aggregate([
-    {
-      $match: {
-        isDeleted: { $ne: true },
-      },
-    },
-    {
-      $lookup: {
-        from: "coursereviews",
-        localField: "_id",
-        foreignField: "course",
-        as: "reviews",
-      },
-    },
-    {
-      $addFields: {
-        averageRating: {
-          $cond: [
-            { $gt: [{ $size: "$reviews" }, 0] },
-            { $avg: "$reviews.rating" },
-            0,
-          ],
-        },
-        totalReviews: { $size: "$reviews" },
-      },
-    },
-    {
-      $project: {
-        reviews: 0,
-      },
-    },
-    {
-      $sort: { createdAt: -1 },
-    },
-  ]);
+  const courses = await Course.find({ isDeleted: { $ne: true } })
+    .sort({ createdAt: -1 })
+    .lean();
 
-  // 🚀 THE FIX: Updated to securely sign the nested 'meta.coverImageUrl'
   return Promise.all(
     courses.map(async (course) => {
       if (course.meta && course.meta.coverImageUrl) {

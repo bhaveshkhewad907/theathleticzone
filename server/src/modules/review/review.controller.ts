@@ -1,36 +1,34 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response, NextFunction, RequestHandler } from "express";
 import Review from "./review.model";
 import ApiError from "../../utils/apiError";
+import { AuthenticatedRequest } from "../../types/auth.types"; // Adjust path if necessary
 
-// Athletes submit reviews here
-export const createReview = async (
-  req: any,
+export const createReview: RequestHandler = async (
+  req: Request,
   res: Response,
   next: NextFunction,
 ) => {
   try {
-    // 🛡️ FIX 1: Grab 'sport' from the request body
-    const { rating, content, sport } = req.body;
+    const authReq = req as AuthenticatedRequest;
+    const { rating, content } = req.body;
 
-    // 🛡️ FIX 2: Make sure they actually sent the sport
-    if (!rating || !content || !sport) {
-      throw new ApiError(400, "Rating, content, and sport are required");
+    if (!rating || !content) {
+      throw new ApiError(400, "Rating and content are required.");
     }
 
-    const existingReview = await Review.findOne({ user: req.user.id });
+    const existingReview = await Review.findOne({ user: authReq.user.id });
     if (existingReview) {
       existingReview.rating = rating;
       existingReview.content = content;
-      existingReview.sport = sport; // 🛡️ FIX 3: Update existing sport
       await existingReview.save();
-      return res.status(200).json({ success: true, data: existingReview });
+      res.status(200).json({ success: true, data: existingReview });
+      return;
     }
 
     const newReview = await Review.create({
-      user: req.user.id,
+      user: authReq.user.id,
       rating,
       content,
-      sport, // 🛡️ FIX 4: Save new sport
     });
 
     res.status(201).json({ success: true, data: newReview });
@@ -39,16 +37,14 @@ export const createReview = async (
   }
 };
 
-// Landing page fetches recent public reviews here
-export const getPublicReviews = async (
-  req: Request,
+export const getPublicReviews: RequestHandler = async (
+  _req: Request,
   res: Response,
   next: NextFunction,
 ) => {
   try {
-    // 🛡️ SYNC FIX: Populate the user's name, profileImage, and SPORT
     const reviews = await Review.find()
-      .populate("user", "name profileImage sport")
+      .populate("user", "name profileImage") // 🚀 FIX: Ghost 'sport' request removed
       .sort({ createdAt: -1 })
       .limit(10)
       .lean();

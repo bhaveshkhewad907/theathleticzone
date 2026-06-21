@@ -1,59 +1,47 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response, NextFunction, RequestHandler } from "express";
 import User from "./user.model";
 import ApiError from "../../utils/apiError";
-import {
-  generatePresignedUrl,
-  deleteFileFromR2,
-  uploadBufferToR2,
-} from "../../services/r2.service";
+import { deleteFileFromR2, uploadBufferToR2 } from "../../services/r2.service";
+import { AuthenticatedRequest } from "../../types/auth.types";
 
-export const getMe = async (req: any, res: Response, next: NextFunction) => {
+export const getMe: RequestHandler = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
-    const user = await User.findById(req.user.id).select(
-      "name email role profileImage platformState",
+    const authReq = req as AuthenticatedRequest;
+    const user = await User.findById(authReq.user.id).select(
+      "name email role profileImage platformState personalInfo",
     );
 
     if (!user) throw new ApiError(404, "User not found");
 
-    res.status(200).json({
-      success: true,
-      data: user,
-    });
+    res.status(200).json({ success: true, data: user });
   } catch (error) {
     next(error);
   }
 };
 
-export const updateProfile = async (req: any, res: any, next: any) => {
+export const updateProfile: RequestHandler = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
-    const { profileImage } = req.body;
-    const existingUser = await User.findById(req.user?.id);
+    const authReq = req as AuthenticatedRequest;
 
-    if (!existingUser) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
-    }
-
-    if (
-      profileImage &&
-      existingUser.profileImage &&
-      existingUser.profileImage !== profileImage
-    ) {
-      const publicDomain = process.env.R2_PUBLIC_DOMAIN as string;
-      if (existingUser.profileImage.startsWith(publicDomain)) {
-        const oldFileKey = existingUser.profileImage.split(
-          `${publicDomain}/`,
-        )[1];
-        if (oldFileKey) await deleteFileFromR2(oldFileKey);
-      }
-    }
+    // 🚀 ARCHITECTURE FIX: This endpoint now cleanly handles text-based profile updates
+    // Avatar logic is strictly isolated to `uploadProfilePicture`.
+    const { name, personalInfo } = req.body;
 
     const updatedUser = await User.findByIdAndUpdate(
-      req.user?.id,
-      { profileImage },
-      { returnDocument: "after", runValidators: true },
+      authReq.user.id,
+      { $set: { name, personalInfo } },
+      { new: true, runValidators: true },
     ).select("-password");
+
+    if (!updatedUser) throw new ApiError(404, "User not found");
 
     res.status(200).json({ success: true, data: updatedUser });
   } catch (error) {
@@ -61,28 +49,16 @@ export const updateProfile = async (req: any, res: any, next: any) => {
   }
 };
 
-export const getProfileUploadUrl = async (req: any, res: any, next: any) => {
-  try {
-    const { fileName, contentType, folder } = req.body;
-    if (!fileName || !contentType || !folder) {
-      throw new ApiError(400, "fileName, contentType, and folder are required");
-    }
-    const data = await generatePresignedUrl(fileName, contentType, folder);
-    res.status(200).json({ success: true, data });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const uploadProfilePicture = async (
-  req: any,
+export const uploadProfilePicture: RequestHandler = async (
+  req: Request,
   res: Response,
   next: NextFunction,
 ) => {
   try {
+    const authReq = req as AuthenticatedRequest;
     if (!req.file) throw new ApiError(400, "No image file provided.");
 
-    const existingUser = await User.findById(req.user?.id);
+    const existingUser = await User.findById(authReq.user.id);
     if (!existingUser) throw new ApiError(404, "User not found");
 
     const publicAvatarUrl = await uploadBufferToR2(
@@ -91,6 +67,7 @@ export const uploadProfilePicture = async (
       "avatars",
     );
 
+    // Clean up old avatar from R2
     if (existingUser.profileImage) {
       const publicDomain = process.env.R2_PUBLIC_DOMAIN as string;
       if (existingUser.profileImage.startsWith(publicDomain)) {
@@ -98,13 +75,15 @@ export const uploadProfilePicture = async (
           `${publicDomain}/`,
         )[1];
         if (oldFileKey) {
-          deleteFileFromR2(oldFileKey).catch((err) => console.error(err));
+          deleteFileFromR2(oldFileKey).catch((err) =>
+            console.error("R2 Cleanup Error:", err),
+          );
         }
       }
     }
 
     const updatedUser = await User.findByIdAndUpdate(
-      req.user.id,
+      authReq.user.id,
       { profileImage: publicAvatarUrl },
       { new: true },
     ).select("-password");
@@ -121,36 +100,5 @@ export const uploadProfilePicture = async (
       );
     }
     next(error);
-  }
-};
-
-// Add this to the bottom of user.controller.ts
-export const completeTrainingCycle = async (req: any, res: any) => {
-  try {
-    const userId = req.user.id;
-
-    // Reset their financial status and move them to the victory state
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      {
-        $set: {
-          "platformState.status": "COMPLETED_TRAINING",
-          "platformState.hasPaidEntryFee": false,
-          "platformState.usedCoupon": null,
-        },
-      },
-      { new: true }, // Returns the updated user document
-    );
-
-    res.status(200).json({
-      success: true,
-      message: "Protocol Mastered. Ready for the next phase.",
-      data: updatedUser,
-    });
-  } catch (error) {
-    console.error("Error completing training cycle:", error);
-    res
-      .status(500)
-      .json({ success: false, message: "Failed to complete cycle." });
   }
 };

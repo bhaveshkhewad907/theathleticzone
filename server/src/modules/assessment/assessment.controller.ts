@@ -1,18 +1,20 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response, NextFunction, RequestHandler } from "express";
 import Assessment from "./assessment.model";
 import User from "../user/user.model";
 import mongoose from "mongoose";
 import ApiError from "../../utils/apiError";
 import { runRecommendationEngine } from "./recommendation.service";
 import CoursePurchase from "../course/coursePurchase.model";
+import { AuthenticatedRequest } from "../../types/auth.types";
 
-export const submitAssessment = async (
-  req: any,
+export const submitAssessment: RequestHandler = async (
+  req: Request,
   res: Response,
   next: NextFunction,
 ) => {
   try {
-    const userId = req.user.id;
+    const authReq = req as AuthenticatedRequest;
+    const userId = authReq.user.id;
     const { physical, metrics } = req.body;
 
     let engineResult = await runRecommendationEngine(physical, metrics);
@@ -29,12 +31,13 @@ export const submitAssessment = async (
       if (!fallbackCourse) {
         throw new ApiError(
           400,
-          "Protocol Vault is entirely empty! Admin must upload at least one course.",
+          "Protocol Vault is empty! Admin must upload at least one course.",
         );
       }
-      engineResult = { ...engineResult, assignedCourseId: fallbackCourse._id };
+      engineResult.assignedCourseId = fallbackCourse._id;
     }
 
+    // 1. Create the Assessment Document
     const assessment = await Assessment.create({
       userId,
       physical,
@@ -42,50 +45,25 @@ export const submitAssessment = async (
       engineResult,
     });
 
-    await User.findByIdAndUpdate(userId, {
-      $set: {
-        "platformState.status": "ACTIVE_TRAINING",
-        "platformState.activeCourseId": engineResult.assignedCourseId,
-        age: physical.age,
-        weight: physical.weight,
-        height: physical.height,
-      },
-      $push: { assessmentHistory: assessment._id },
-    });
-
-    try {
-      const ProfileModel =
-        mongoose.models.Profile || mongoose.models.AthleteProfile;
-      if (ProfileModel) {
-        await ProfileModel.findOneAndUpdate(
-          { user: userId },
-          {
-            $set: {
-              age: physical.age,
-              weight: physical.weight,
-              height: physical.height,
-            },
-          },
-          { upsert: true },
-        );
-      }
-    } catch (e) {
-      // Silently continue
-    }
-
-    const existingAssignment = await CoursePurchase.findOne({
-      user: userId,
-      course: engineResult.assignedCourseId,
-    });
-
-    if (!existingAssignment) {
-      await CoursePurchase.create({
-        user: userId,
-        course: engineResult.assignedCourseId,
-        priceAtPurchase: 0,
-        status: "PURCHASED",
-      });
-    }
+    // 2. Concurrently update User Profile and provision Course Access
+    // 🚀 ARCHITECTURE FIX: Eliminated the sequential waterfall and fixed the variable naming bug
+    await Promise.all([
+      User.findByIdAndUpdate(userId, {
+        $set: {
+          "platformState.status": "ACTIVE_TRAINING",
+          "platformState.activeCourseId": engineResult.assignedCourseId,
+          age: physical.age,
+          weight: physical.bodyweightKg, // Fixed from physical.weight
+          height: physical.heightCm, // Fixed from physical.height
+        },
+        $push: { assessmentHistory: assessment._id },
+      }),
+      CoursePurchase.findOneAndUpdate(
+        { user: userId, course: engineResult.assignedCourseId },
+        { $setOnInsert: { priceAtPurchase: 0, status: "PURCHASED" } },
+        { upsert: true, new: true }, // Upsert combined find & create into 1 operation
+      ),
+    ]);
 
     res.status(201).json({
       success: true,
@@ -97,22 +75,25 @@ export const submitAssessment = async (
   }
 };
 
-export const getMyAssessments = async (
-  req: any,
+export const getMyAssessments: RequestHandler = async (
+  req: Request,
   res: Response,
   next: NextFunction,
 ) => {
   try {
-    const assessments = await Assessment.find({ userId: req.user.id }).sort({
-      createdAt: -1,
-    });
+    const authReq = req as AuthenticatedRequest;
+    const assessments = await Assessment.find({ userId: authReq.user.id }).sort(
+      {
+        createdAt: -1,
+      },
+    );
     res.status(200).json({ success: true, data: assessments });
   } catch (error) {
     next(error);
   }
 };
 
-export const getAllAssessmentsAdmin = async (
+export const getAllAssessmentsAdmin: RequestHandler = async (
   _req: Request,
   res: Response,
   next: NextFunction,
@@ -127,15 +108,14 @@ export const getAllAssessmentsAdmin = async (
   }
 };
 
-// 🚀 THE NEW RESET LOOP LOGIC!
-export const resetCycle = async (
-  req: any,
+export const resetCycle: RequestHandler = async (
+  req: Request,
   res: Response,
   next: NextFunction,
 ) => {
   try {
-    const userId = req.user.id;
-    await User.findByIdAndUpdate(userId, {
+    const authReq = req as AuthenticatedRequest;
+    await User.findByIdAndUpdate(authReq.user.id, {
       $set: {
         "platformState.status": "COMPLETED_TRAINING",
         "platformState.hasPaidEntryFee": false,

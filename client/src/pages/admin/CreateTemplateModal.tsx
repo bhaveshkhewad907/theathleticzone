@@ -18,6 +18,13 @@ interface Step {
   type: string;
 }
 
+// 🚀 NEW: We now store the Step PLUS its unique sets and reps
+interface SelectedStep {
+  step: Step;
+  sets: string;
+  reps: string;
+}
+
 interface CreateTemplateModalProps {
   onClose: () => void;
   onSuccess: () => void;
@@ -28,13 +35,14 @@ export default function CreateTemplateModal({
   onSuccess,
 }: CreateTemplateModalProps) {
   const [availableSteps, setAvailableSteps] = useState<Step[]>([]);
-  const [selectedSteps, setSelectedSteps] = useState<Step[]>([]);
+
+  // 🚀 UPDATED STATE to use the new interface
+  const [selectedSteps, setSelectedSteps] = useState<SelectedStep[]>([]);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [editingStep, setEditingStep] = useState<Step | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Load the Content Vault on mount
   useEffect(() => {
     api
       .get("/chapters/steps")
@@ -43,7 +51,8 @@ export default function CreateTemplateModal({
   }, []);
 
   const addStep = (step: Step) => {
-    setSelectedSteps([...selectedSteps, step]);
+    // 🚀 NEW: Defaults to 3 sets of 10 reps when added
+    setSelectedSteps([...selectedSteps, { step, sets: "3", reps: "10" }]);
   };
 
   const removeStep = (index: number) => {
@@ -59,11 +68,21 @@ export default function CreateTemplateModal({
     const newSteps = [...selectedSteps];
     const swapIndex = direction === "up" ? index - 1 : index + 1;
 
-    // Swap the elements
     [newSteps[index], newSteps[swapIndex]] = [
       newSteps[swapIndex],
       newSteps[index],
     ];
+    setSelectedSteps(newSteps);
+  };
+
+  // 🚀 NEW: Function to update sets and reps
+  const updateConfig = (
+    index: number,
+    field: "sets" | "reps",
+    value: string,
+  ) => {
+    const newSteps = [...selectedSteps];
+    newSteps[index][field] = value;
     setSelectedSteps(newSteps);
   };
 
@@ -77,7 +96,12 @@ export default function CreateTemplateModal({
       await api.post("/chapters/templates", {
         name,
         description,
-        steps: selectedSteps.map((s) => s._id), // Just send the IDs to backend
+        // 🚀 NEW: Sends the step ID along with the custom sets & reps to the backend
+        steps: selectedSteps.map((s) => ({
+          step: s.step._id,
+          sets: s.sets,
+          reps: s.reps,
+        })),
       });
       toast.success("Protocol Template established!");
       onSuccess();
@@ -99,7 +123,7 @@ export default function CreateTemplateModal({
               Protocol Builder
             </h2>
             <p className="text-[10px] font-black uppercase tracking-widest text-amber-500 mt-1">
-              Construct Reusable Day Templates
+              Construct Reusable Day Templates with Sets & Reps
             </p>
           </div>
           <button
@@ -111,9 +135,9 @@ export default function CreateTemplateModal({
         </div>
 
         {/* Split Screen Workspace */}
-        <div className="flex-1 overflow-hidden grid grid-cols-1 md:grid-cols-2">
+        <div className="flex-1 overflow-hidden grid grid-cols-1 lg:grid-cols-2">
           {/* LEFT: Content Vault */}
-          <div className="p-6 border-r border-white/5 overflow-y-auto bg-black/20">
+          <div className="p-6 border-r border-white/5 overflow-y-auto bg-black/20 custom-scrollbar">
             <h3 className="text-xs font-black uppercase tracking-[0.2em] text-[#8A94A6] mb-4">
               Content Vault ({availableSteps.length} Assets)
             </h3>
@@ -123,10 +147,10 @@ export default function CreateTemplateModal({
                   key={step._id}
                   className="group p-4 bg-black/40 border border-white/5 rounded-xl flex items-center justify-between hover:border-amber-500/30 transition-all"
                 >
-                  <div className="flex items-center gap-3">
-                    <Video size={16} className="text-[#8A94A6]" />
-                    <div>
-                      <p className="text-sm font-bold text-white uppercase tracking-wider">
+                  <div className="flex items-center gap-3 truncate pr-4">
+                    <Video size={16} className="text-[#8A94A6] shrink-0" />
+                    <div className="truncate">
+                      <p className="text-sm font-bold text-white uppercase tracking-wider truncate">
                         {step.title}
                       </p>
                       <p className="text-[9px] text-amber-500 uppercase tracking-widest">
@@ -134,7 +158,7 @@ export default function CreateTemplateModal({
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 shrink-0">
                     <button
                       onClick={() => setEditingStep(step)}
                       className="h-8 w-8 rounded-full bg-white/5 flex items-center justify-center text-white/50 hover:bg-amber-500 hover:text-black transition-all"
@@ -155,7 +179,7 @@ export default function CreateTemplateModal({
           </div>
 
           {/* RIGHT: Template Canvas */}
-          <div className="p-6 overflow-y-auto flex flex-col">
+          <div className="p-6 overflow-y-auto flex flex-col custom-scrollbar">
             <div className="space-y-4 mb-8 shrink-0">
               <input
                 type="text"
@@ -185,13 +209,13 @@ export default function CreateTemplateModal({
                   </p>
                 </div>
               ) : (
-                selectedSteps.map((step, idx) => (
+                selectedSteps.map((item, idx) => (
                   <div
-                    key={`${step._id}-${idx}`}
-                    className="p-3 bg-[#121821] border border-amber-500/20 rounded-xl flex items-center justify-between shadow-lg animate-in fade-in slide-in-from-right-4"
+                    key={`${item.step._id}-${idx}`}
+                    className="p-3 bg-[#121821] border border-amber-500/20 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between shadow-lg gap-4"
                   >
-                    <div className="flex items-center gap-4">
-                      <div className="flex flex-col gap-1 text-white/20">
+                    <div className="flex items-center gap-4 flex-1">
+                      <div className="flex flex-col gap-1 text-white/20 shrink-0">
                         <button
                           onClick={() => moveStep(idx, "up")}
                           className="hover:text-amber-500 active:scale-95"
@@ -205,21 +229,51 @@ export default function CreateTemplateModal({
                           <GripVertical size={14} />
                         </button>
                       </div>
-                      <div className="h-8 w-8 rounded-full bg-black/50 border border-white/10 flex items-center justify-center text-[10px] font-black text-amber-500">
+                      <div className="h-8 w-8 rounded-full bg-black/50 border border-white/10 flex items-center justify-center text-[10px] font-black text-amber-500 shrink-0">
                         {idx + 1}
                       </div>
-                      <div>
-                        <p className="text-sm font-bold text-white uppercase tracking-wider">
-                          {step.title}
+                      <div className="truncate pr-2">
+                        <p className="text-sm font-bold text-white uppercase tracking-wider truncate">
+                          {item.step.title}
+                        </p>
+                        <p className="text-[9px] text-amber-500 uppercase tracking-widest">
+                          {item.step.type}
                         </p>
                       </div>
                     </div>
-                    <button
-                      onClick={() => removeStep(idx)}
-                      className="text-white/20 hover:text-red-500 transition-colors"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+
+                    {/* 🚀 NEW: Sets & Reps Inputs inline */}
+                    <div className="flex items-center gap-2 pl-12 sm:pl-0 shrink-0">
+                      <div className="flex items-center gap-2 bg-black/40 border border-white/10 rounded-lg p-1.5">
+                        <input
+                          type="text"
+                          value={item.sets}
+                          onChange={(e) =>
+                            updateConfig(idx, "sets", e.target.value)
+                          }
+                          className="w-12 bg-transparent text-white text-center text-xs font-bold outline-none placeholder:text-white/20"
+                          placeholder="Sets"
+                        />
+                        <span className="text-amber-500 text-[10px] font-black">
+                          x
+                        </span>
+                        <input
+                          type="text"
+                          value={item.reps}
+                          onChange={(e) =>
+                            updateConfig(idx, "reps", e.target.value)
+                          }
+                          className="w-12 bg-transparent text-white text-center text-xs font-bold outline-none placeholder:text-white/20"
+                          placeholder="Reps"
+                        />
+                      </div>
+                      <button
+                        onClick={() => removeStep(idx)}
+                        className="p-2 text-white/20 hover:text-red-500 bg-white/5 hover:bg-red-500/10 rounded-lg transition-colors ml-2"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </div>
                 ))
               )}
@@ -242,8 +296,6 @@ export default function CreateTemplateModal({
           onClose={() => setEditingStep(null)}
           onSuccess={() => {
             setEditingStep(null);
-            // We use a quick page reload to fetch the fresh Cloudflare URL
-            // so the coach instantly sees the new video.
             window.location.reload();
           }}
         />

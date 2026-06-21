@@ -1,15 +1,13 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response, NextFunction, RequestHandler } from "express";
 import { Step, Template, CoursePlan } from "./courseArchitect.model";
 import CourseProgress from "../course/courseProgress.model";
+import { AuthenticatedRequest } from "../../types/auth.types"; // Adjust path if needed
+import ApiError from "../../utils/apiError";
 
 // ==============================
 // CONTENT VAULT (STEPS)
 // ==============================
-export const createStep = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
+export const createStep: RequestHandler = async (req, res, next) => {
   try {
     const step = await Step.create(req.body);
     res.status(201).json({ success: true, data: step });
@@ -18,24 +16,17 @@ export const createStep = async (
   }
 };
 
-export const getSteps = async (
-  _req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
+export const getSteps: RequestHandler = async (_req, res, next) => {
   try {
-    const steps = await Step.find().sort({ createdAt: -1 });
+    // 🚀 PERFORMANCE FIX: Added .lean() to save memory on heavy array reads
+    const steps = await Step.find().sort({ createdAt: -1 }).lean();
     res.status(200).json({ success: true, data: steps });
   } catch (error) {
     next(error);
   }
 };
 
-export const updateStep = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
+export const updateStep: RequestHandler = async (req, res, next) => {
   try {
     const step = await Step.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
@@ -49,11 +40,7 @@ export const updateStep = async (
 // ==============================
 // PROTOCOL BUILDER (TEMPLATES)
 // ==============================
-export const createTemplate = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
+export const createTemplate: RequestHandler = async (req, res, next) => {
   try {
     const template = await Template.create(req.body);
     res.status(201).json({ success: true, data: template });
@@ -62,15 +49,13 @@ export const createTemplate = async (
   }
 };
 
-export const getTemplates = async (
-  _req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
+export const getTemplates: RequestHandler = async (_req, res, next) => {
   try {
+    // 🚀 PERFORMANCE FIX: Added .lean()
     const templates = await Template.find()
-      .populate("steps")
-      .sort({ createdAt: -1 });
+      .populate("steps.step")
+      .sort({ createdAt: -1 })
+      .lean();
     res.status(200).json({ success: true, data: templates });
   } catch (error) {
     next(error);
@@ -80,17 +65,13 @@ export const getTemplates = async (
 // ==============================
 // COURSE ARCHITECT (PLANS)
 // ==============================
-export const saveCoursePlan = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
+export const saveCoursePlan: RequestHandler = async (req, res, next) => {
   try {
     const { courseId, days } = req.body;
     const plan = await CoursePlan.findOneAndUpdate(
       { courseId },
       { courseId, days },
-      { new: true, upsert: true }, // Creates it if it doesn't exist, updates if it does
+      { new: true, upsert: true },
     );
     res.status(200).json({ success: true, data: plan });
   } catch (error) {
@@ -98,18 +79,15 @@ export const saveCoursePlan = async (
   }
 };
 
-export const getCoursePlan = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
+export const getCoursePlan: RequestHandler = async (req, res, next) => {
   try {
-    const plan = await CoursePlan.findOne({
-      courseId: req.params.courseId,
-    }).populate({
-      path: "days.templateId",
-      populate: { path: "steps" }, // 🚀 THE FIX: This fetches the actual step details!
-    });
+    // 🚀 PERFORMANCE FIX: Deep population requires .lean() to prevent RAM spikes
+    const plan = await CoursePlan.findOne({ courseId: req.params.courseId })
+      .populate({
+        path: "days.templateId",
+        populate: { path: "steps.step" },
+      })
+      .lean();
 
     res.status(200).json({ success: true, data: plan || null });
   } catch (error) {
@@ -121,43 +99,51 @@ export const getCoursePlan = async (
 // USER PROGRESS TRACKING
 // ==============================
 
-export const getCourseProgress = async (
-  req: any,
+export const getCourseProgress: RequestHandler = async (
+  req: Request,
   res: Response,
   next: NextFunction,
 ) => {
   try {
+    const authReq = req as AuthenticatedRequest;
     const progress = await CourseProgress.findOne({
-      user: req.user.id, // 🚀 Changed from userId to user
-      course: req.params.courseId, // 🚀 Changed from courseId to course
-    });
+      user: authReq.user.id,
+      course: req.params.courseId,
+    }).lean(); // 🚀 PERFORMANCE FIX
     res.status(200).json({ success: true, data: progress });
   } catch (error) {
     next(error);
   }
 };
 
-export const updateCourseProgress = async (
-  req: any,
+export const updateCourseProgress: RequestHandler = async (
+  req: Request,
   res: Response,
   next: NextFunction,
 ) => {
   try {
+    const authReq = req as AuthenticatedRequest;
     const { courseId, stepId, dayNumber, isDayComplete } = req.body;
-    const userId = req.user.id;
+    const userId = authReq.user.id;
 
-    // Find or create a progress document for this user & course
-    let progress = await CourseProgress.findOne({
-      user: userId,
-      course: courseId,
-    });
+    // 🚀 ARCHITECTURE FIX: Race-Condition proof upsert query
+    // If multiple requests hit simultaneously, Mongo guarantees exactly ONE document is created.
+    let progress = await CourseProgress.findOneAndUpdate(
+      { user: userId, course: courseId },
+      {
+        $setOnInsert: {
+          completedSteps: [],
+          completedDays: [],
+          lastWatchedSeconds: 0,
+          progressPercentage: 0,
+          isCompleted: false,
+        },
+      },
+      { new: true, upsert: true },
+    );
+
     if (!progress) {
-      progress = await CourseProgress.create({
-        user: userId,
-        course: courseId,
-        completedSteps: [],
-        completedDays: [],
-      });
+      throw new ApiError(500, "Failed to initialize athlete progress ledger.");
     }
 
     // Toggle individual steps

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import api from "../../services/api";
 import { toast } from "react-hot-toast";
 import {
@@ -9,8 +9,12 @@ import {
   ShieldCheck,
   Target,
   User,
+  MessageSquare, // 🚀 Added missing icon
 } from "lucide-react";
-import dayjs from "dayjs"; // Assuming you use dayjs, or just use native Date
+import dayjs from "dayjs";
+
+// 🚀 Import the newly upgraded Modal
+import LeaveReview from "./LeaveReview"; // Adjust path if LeaveReview is in a different folder
 
 /* ==========================================================================
    Types
@@ -37,10 +41,12 @@ export default function AthleteFeedback() {
   const [feedbacks, setFeedbacks] = useState<FeedbackRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // 🚀 NEW: Review Modal State
+  const [showReviewModal, setShowReviewModal] = useState(false);
+
   useEffect(() => {
     const fetchLedger = async () => {
       try {
-        // 🚀 This endpoint should return ONLY the current athlete's filtered feedback
         const res = await api.get<{ success: boolean; data: FeedbackRecord[] }>(
           "/athlete/feedback",
         );
@@ -56,7 +62,6 @@ export default function AthleteFeedback() {
     fetchLedger();
   }, []);
 
-  // Utility to style the intensity badge
   const getIntensityConfig = (intensity: string) => {
     switch (intensity) {
       case "HIGH":
@@ -97,11 +102,10 @@ export default function AthleteFeedback() {
 
   return (
     <div className="relative min-h-full pb-20">
-      {/* 🔦 Ambient Radial Lighting Spotlight */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(245,158,11,0.05),transparent_60%)] pointer-events-none" />
 
       <div className="relative z-10 max-w-5xl mx-auto space-y-10 animate-in fade-in duration-700">
-        {/* 🏆 Header Section */}
+        {/* Header Section */}
         <div className="relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between bg-[#0F1724]/60 backdrop-blur-md border border-white/[0.05] p-10 rounded-[16px] shadow-[0_10px_30px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.04)]">
           <div className="absolute inset-0 bg-gradient-to-r from-black/40 to-transparent pointer-events-none" />
           <div className="relative z-10">
@@ -112,13 +116,25 @@ export default function AthleteFeedback() {
               Secure Tactical Feedback & Deployment Intelligence
             </p>
           </div>
+
+          {/* 🚀 NEW: The trigger button for the Public Review */}
+          <div className="relative z-10 mt-6 md:mt-0">
+            <button
+              onClick={() => setShowReviewModal(true)}
+              className="flex items-center justify-center gap-2 px-6 py-4 bg-amber-500/10 border border-amber-500/30 text-amber-500 rounded-xl hover:bg-amber-500 hover:text-black transition-all shadow-[0_0_15px_rgba(245,158,11,0.2)] hover:shadow-[0_0_25px_rgba(245,158,11,0.5)] text-[10px] font-black uppercase tracking-widest active:scale-95"
+            >
+              <MessageSquare size={16} />
+              Submit Public Review
+            </button>
+          </div>
+
           <ShieldCheck
-            className="text-white/[0.03] absolute right-10 top-1/2 -translate-y-1/2"
-            size={100}
+            className="text-white/[0.02] absolute right-10 top-1/2 -translate-y-1/2 pointer-events-none"
+            size={120}
           />
         </div>
 
-        {/* 📂 Empty State */}
+        {/* Empty State */}
         {feedbacks.length === 0 && (
           <div className="flex flex-col items-center justify-center py-32 bg-[#0F1724]/40 border border-white/[0.05] rounded-[24px] backdrop-blur-sm shadow-inner">
             <Activity size={48} className="text-white/10 mb-6" />
@@ -131,7 +147,7 @@ export default function AthleteFeedback() {
           </div>
         )}
 
-        {/* 📜 Feedback Timeline / Grid */}
+        {/* Feedback Timeline */}
         <div className="space-y-6">
           {feedbacks.map((item, idx) => {
             const intensityStyle = getIntensityConfig(item.intensity);
@@ -144,13 +160,11 @@ export default function AthleteFeedback() {
                 transition={{ delay: idx * 0.1, ease: "easeOut" }}
                 className="group relative bg-[#0F1724]/80 backdrop-blur-md border border-white/[0.05] rounded-[24px] p-8 overflow-hidden shadow-[0_15px_35px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.04)] hover:border-amber-500/20 transition-all duration-500"
               >
-                {/* Accent Highlight */}
                 <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-amber-500/50 to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
 
                 <div className="flex flex-col lg:flex-row gap-8 relative z-10">
-                  {/* Left Column: Meta & Global Summary */}
+                  {/* Left Column */}
                   <div className="lg:w-1/3 space-y-6 border-b lg:border-b-0 lg:border-r border-white/[0.05] pb-6 lg:pb-0 lg:pr-8">
-                    {/* Date & Intensity */}
                     <div className="flex flex-wrap items-center gap-3">
                       <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-[#8A94A6] bg-black/40 px-3 py-1.5 rounded-full border border-white/[0.05]">
                         <Calendar size={12} className="text-amber-500" />
@@ -165,7 +179,6 @@ export default function AthleteFeedback() {
                       </div>
                     </div>
 
-                    {/* Coach Info */}
                     <div className="flex items-center gap-3">
                       {item.coach?.profileImage ? (
                         <img
@@ -188,7 +201,6 @@ export default function AthleteFeedback() {
                       </div>
                     </div>
 
-                    {/* Global Summary */}
                     <div className="space-y-2 pt-2">
                       <h4 className="text-[9px] font-black uppercase tracking-[0.3em] text-[#8A94A6] flex items-center gap-2">
                         <Activity size={10} className="text-white/20" /> Mission
@@ -200,7 +212,7 @@ export default function AthleteFeedback() {
                     </div>
                   </div>
 
-                  {/* Right Column: Personal Tactical Feedback */}
+                  {/* Right Column */}
                   <div className="lg:w-2/3 flex flex-col justify-center">
                     <div className="flex items-center gap-3 mb-4">
                       <div className="h-10 w-10 bg-amber-500/10 rounded-[12px] flex items-center justify-center text-amber-500 border border-amber-500/20 shadow-inner">
@@ -212,11 +224,9 @@ export default function AthleteFeedback() {
                     </div>
 
                     <div className="bg-black/40 border border-white/[0.03] rounded-[16px] p-6 shadow-inner relative">
-                      {/* Decorative quote marks */}
                       <div className="absolute top-4 right-4 text-6xl text-white/[0.02] font-serif leading-none rotate-180 pointer-events-none">
                         "
                       </div>
-
                       <p className="text-sm text-[#E5E7EB] leading-loose font-medium relative z-10 italic">
                         {item.personalFeedback ||
                           "No specific technical feedback recorded for this cycle."}
@@ -229,6 +239,13 @@ export default function AthleteFeedback() {
           })}
         </div>
       </div>
+
+      {/* 🚀 THE REVIEW MODAL CONTROLLER */}
+      <AnimatePresence>
+        {showReviewModal && (
+          <LeaveReview onClose={() => setShowReviewModal(false)} />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

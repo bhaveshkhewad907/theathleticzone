@@ -1,4 +1,4 @@
-import Course from "../course/course.model";
+import mongoose from "mongoose";
 import ApiError from "../../utils/apiError";
 
 interface PhysicalData {
@@ -31,19 +31,16 @@ export const runRecommendationEngine = async (
   let beginnerPoints = 0;
   let intermediatePoints = 0;
 
-  // Beginner Checks
   if (trainingAgeYears < 2) beginnerPoints++;
   if (relativeSquat < 1.5) beginnerPoints++;
   if (sprint30mSeconds > 4.6) beginnerPoints++;
   if (broadJumpMeters < 2.0) beginnerPoints++;
 
-  // Intermediate Checks
   if (trainingAgeYears >= 2) intermediatePoints++;
   if (relativeSquat >= 1.5) intermediatePoints++;
   if (broadJumpMeters > 2.1) intermediatePoints++;
   if (sprint30mSeconds <= 4.5) intermediatePoints++;
 
-  // The Verdict
   let assignedLevel = "Beginner";
   if (intermediatePoints >= 3) {
     assignedLevel = "Intermediate";
@@ -55,51 +52,42 @@ export const runRecommendationEngine = async (
   // 2. DETERMINE SPECIFIC DEFICIT
   // ==========================================
   let identifiedDeficit = "";
-
-  // The logic runs in a specific order. Mobility overrides everything else.
   const hasMobilityDeficit = kneeToWallCm < 8 || deepSquatHold === "Poor";
 
   if (assignedLevel === "Beginner") {
-    if (hasMobilityDeficit) {
-      identifiedDeficit = "Mobility";
-    } else if (relativeSquat < 1.4) {
-      identifiedDeficit = "Strength";
-    } else if (relativeSquat >= 1.4 && broadJumpMeters < 2.0) {
+    if (hasMobilityDeficit) identifiedDeficit = "Mobility";
+    else if (relativeSquat < 1.4) identifiedDeficit = "Strength";
+    else if (relativeSquat >= 1.4 && broadJumpMeters < 2.0)
       identifiedDeficit = "Power";
-    } else {
-      // Squat is good, Broad Jump is good, Mobility is good -> Technique issue
-      identifiedDeficit = "Technique";
-    }
+    else identifiedDeficit = "Technique";
   }
 
   if (assignedLevel === "Intermediate") {
-    if (hasMobilityDeficit) {
-      identifiedDeficit = "Mobility";
-    } else if (relativeSquat < 1.8) {
-      identifiedDeficit = "Strength";
-    } else if (relativeSquat >= 1.8 && broadJumpMeters < 2.3) {
+    if (hasMobilityDeficit) identifiedDeficit = "Mobility";
+    else if (relativeSquat < 1.8) identifiedDeficit = "Strength";
+    else if (relativeSquat >= 1.8 && broadJumpMeters < 2.3)
       identifiedDeficit = "Power";
-    } else {
-      // Squat is elite, Broad Jump is elite, Mobility is good -> Technique issue
-      identifiedDeficit = "Technique";
-    }
+    else identifiedDeficit = "Technique";
   }
 
   // ==========================================
   // 3. AUTOMATIC COURSE ASSIGNMENT
   // ==========================================
-  // We search the database for a Course whose title contains BOTH the Level and the Deficit
-  // (e.g., looking for a course named "Beginner Power Cycle" or "Intermediate Strength Block")
+  // 🚀 ARCHITECTURE FIX: Query explicitly against the structured metadata fields
+  const Course = mongoose.model("Course");
   const assignedCourse = await Course.findOne({
-    "meta.title": { $regex: new RegExp(assignedLevel, "i") },
-    $and: [{ "meta.title": { $regex: new RegExp(identifiedDeficit, "i") } }],
+    "meta.tier": assignedLevel,
+    "meta.targetDeficit": identifiedDeficit,
+    isDeleted: { $ne: true },
   });
 
   if (!assignedCourse) {
-    throw new ApiError(
-      404,
-      `Engine evaluated athlete as [${assignedLevel} - ${identifiedDeficit}], but no matching course was found in the database. Please create a course with these keywords in the title.`,
-    );
+    // Return null so the controller can safely assign the fallback course
+    return {
+      assignedLevel,
+      identifiedDeficit,
+      assignedCourseId: null,
+    };
   }
 
   return {

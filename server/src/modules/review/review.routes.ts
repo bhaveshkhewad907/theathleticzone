@@ -8,6 +8,6 @@ const router = Router();
 router.get("/public", getPublicReviews);
 
 // Protected route for Athletes only
-router.post("/", requireAuth, createReview);
+router.post("/", requireAuth, requireRole("ATHLETE"), createReview); // 🚀 SECURITY FIX: RBAC Enforced
 
 export default router;

@@ -2,16 +2,15 @@ import { Router } from "express";
 import {
   create,
   update,
-  deactivate,
   getAdmin,
   getPublic,
-  reactivate,
   softDelete,
   getSecureCourseAccess,
   saveCourseProgress,
 } from "./course.controller";
 import { requireAuth, requireRole } from "../../middlewares/auth.middleware";
-import { generatePresignedUrl } from "./course.upload.service";
+// 🚀 FIX: Import from the unified R2 service
+import { generatePresignedUrl } from "../../services/r2.service";
 import ApiError from "../../utils/apiError";
 
 const router = Router();
@@ -30,6 +29,7 @@ router.post(
           "fileName, contentType, and folder are required",
         );
       }
+      // This now perfectly hits the R2 service!
       const data = await generatePresignedUrl(fileName, contentType, folder);
       res.status(200).json({ success: true, data: data });
     } catch (error) {
@@ -45,10 +45,8 @@ router.post("/:id/progress", requireAuth, saveCourseProgress);
 // --- ADMIN ROUTES ---
 router.post("/", requireAuth, requireRole("ADMIN"), create);
 router.put("/:id", requireAuth, requireRole("ADMIN"), update);
-router.patch("/:id/deactivate", requireAuth, requireRole("ADMIN"), deactivate);
 router.get("/admin", requireAuth, requireRole("ADMIN"), getAdmin);
 router.delete("/:id", requireAuth, requireRole("ADMIN"), softDelete);
-router.patch("/:id/reactivate", requireAuth, requireRole("ADMIN"), reactivate);
 
 // --- PUBLIC ROUTE ---
 router.get("/public", getPublic);
