@@ -4,7 +4,6 @@ import { Tag } from "lucide-react";
 
 interface AdminDashboardData {
   totalAthletes: number;
-  totalAdmins: number;
   athletesInTraining: number;
   athletesNeedingAssessment: number;
   totalAssessments: number;
@@ -137,7 +136,7 @@ export default function AdminDashboard() {
             value={`₹${data.totalRevenue.toLocaleString()}`}
             colorClass="text-green-500"
           />
-          <StatCard label="Total Admins" value={data.totalAdmins} />
+
           <StatCard
             label="Completed Assessments"
             value={data.totalAssessments}
