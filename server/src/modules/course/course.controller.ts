@@ -12,7 +12,10 @@ import CourseProgress from "./courseProgress.model";
 import Course from "./course.model";
 import User from "../user/user.model";
 import { AuthenticatedRequest } from "../../types/auth.types";
-import { getPresignedUrl } from "../../services/r2.service";
+import {
+  generatePresignedUrl,
+  getPresignedUrl,
+} from "../../services/r2.service";
 
 export const create: RequestHandler = async (req, res, next) => {
   try {
@@ -172,6 +175,23 @@ export const getAthleteCurrentCourse: RequestHandler = async (
     ).lean();
 
     res.status(200).json({ success: true, data: { activeCourse } });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getCourseUploadUrl: RequestHandler = async (req, res, next) => {
+  try {
+    const { fileName, contentType, folder } = req.body;
+
+    if (!fileName || !contentType || !folder) {
+      throw new ApiError(400, "fileName, contentType, and folder are required");
+    }
+
+    // This calls your secure Cloudflare R2 logic to authorize a direct browser upload
+    const data = await generatePresignedUrl(fileName, contentType, folder);
+
+    res.status(200).json({ success: true, data });
   } catch (error) {
     next(error);
   }

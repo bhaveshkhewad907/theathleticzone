@@ -9,6 +9,7 @@ import {
   getSecureCourseAccess,
   saveCourseProgress,
   getAthleteCurrentCourse,
+  getCourseUploadUrl,
 } from "./course.controller";
 
 const router = Router();
@@ -27,6 +28,7 @@ const adminOnly = requireRole("ADMIN");
 
 router.get("/admin", requireAuth, adminOnly, getAdmin);
 router.post("/", requireAuth, adminOnly, create);
+router.post("/get-upload-url", requireAuth, adminOnly, getCourseUploadUrl);
 
 router.put("/:id", requireAuth, adminOnly, update);
 router.delete("/:id", requireAuth, adminOnly, softDelete);
