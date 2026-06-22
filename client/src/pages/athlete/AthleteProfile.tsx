@@ -7,6 +7,7 @@ import { toast } from "react-hot-toast";
 import LeaveReview from "./LeaveReview";
 
 interface ExtendedUser {
+  _id?: string;
   name?: string;
   email?: string;
   role?: string;
@@ -24,7 +25,18 @@ export default function AthleteProfile() {
 
   // 🚀 REVIEW LOGIC STATE
   const [showReviewModal, setShowReviewModal] = useState(false);
-  const [reviewSubmitted, setReviewSubmitted] = useState(false);
+
+  const [reviewSubmitted, setReviewSubmitted] = useState(() => {
+    if (!user?._id) return false;
+    return localStorage.getItem(`has_reviewed_${user._id}`) === "true";
+  });
+
+  const handleReviewSuccess = () => {
+    setReviewSubmitted(true);
+    if (user?._id) {
+      localStorage.setItem(`has_reviewed_${user._id}`, "true");
+    }
+  };
 
   useEffect(() => {
     const bgImage = user?.profileImage || imagePreview;
@@ -168,7 +180,7 @@ export default function AthleteProfile() {
         {showReviewModal && (
           <LeaveReview
             onClose={() => setShowReviewModal(false)}
-            onSuccess={() => setReviewSubmitted(true)}
+            onSuccess={handleReviewSuccess}
           />
         )}
       </AnimatePresence>
