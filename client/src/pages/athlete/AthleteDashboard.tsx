@@ -68,23 +68,48 @@ export default function AthleteDashboard() {
 
     const fetchDashboardData = async () => {
       try {
+        // 🚀 SMART FETCH: Retrieve the course from the backend
         try {
           const courseRes = await api.get("/courses/current");
-          if (courseRes.data?.data?.length > 0) {
-            const courseObj = courseRes.data.data[0].course;
+
+          // Debugger: You will now see the exact payload in your F12 Console!
+          console.log("Backend Course Payload:", courseRes.data);
+
+          // 🛡️ ARCHITECTURE FIX: Dynamically hunt for the course object regardless of backend wrapping
+          const courseObj =
+            courseRes.data?.data?.activeCourse ||
+            courseRes.data?.data ||
+            courseRes.data?.activeCourse;
+
+          // If we found a valid database ID, mount the course to the Dashboard!
+          if (courseObj && (courseObj._id || courseObj.id)) {
             setActiveCourse({
-              _id: courseObj._id,
-              title: courseObj.meta?.title || courseObj.title,
-              description: courseObj.meta?.description || courseObj.description,
+              _id: courseObj._id || courseObj.id,
+              // Safety fallbacks applied in case MongoDB fields are temporarily empty
+              title:
+                courseObj.meta?.title ||
+                courseObj.title ||
+                "Elite Training Protocol",
+              description:
+                courseObj.meta?.description ||
+                courseObj.description ||
+                "Your active training sector.",
               thumbnailUrl:
-                courseObj.meta?.coverImageUrl || courseObj.thumbnailUrl,
-              videoUrl: courseObj.meta?.videoUrl || courseObj.videoUrl, // 🚀 Captures the video
+                courseObj.meta?.coverImageUrl ||
+                courseObj.thumbnailUrl ||
+                "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=2070&auto=format&fit=crop",
+              videoUrl: courseObj.meta?.videoUrl || courseObj.videoUrl,
             });
+          } else {
+            console.warn(
+              "Backend responded 200 OK, but no valid Course ID was found in the payload.",
+            );
           }
         } catch (courseErr) {
-          console.error(courseErr);
+          console.error("Failed to fetch current course:", courseErr);
         }
 
+        // Fetch User Physical Assessment Data
         try {
           const assessmentRes = await api.get("/assessments/me");
           if (assessmentRes.data?.data?.length > 0) {
@@ -96,7 +121,7 @@ export default function AthleteDashboard() {
             });
           }
         } catch (assessmentErr) {
-          console.error(assessmentErr);
+          console.error("Failed to fetch physical stats:", assessmentErr);
         }
       } finally {
         setLoading(false);
