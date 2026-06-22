@@ -181,7 +181,7 @@ export default function AthleteProfile() {
 
           {user?.platformState?.status === "ACTIVE_TRAINING" && (
             <a
-              href="https://chat.whatsapp.com/YOUR_GROUP_INVITE_LINK_HERE"
+              href="https://chat.whatsapp.com/HYRfYE0Xe7bC5u2jcjv4qQ"
               target="_blank"
               rel="noopener noreferrer"
               className="w-full mt-6 py-4 bg-[#25D366]/10 border border-[#25D366]/30 text-[#25D366] rounded-[16px] hover:bg-[#25D366] hover:text-black transition-all shadow-[0_0_15px_rgba(37,211,102,0.1)] font-black uppercase tracking-widest text-[10px] md:text-xs flex items-center justify-center gap-2 active:scale-95"
