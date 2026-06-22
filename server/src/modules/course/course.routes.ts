@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { requireAuth, requireRole } from "../../middlewares/auth.middleware";
 import {
   create,
   update,
@@ -9,53 +10,29 @@ import {
   saveCourseProgress,
   getAthleteCurrentCourse,
 } from "./course.controller";
-import { requireAuth, requireRole } from "../../middlewares/auth.middleware";
-// 🚀 FIX: Import from the unified R2 service
-import { generatePresignedUrl } from "../../services/r2.service";
-import ApiError from "../../utils/apiError";
 
 const router = Router();
 
-// --- UPLOAD ROUTE ---
-router.post(
-  "/get-upload-url",
-  requireAuth,
-  requireRole("ADMIN", "ATHLETE"),
-  async (req, res, next) => {
-    try {
-      const { fileName, contentType, folder } = req.body;
-      if (!fileName || !contentType || !folder) {
-        throw new ApiError(
-          400,
-          "fileName, contentType, and folder are required",
-        );
-      }
-      // This now perfectly hits the R2 service!
-      const data = await generatePresignedUrl(fileName, contentType, folder);
-      res.status(200).json({ success: true, data: data });
-    } catch (error) {
-      next(error);
-    }
-  },
-);
-
-// 🚀 SECURE ATHLETE ACCESS & TELEMETRY ROUTES
 router.get(
   "/current",
   requireAuth,
   requireRole("ATHLETE"),
   getAthleteCurrentCourse,
-); // 👈 ADD THIS LINE
+);
+
+// Landing page fetches active courses
+router.get("/public", getPublic);
+
+const adminOnly = requireRole("ADMIN");
+
+router.get("/admin", requireAuth, adminOnly, getAdmin);
+router.post("/", requireAuth, adminOnly, create);
+
+router.put("/:id", requireAuth, adminOnly, update);
+router.delete("/:id", requireAuth, adminOnly, softDelete);
+
+// Secure Video Streaming & Telemetry
 router.get("/:id/secure-access", requireAuth, getSecureCourseAccess);
 router.post("/:id/progress", requireAuth, saveCourseProgress);
-
-// --- ADMIN ROUTES ---
-router.post("/", requireAuth, requireRole("ADMIN"), create);
-router.put("/:id", requireAuth, requireRole("ADMIN"), update);
-router.get("/admin", requireAuth, requireRole("ADMIN"), getAdmin);
-router.delete("/:id", requireAuth, requireRole("ADMIN"), softDelete);
-
-// --- PUBLIC ROUTE ---
-router.get("/public", getPublic);
 
 export default router;
