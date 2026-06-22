@@ -27,7 +27,6 @@ interface ReviewData {
   _id: string;
   content: string;
   rating: number;
-  sport: string;
   user?: {
     name: string;
     profileImage?: string;
@@ -912,9 +911,6 @@ export default function LandingPage() {
                       <div>
                         <p className="text-[11px] font-black text-white uppercase tracking-widest drop-shadow-md">
                           {review.user?.name || "Anonymous Athlete"}
-                        </p>
-                        <p className="text-[9px] font-black text-amber-500 uppercase tracking-[0.2em] mt-1 drop-shadow-md">
-                          {review.sport}
                         </p>
                       </div>
 

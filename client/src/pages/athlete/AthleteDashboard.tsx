@@ -69,7 +69,7 @@ export default function AthleteDashboard() {
     const fetchDashboardData = async () => {
       try {
         try {
-          const courseRes = await api.get("/course-purchase/my");
+          const courseRes = await api.get("/courses/current");
           if (courseRes.data?.data?.length > 0) {
             const courseObj = courseRes.data.data[0].course;
             setActiveCourse({

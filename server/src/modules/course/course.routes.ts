@@ -7,6 +7,7 @@ import {
   softDelete,
   getSecureCourseAccess,
   saveCourseProgress,
+  getAthleteCurrentCourse,
 } from "./course.controller";
 import { requireAuth, requireRole } from "../../middlewares/auth.middleware";
 // 🚀 FIX: Import from the unified R2 service
@@ -39,6 +40,12 @@ router.post(
 );
 
 // 🚀 SECURE ATHLETE ACCESS & TELEMETRY ROUTES
+router.get(
+  "/current",
+  requireAuth,
+  requireRole("ATHLETE"),
+  getAthleteCurrentCourse,
+); // 👈 ADD THIS LINE
 router.get("/:id/secure-access", requireAuth, getSecureCourseAccess);
 router.post("/:id/progress", requireAuth, saveCourseProgress);
 

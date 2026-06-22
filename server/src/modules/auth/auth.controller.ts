@@ -191,36 +191,44 @@ export const refresh = async (
   }
 };
 
-export const logout = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  const isProduction = process.env.NODE_ENV === "production";
-  const clearCookieOptions = {
-    httpOnly: true,
-    secure: isProduction,
-    sameSite: "lax" as const,
-    domain: isProduction ? ".theathleticzone.in" : undefined,
-    path: "/",
-  };
-
+export const logout: RequestHandler = async (req, res, next) => {
   try {
     const refreshToken = req.cookies.refreshToken;
-    if (refreshToken) {
-      await logoutSession(refreshToken);
-    }
+    if (refreshToken) await logoutSession(refreshToken);
   } catch (error) {
-    console.warn(
-      "Failed to delete session in DB, but proceeding to clear cookies:",
-      error,
-    );
+    console.warn("Failed to delete session in DB, clearing cookies anyway.");
+  } finally {
+    const isProduction = process.env.NODE_ENV === "production";
+
+    // 🎯 1. Target the NEW Cookies (Strict domain matching your login logic)
+    const currentOptions = {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: "lax" as const,
+      domain: isProduction ? ".theathleticzone.in" : undefined,
+      path: "/",
+    };
+    res.clearCookie("refreshToken", currentOptions);
+    res.clearCookie("accessToken", currentOptions);
+
+    // 🎯 2. Target the GHOST Cookies (Legacy format without explicit domain)
+    const legacyOptions = {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: (isProduction ? "none" : "lax") as "none" | "lax", // 🚀 FIX: TypeScript strict typing satisfied
+      path: "/",
+    };
+    res.clearCookie("refreshToken", legacyOptions);
+    res.clearCookie("accessToken", legacyOptions);
+
+    // 🎯 3. Target the OLDEST Fallback Cookies (Development artifacts)
+    res.clearCookie("refreshToken", { path: "/" });
+    res.clearCookie("accessToken", { path: "/" });
+
+    res
+      .status(200)
+      .json({ success: true, message: "Logged out successfully." });
   }
-
-  res.clearCookie("refreshToken", clearCookieOptions);
-  res.clearCookie("accessToken", clearCookieOptions);
-
-  res.status(200).json({ success: true, message: "Logged out successfully" });
 };
 
 export const forgotPassword: RequestHandler = async (req, res, next) => {

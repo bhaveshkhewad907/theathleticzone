@@ -1,8 +1,12 @@
 import { useContext, useState, useEffect } from "react";
 import AuthContext from "../../context/AuthContext";
-import { Mail, Shield, Camera } from "lucide-react";
+import { Mail, Shield, Camera, MessageSquare } from "lucide-react";
+import { AnimatePresence } from "framer-motion";
 import api from "../../services/api";
 import { toast } from "react-hot-toast";
+
+// 🚀 IMPORT THE MODAL
+import LeaveReview from "./LeaveReview";
 
 interface ExtendedUser {
   name?: string;
@@ -20,24 +24,20 @@ export default function AthleteProfile() {
   );
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  // =========================================================
-  // 🚀 RESTORES THE GLOBAL APP BACKGROUND FEATURE
-  // =========================================================
+  // 🚀 REVIEW LOGIC STATE
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewSubmitted, setReviewSubmitted] = useState(false);
+
   useEffect(() => {
     const bgImage = user?.profileImage || imagePreview;
     if (bgImage) {
-      // Applies the image to the root HTML body so it persists EVERYWHERE in the application!
-      // Includes a deep cinematic gradient so text stays readable on all pages.
       document.body.style.backgroundImage = `linear-gradient(to bottom, rgba(11, 15, 20, 0.85), rgba(11, 15, 20, 0.98)), url('${bgImage}')`;
       document.body.style.backgroundSize = "cover";
       document.body.style.backgroundPosition = "center top";
       document.body.style.backgroundAttachment = "fixed";
     }
-
-    // Notice: We purposefully do NOT clean this up on unmount because we want the background to stay when they navigate away!
   }, [user?.profileImage, imagePreview]);
 
-  // Sync preview if user state updates remotely
   useEffect(() => {
     if (user?.profileImage) setImagePreview(user.profileImage);
   }, [user?.profileImage]);
@@ -46,7 +46,6 @@ export default function AthleteProfile() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // 🚀 FIX 1: Matched the Backend 2MB limit!
     if (file.size > 2 * 1024 * 1024) {
       return toast.error("Image exceeds 2MB limit.");
     }
@@ -55,9 +54,8 @@ export default function AthleteProfile() {
       setImagePreview(URL.createObjectURL(file));
 
       const uploadData = new FormData();
-      uploadData.append("avatar", file); // The keyword "avatar" matches perfectly!
+      uploadData.append("avatar", file);
 
-      // 🚀 FIX 2: Pointed to the exact backend route: /users/upload-avatar
       await api.post("/users/upload-avatar", uploadData, {
         onUploadProgress: (progressEvent) => {
           setUploadProgress(
@@ -73,8 +71,7 @@ export default function AthleteProfile() {
         auth.setAuth(meRes.data.data);
       }
       toast.success("Profile picture updated & applied globally.");
-    } catch (error) {
-      console.error("Upload error:", error);
+    } catch {
       toast.error("Upload failed. Please try a different image.");
       setImagePreview(user?.profileImage || null);
     } finally {
@@ -84,23 +81,18 @@ export default function AthleteProfile() {
 
   return (
     <div className="relative min-h-full">
-      {/* Dynamic ambient lighting for the profile page specifically */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(245,158,11,0.05),transparent_60%)] pointer-events-none" />
 
       <div className="relative z-10 space-y-8 animate-in fade-in duration-700 max-w-3xl mx-auto p-4 md:p-8">
-        {/* Header */}
         <div className="relative overflow-hidden bg-[#0F1724]/60 backdrop-blur-xl border border-white/10 p-8 rounded-[24px] shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
           <h1 className="text-3xl font-black tracking-tighter uppercase italic text-white leading-none">
             My <span className="text-amber-500">Profile</span>
           </h1>
         </div>
 
-        {/* Main Card */}
         <div className="relative bg-[#0F1724]/60 backdrop-blur-xl border border-white/10 rounded-[24px] p-10 text-center shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden">
-          {/* Glowing Aura Behind Avatar */}
           <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[150px] h-[150px] bg-amber-500/20 blur-[60px] pointer-events-none rounded-full" />
 
-          {/* Avatar Upload Area */}
           <div className="relative w-36 h-36 mx-auto mb-10 group cursor-pointer z-10">
             <div className="w-full h-full bg-black/40 border-2 border-amber-500/30 rounded-[2rem] flex items-center justify-center text-5xl font-black text-amber-500 overflow-hidden relative transition-all duration-300 group-hover:border-amber-500 group-hover:shadow-[0_0_30px_rgba(245,158,11,0.3)]">
               {imagePreview ? (
@@ -128,7 +120,6 @@ export default function AthleteProfile() {
               </label>
             </div>
 
-            {/* Smooth Progress Bar */}
             {uploadProgress > 0 && uploadProgress < 100 && (
               <div className="absolute -bottom-6 left-0 w-full bg-white/10 h-1.5 rounded-full overflow-hidden shadow-inner">
                 <div
@@ -143,7 +134,6 @@ export default function AthleteProfile() {
             {user?.name || "Athlete"}
           </h2>
 
-          {/* User Details */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
             <div className="bg-black/40 border border-white/5 rounded-2xl p-5 flex items-center gap-4 shadow-inner hover:border-amber-500/20 transition-colors">
               <div className="p-3 bg-amber-500/10 rounded-xl text-amber-500 shadow-inner">
@@ -162,8 +152,28 @@ export default function AthleteProfile() {
               </div>
             </div>
           </div>
+
+          {/* 🚀 THE VANISHING REVIEW BUTTON */}
+          {!reviewSubmitted && (
+            <button
+              onClick={() => setShowReviewModal(true)}
+              className="w-full mt-6 py-4 bg-amber-500/10 border border-amber-500/30 text-amber-500 rounded-[16px] hover:bg-amber-500 hover:text-black transition-all shadow-inner font-black uppercase tracking-widest text-[10px] md:text-xs flex items-center justify-center gap-2 active:scale-95"
+            >
+              <MessageSquare size={16} /> Share Your Feedback
+            </button>
+          )}
         </div>
       </div>
+
+      {/* 🚀 THE MODAL COMPONENT */}
+      <AnimatePresence>
+        {showReviewModal && (
+          <LeaveReview
+            onClose={() => setShowReviewModal(false)}
+            onSuccess={() => setReviewSubmitted(true)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
