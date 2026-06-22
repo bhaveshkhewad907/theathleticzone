@@ -164,7 +164,23 @@ export default function CourseArchitectModal({
 
     setLoading(true);
     try {
-      await api.post("/chapters/plan", { courseId, days });
+      // 🚀 THE FIX: Mongoose cannot cast an empty string ("") to an ObjectId.
+      // We must map through the days and convert any empty strings into 'null'
+      const sanitizedDays = days.map((day) => ({
+        dayNumber: day.dayNumber,
+        morning: {
+          isRest: day.morning.isRest,
+          templateId: day.morning.templateId || null, // "" becomes null
+        },
+        evening: {
+          isRest: day.evening.isRest,
+          templateId: day.evening.templateId || null, // "" becomes null
+        },
+      }));
+
+      // Send the sanitized payload to the backend
+      await api.post("/chapters/plan", { courseId, days: sanitizedDays });
+
       toast.success("Master Course Plan established!");
       onSuccess();
       onClose();
