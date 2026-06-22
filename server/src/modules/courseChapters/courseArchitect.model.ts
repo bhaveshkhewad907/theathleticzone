@@ -53,7 +53,17 @@ export const Template = mongoose.model<ITemplate>("Template", templateSchema);
 // 3. COURSE PLAN MODEL (Mapping templates to days for a specific course)
 export interface ICoursePlan extends Document {
   courseId: mongoose.Types.ObjectId;
-  days: { dayNumber: number; templateId: mongoose.Types.ObjectId }[];
+  days: {
+    dayNumber: number;
+    morning: {
+      isRest: boolean;
+      templateId?: mongoose.Types.ObjectId | null;
+    };
+    evening: {
+      isRest: boolean;
+      templateId?: mongoose.Types.ObjectId | null;
+    };
+  }[];
 }
 const coursePlanSchema = new Schema<ICoursePlan>(
   {
@@ -66,10 +76,23 @@ const coursePlanSchema = new Schema<ICoursePlan>(
     days: [
       {
         dayNumber: { type: Number, required: true },
-        templateId: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Template",
-          required: true,
+        // ☀️ MORNING BLOCK
+        morning: {
+          isRest: { type: Boolean, default: false },
+          templateId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Template",
+            default: null,
+          },
+        },
+        // 🌙 EVENING BLOCK
+        evening: {
+          isRest: { type: Boolean, default: false },
+          templateId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Template",
+            default: null,
+          },
         },
       },
     ],

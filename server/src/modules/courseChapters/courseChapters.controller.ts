@@ -81,10 +81,15 @@ export const saveCoursePlan: RequestHandler = async (req, res, next) => {
 
 export const getCoursePlan: RequestHandler = async (req, res, next) => {
   try {
-    // 🚀 PERFORMANCE FIX: Deep population requires .lean() to prevent RAM spikes
+    // 🚀 PERFORMANCE & ARCHITECTURE UPGRADE:
+    // We now populate BOTH the Morning and Evening block templates!
     const plan = await CoursePlan.findOne({ courseId: req.params.courseId })
       .populate({
-        path: "days.templateId",
+        path: "days.morning.templateId",
+        populate: { path: "steps.step" },
+      })
+      .populate({
+        path: "days.evening.templateId",
         populate: { path: "steps.step" },
       })
       .lean();
