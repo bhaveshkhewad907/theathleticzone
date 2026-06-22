@@ -26,10 +26,17 @@ export default function AthleteProfile() {
   // 🚀 REVIEW LOGIC STATE
   const [showReviewModal, setShowReviewModal] = useState(false);
 
-  const [reviewSubmitted, setReviewSubmitted] = useState(() => {
-    if (!user?._id) return false;
-    return localStorage.getItem(`has_reviewed_${user._id}`) === "true";
-  });
+  // 1. Start with a standard state
+  const [reviewSubmitted, setReviewSubmitted] = useState(false);
+
+  // 2. 🚀 ARCHITECTURE FIX: Wait for the user ID to load, THEN check storage!
+  useEffect(() => {
+    if (user?._id) {
+      const alreadyReviewed =
+        localStorage.getItem(`has_reviewed_${user._id}`) === "true";
+      setReviewSubmitted(alreadyReviewed);
+    }
+  }, [user?._id]);
 
   const handleReviewSuccess = () => {
     setReviewSubmitted(true);
