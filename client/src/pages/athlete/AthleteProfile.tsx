@@ -4,8 +4,6 @@ import { Mail, Shield, Camera, MessageSquare } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import api from "../../services/api";
 import { toast } from "react-hot-toast";
-
-// 🚀 IMPORT THE MODAL
 import LeaveReview from "./LeaveReview";
 
 interface ExtendedUser {
@@ -56,7 +54,7 @@ export default function AthleteProfile() {
       const uploadData = new FormData();
       uploadData.append("avatar", file);
 
-      await api.post("/users/upload-avatar", uploadData, {
+      const uploadRes = await api.post("/users/upload-avatar", uploadData, {
         onUploadProgress: (progressEvent) => {
           setUploadProgress(
             Math.round(
@@ -67,9 +65,9 @@ export default function AthleteProfile() {
       });
 
       if (auth?.setAuth) {
-        const meRes = await api.get("/auth/me");
-        auth.setAuth(meRes.data.data);
+        auth.setAuth(uploadRes.data.data);
       }
+
       toast.success("Profile picture updated & applied globally.");
     } catch {
       toast.error("Upload failed. Please try a different image.");
