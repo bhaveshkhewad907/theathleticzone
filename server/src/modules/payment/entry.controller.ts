@@ -3,7 +3,8 @@ import Razorpay from "razorpay";
 import crypto from "crypto";
 import User from "../user/user.model";
 import ApiError from "../../utils/apiError";
-import { AuthenticatedRequest } from "../../types/auth.types"; // Adjust path if needed
+import { AuthenticatedRequest } from "../../types/auth.types";
+import PaymentLedger from "./paymentLedger.model";
 
 // 🚀 YOUR INFLUENCER CODES (Hardcoded discounts in percentage)
 const COUPONS: Record<string, number> = {
@@ -99,7 +100,23 @@ export const verifyEntryPayment: RequestHandler = async (
       );
     }
 
-    // 🚀 PAYMENT SUCCESS: Unlock the assessment and record the influencer code!
+    // 🚀 NEW: Calculate the exact price paid for the ledger
+    let finalPrice = BASE_PRICE_INR;
+    if (appliedCoupon && COUPONS[appliedCoupon.toUpperCase()]) {
+      const discount = COUPONS[appliedCoupon.toUpperCase()];
+      finalPrice = finalPrice - (finalPrice * discount) / 100;
+    }
+
+    // 🚀 NEW: Save transaction to the permanent un-erasable ledger!
+    await PaymentLedger.create({
+      user: authReq.user.id,
+      amountPaid: finalPrice,
+      appliedCoupon: appliedCoupon ? appliedCoupon.toUpperCase() : null,
+      razorpayOrderId: razorpay_order_id,
+      razorpayPaymentId: razorpay_payment_id,
+    });
+
+    // 🚀 PAYMENT SUCCESS: Unlock the assessment and profile
     await User.findByIdAndUpdate(authReq.user.id, {
       $set: {
         "platformState.hasPaidEntryFee": true,

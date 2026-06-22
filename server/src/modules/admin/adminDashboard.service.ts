@@ -1,12 +1,8 @@
 import User from "../user/user.model";
 import Assessment from "../assessment/assessment.model";
 import CoursePurchase from "../course/coursePurchase.model";
-
-// 🚀 EXACT MATCH to your Entry Controller
-const COUPONS: Record<string, number> = {
-  JAYSON30: 30, // 30% off
-};
-const BASE_PRICE = 10; // ₹10
+// 🚀 NEW: Import the permanent financial ledger
+import PaymentLedger from "../payment/paymentLedger.model";
 
 export const getAdminDashboard = async () => {
   const totalAthletes = await User.countDocuments({ role: "ATHLETE" });
@@ -23,26 +19,12 @@ export const getAdminDashboard = async () => {
     status: "COMPLETED",
   });
 
-  // 🚀 1. EXACT REVENUE MATH (Dynamically calculates ₹10 vs ₹7 based on the coupon)
-  const entryFeeAggregation = await User.aggregate([
-    { $match: { "platformState.hasPaidEntryFee": true } },
-    {
-      $addFields: {
-        actualPaid: {
-          $switch: {
-            branches: Object.entries(COUPONS).map(([code, discount]) => ({
-              case: { $eq: ["$platformState.usedCoupon", code] },
-              then: BASE_PRICE - (BASE_PRICE * discount) / 100, // 10 - 3 = 7
-            })),
-            default: BASE_PRICE, // 10
-          },
-        },
-      },
-    },
-    { $group: { _id: null, total: { $sum: "$actualPaid" } } },
+  // 🚀 1. EXACT REVENUE MATH (Sums all transactions in the permanent Ledger)
+  const ledgerAggregation = await PaymentLedger.aggregate([
+    { $group: { _id: null, total: { $sum: "$amountPaid" } } },
   ]);
   const entryFeeRevenue =
-    entryFeeAggregation.length > 0 ? entryFeeAggregation[0].total : 0;
+    ledgerAggregation.length > 0 ? ledgerAggregation[0].total : 0;
 
   // 🚀 2. LEGACY REVENUE (Catches any old purchases from the CoursePurchase collection)
   const coursePurchaseAggregation = await CoursePurchase.aggregate([
@@ -57,12 +39,12 @@ export const getAdminDashboard = async () => {
   // 🚀 3. TOTAL PLATFORM REVENUE
   const totalRevenue = entryFeeRevenue + courseRevenue;
 
-  // 🚀 4. INFLUENCER TRACKING (Accurately counts how many unique athletes used each code)
-  const couponUsage = await User.aggregate([
-    { $match: { "platformState.usedCoupon": { $exists: true, $ne: null } } },
+  // 🚀 4. INFLUENCER TRACKING (Accurately tracks EVERY individual transaction)
+  const couponUsage = await PaymentLedger.aggregate([
+    { $match: { appliedCoupon: { $ne: null } } },
     {
       $group: {
-        _id: "$platformState.usedCoupon",
+        _id: "$appliedCoupon",
         count: { $sum: 1 },
       },
     },
