@@ -12,7 +12,11 @@ export const getAdminDashboard = async () => {
   });
   const athletesNeedingAssessment = await User.countDocuments({
     role: "ATHLETE",
-    "platformState.status": "NEEDS_ASSESSMENT",
+    $or: [
+      { "platformState.status": "NEEDS_ASSESSMENT" },
+      { "platformState.status": { $exists: false } },
+      { "platformState.status": null },
+    ],
   });
 
   const totalAssessments = await Assessment.countDocuments({
