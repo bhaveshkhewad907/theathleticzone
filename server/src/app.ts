@@ -92,8 +92,16 @@ app.use(
 
 app.use(express.json({ limit: "10kb" }));
 
-// 🚀 FIX: Replaced custom iteration loop with the native express-mongo-sanitize middleware
-app.use(mongoSanitize());
+app.use((req: Request, _res: Response, next: NextFunction) => {
+  if (req.body) req.body = mongoSanitize.sanitize(req.body);
+  if (req.params) req.params = mongoSanitize.sanitize(req.params);
+  if (req.query) {
+    for (const key in req.query) {
+      req.query[key] = mongoSanitize.sanitize(req.query[key] as any);
+    }
+  }
+  next();
+});
 
 app.use(passport.initialize());
 
