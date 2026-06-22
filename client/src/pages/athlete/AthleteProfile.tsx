@@ -1,6 +1,12 @@
 import { useContext, useState, useEffect } from "react";
 import AuthContext from "../../context/AuthContext";
-import { Mail, Shield, Camera, MessageSquare } from "lucide-react";
+import {
+  Mail,
+  Shield,
+  Camera,
+  MessageSquare,
+  MessageCircle,
+} from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import api from "../../services/api";
 import { toast } from "react-hot-toast";
@@ -12,6 +18,9 @@ interface ExtendedUser {
   email?: string;
   role?: string;
   profileImage?: string;
+  platformState?: {
+    status: string;
+  };
 }
 
 export default function AthleteProfile() {
@@ -169,6 +178,17 @@ export default function AthleteProfile() {
               </div>
             </div>
           </div>
+
+          {user?.platformState?.status === "ACTIVE_TRAINING" && (
+            <a
+              href="https://chat.whatsapp.com/YOUR_GROUP_INVITE_LINK_HERE"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full mt-6 py-4 bg-[#25D366]/10 border border-[#25D366]/30 text-[#25D366] rounded-[16px] hover:bg-[#25D366] hover:text-black transition-all shadow-[0_0_15px_rgba(37,211,102,0.1)] font-black uppercase tracking-widest text-[10px] md:text-xs flex items-center justify-center gap-2 active:scale-95"
+            >
+              <MessageCircle size={18} /> Join Elite WhatsApp Community
+            </a>
+          )}
 
           {/* 🚀 THE VANISHING REVIEW BUTTON */}
           {!reviewSubmitted && (
