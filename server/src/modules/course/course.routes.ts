@@ -20,6 +20,7 @@ router.get(
   requireRole("ATHLETE"),
   getAthleteCurrentCourse,
 );
+router.post("/get-upload-url", requireAuth, getCourseUploadUrl);
 
 // Landing page fetches active courses
 router.get("/public", getPublic);
@@ -28,7 +29,6 @@ const adminOnly = requireRole("ADMIN");
 
 router.get("/admin", requireAuth, adminOnly, getAdmin);
 router.post("/", requireAuth, adminOnly, create);
-router.post("/get-upload-url", requireAuth, adminOnly, getCourseUploadUrl);
 
 router.put("/:id", requireAuth, adminOnly, update);
 router.delete("/:id", requireAuth, adminOnly, softDelete);
