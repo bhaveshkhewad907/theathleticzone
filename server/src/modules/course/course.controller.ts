@@ -12,10 +12,18 @@ import CourseProgress from "./courseProgress.model";
 import Course from "./course.model";
 import User from "../user/user.model";
 import { AuthenticatedRequest } from "../../types/auth.types";
-import {
-  generatePresignedUrl,
-  getPresignedUrl,
-} from "../../services/r2.service";
+import { getPresignedUrl } from "../../services/r2.service";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+
+const s3Client = new S3Client({
+  region: "auto",
+  endpoint: `https://${process.env.CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+  credentials: {
+    accessKeyId: process.env.R2_ACCESS_KEY_ID || "",
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || "",
+  },
+});
 
 export const create: RequestHandler = async (req, res, next) => {
   try {
@@ -182,16 +190,64 @@ export const getAthleteCurrentCourse: RequestHandler = async (
 
 export const getCourseUploadUrl: RequestHandler = async (req, res, next) => {
   try {
-    const { fileName, contentType, folder } = req.body;
+    const authReq = req as AuthenticatedRequest;
+    const { fileName, contentType, folder: requestedFolder } = req.body;
 
-    if (!fileName || !contentType || !folder) {
-      throw new ApiError(400, "fileName, contentType, and folder are required");
+    // 1. 🛡️ STRICT MIME-TYPE WHITELIST (Prevents .exe or malicious HTML uploads)
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "video/mp4",
+      "video/quicktime",
+    ];
+    if (!allowedTypes.includes(contentType)) {
+      return next(
+        new ApiError(
+          415,
+          "Unsupported Media Type. Only images and standard video formats are allowed.",
+        ),
+      );
     }
 
-    // This calls your secure Cloudflare R2 logic to authorize a direct browser upload
-    const data = await generatePresignedUrl(fileName, contentType, folder);
+    // 2. 🛡️ ENTERPRISE ROLE-BASED FOLDER ROUTING (Never trust the frontend)
+    let secureFolder = "";
 
-    res.status(200).json({ success: true, data });
+    if (authReq.user.role === "ADMIN") {
+      // Admins can upload to specific course folders, but we sanitize the path
+      const allowedAdminFolders = ["thumbnails", "videos", "assets"];
+      secureFolder = allowedAdminFolders.includes(requestedFolder)
+        ? requestedFolder
+        : "assets";
+    } else if (authReq.user.role === "ATHLETE") {
+      // 🚀 Athletes are permanently locked into their own specific assessment directory!
+      // They cannot access or overwrite Admin courses.
+      secureFolder = `assessments/${authReq.user.id}`;
+    } else {
+      return next(new ApiError(403, "Unauthorized storage access."));
+    }
+
+    // 3. 🛡️ FILENAME SANITIZATION (Prevents Path Traversal attacks like "../../malicious.mp4")
+    const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, "_");
+    const uniqueFileName = `${Date.now()}-${Math.random().toString(36).substring(7)}-${sanitizedFileName}`;
+    const fileKey = `${secureFolder}/${uniqueFileName}`;
+
+    // 4. Generate the presigned URL using AWS S3 SDK / Cloudflare R2
+    const command = new PutObjectCommand({
+      Bucket: process.env.R2_BUCKET_NAME,
+      Key: fileKey,
+      ContentType: contentType,
+    });
+
+    const uploadUrl = await getSignedUrl(s3Client, command, {
+      expiresIn: 3600,
+    });
+    const publicUrl = `${process.env.R2_PUBLIC_DOMAIN}/${fileKey}`;
+
+    res.status(200).json({
+      success: true,
+      data: { uploadUrl, publicUrl, fileKey },
+    });
   } catch (error) {
     next(error);
   }

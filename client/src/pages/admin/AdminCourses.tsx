@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import api from "../../services/api";
 import axios from "axios";
 import { toast } from "react-hot-toast";
@@ -11,10 +11,11 @@ import {
   Network,
   Video,
 } from "lucide-react";
+import { lazy } from "react";
 
-import CreateStepModal from "./CreateStepModal";
-import CreateTemplateModal from "./CreateTemplateModal";
-import CourseArchitectModal from "./CourseArchitectModal";
+const CreateStepModal = lazy(() => import("./CreateStepModal"));
+const CreateTemplateModal = lazy(() => import("./CreateTemplateModal"));
+const CourseArchitectModal = lazy(() => import("./CourseArchitectModal"));
 
 interface Protocol {
   _id: string;
@@ -604,26 +605,36 @@ export default function AdminCourses() {
         </div>
       )}
 
-      {showStepModal && (
-        <CreateStepModal
-          onClose={() => setShowStepModal(false)}
-          onSuccess={() => {}}
-        />
-      )}
-      {showTemplateModal && (
-        <CreateTemplateModal
-          onClose={() => setShowTemplateModal(false)}
-          onSuccess={() => {}}
-        />
-      )}
-      {architectCourse && (
-        <CourseArchitectModal
-          courseId={architectCourse.id}
-          courseName={architectCourse.name}
-          onClose={() => setArchitectCourse(null)}
-          onSuccess={() => {}}
-        />
-      )}
+      <Suspense
+        fallback={
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+          </div>
+        }
+      >
+        {showStepModal && (
+          <CreateStepModal
+            onClose={() => setShowStepModal(false)}
+            onSuccess={() => {}}
+          />
+        )}
+
+        {showTemplateModal && (
+          <CreateTemplateModal
+            onClose={() => setShowTemplateModal(false)}
+            onSuccess={() => {}}
+          />
+        )}
+
+        {architectCourse && (
+          <CourseArchitectModal
+            courseId={architectCourse.id}
+            courseName={architectCourse.name}
+            onClose={() => setArchitectCourse(null)}
+            onSuccess={() => {}}
+          />
+        )}
+      </Suspense>
     </>
   );
 }

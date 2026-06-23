@@ -30,8 +30,6 @@ export default function AdminDashboard() {
     };
 
     fetchDashboardData();
-    const poll = setInterval(fetchDashboardData, 15000);
-    return () => clearInterval(poll);
   }, []);
 
   if (loading) {

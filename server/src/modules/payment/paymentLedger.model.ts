@@ -14,7 +14,7 @@ const paymentLedgerSchema = new Schema<IPaymentLedger>(
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     amountPaid: { type: Number, required: true },
     appliedCoupon: { type: String, default: null },
-    razorpayOrderId: { type: String, required: true },
+    razorpayOrderId: { type: String, required: true, unique: true },
     razorpayPaymentId: { type: String, required: true },
   },
   { timestamps: true },

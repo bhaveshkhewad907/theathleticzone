@@ -2,42 +2,40 @@ import { Request, Response, NextFunction, RequestHandler } from "express";
 import Razorpay from "razorpay";
 import crypto from "crypto";
 import User from "../user/user.model";
+import PaymentLedger from "./paymentLedger.model";
+import Coupon from "./coupon.model"; // 🚀 NEW: Import the dynamic Coupon model
 import ApiError from "../../utils/apiError";
 import { AuthenticatedRequest } from "../../types/auth.types";
-import PaymentLedger from "./paymentLedger.model";
 
-// 🚀 YOUR INFLUENCER CODES (Hardcoded discounts in percentage)
-const COUPONS: Record<string, number> = {
-  JAYSON30: 30, // 30% off
-};
+// 🚀 Base price is now securely pulled from the environment variables
+const BASE_PRICE = parseInt(process.env.BASE_PRICE_INR || "10", 10);
 
-const BASE_PRICE_INR = 10; // Base cost of the program
-
-// 🚀 PERFORMANCE FIX: Instantiate the SDK once at server boot, not on every request
 const razorpayInstance = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID || "",
   key_secret: process.env.RAZORPAY_KEY_SECRET || "",
 });
 
-export const createEntryOrder: RequestHandler = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
+export const createEntryOrder: RequestHandler = async (req, res, next) => {
   try {
     const { couponCode } = req.body;
-    let price = BASE_PRICE_INR;
-    let appliedCoupon = null;
+    let price = BASE_PRICE;
+    let appliedCoupon: string | null = null;
 
-    // Validate and apply discount
-    if (couponCode && COUPONS[couponCode.toUpperCase()]) {
-      const discount = COUPONS[couponCode.toUpperCase()];
-      price = price - (price * discount) / 100;
-      appliedCoupon = couponCode.toUpperCase();
+    // 🚀 ENTERPRISE FIX: Dynamically query the database for active coupons
+    if (couponCode) {
+      const validCoupon = await Coupon.findOne({
+        code: couponCode.toUpperCase(),
+        isActive: true,
+      });
+
+      if (validCoupon) {
+        price = price - (price * validCoupon.discountPercentage) / 100;
+        appliedCoupon = validCoupon.code;
+      }
     }
 
     const options = {
-      amount: Math.round(price * 100), // Razorpay expects paise
+      amount: Math.round(price * 100), // Paise
       currency: "INR",
       receipt: `entry_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
       notes: {
@@ -53,18 +51,14 @@ export const createEntryOrder: RequestHandler = async (
       order,
       price,
       appliedCoupon,
-      key: process.env.RAZORPAY_KEY_ID, // Safe to expose public key to frontend
+      key: process.env.RAZORPAY_KEY_ID,
     });
   } catch (error) {
     next(new ApiError(500, "Failed to initialize secure payment gateway."));
   }
 };
 
-export const verifyEntryPayment: RequestHandler = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
+export const verifyEntryPayment: RequestHandler = async (req, res, next) => {
   try {
     const authReq = req as AuthenticatedRequest;
     const {
@@ -87,27 +81,44 @@ export const verifyEntryPayment: RequestHandler = async (
       .update(body.toString())
       .digest("hex");
 
-    // 🚀 SECURITY FIX: Use timingSafeEqual to prevent cryptographic timing attacks
     const isSignatureValid = crypto.timingSafeEqual(
       Buffer.from(expectedSignature),
       Buffer.from(razorpay_signature),
     );
 
     if (!isSignatureValid) {
-      throw new ApiError(
-        400,
-        "Digital signature verification failed. Payment rejected.",
-      );
+      throw new ApiError(400, "Digital signature verification failed.");
     }
 
-    // 🚀 NEW: Calculate the exact price paid for the ledger
-    let finalPrice = BASE_PRICE_INR;
-    if (appliedCoupon && COUPONS[appliedCoupon.toUpperCase()]) {
-      const discount = COUPONS[appliedCoupon.toUpperCase()];
-      finalPrice = finalPrice - (finalPrice * discount) / 100;
+    // 🚀 IDEMPOTENCY CHECK (Kept from Phase 1)
+    const existingTransaction = await PaymentLedger.findOne({
+      razorpayOrderId: razorpay_order_id,
+    });
+    if (existingTransaction) {
+      res
+        .status(200)
+        .json({ success: true, message: "Payment already processed." });
+      return;
     }
 
-    // 🚀 NEW: Save transaction to the permanent un-erasable ledger!
+    // 🚀 ENTERPRISE FIX: Re-calculate price securely using DB during verification
+    let finalPrice = BASE_PRICE;
+    if (appliedCoupon) {
+      const validCoupon = await Coupon.findOne({
+        code: appliedCoupon.toUpperCase(),
+        isActive: true,
+      });
+
+      if (validCoupon) {
+        finalPrice =
+          finalPrice - (finalPrice * validCoupon.discountPercentage) / 100;
+
+        // 🚀 Increment the coupon's global usage tracker
+        validCoupon.currentUses += 1;
+        await validCoupon.save();
+      }
+    }
+
     await PaymentLedger.create({
       user: authReq.user.id,
       amountPaid: finalPrice,
@@ -116,7 +127,6 @@ export const verifyEntryPayment: RequestHandler = async (
       razorpayPaymentId: razorpay_payment_id,
     });
 
-    // 🚀 PAYMENT SUCCESS: Unlock the assessment and profile
     await User.findByIdAndUpdate(authReq.user.id, {
       $set: {
         "platformState.hasPaidEntryFee": true,
