@@ -1,0 +1,13 @@
+# The Athletic Zone
+
+The Athletic Zone is an elite strength, conditioning, and track-and-field training intelligence hub designed to optimize human performance.
+
+## Core Features
+- **Dynamic Two-A-Day Routines**: Gated athletic workout tracking split into distinct morning and evening performance blocks.
+- **Biomechanical Assessments**: Multi-variant onboarding profile parsing sprint videos, physical dimensions, and power metrics.
+- **VIP WhatsApp Integration**: Exclusive community access reserved solely for authenticated, active athletes.
+
+## Platform Integrity
+- Fully fortified payment gating using cryptographic webhooks via Razorpay.
+- Role-based separation between high-level Admin planners and Athlete consumers.
+- Media handling managed securely via distributed Cloudflare R2 object storage.

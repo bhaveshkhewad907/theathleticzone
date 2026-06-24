@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /athlete/
+Disallow: /api/
+
+Sitemap: https://theathleticzone.in/sitemap.xml
