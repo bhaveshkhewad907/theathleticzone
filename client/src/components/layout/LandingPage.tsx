@@ -506,13 +506,14 @@ export default function LandingPage() {
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}
             variants={staggerContainer}
-            className="mb-12 md:mb-16 flex flex-col items-center text-center"
+            className="mb-10 md:mb-16 flex flex-col items-center text-center"
           >
             <motion.div
               variants={fadeUp}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/20 backdrop-blur-md border border-amber-500/30 text-amber-400 text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] mb-4 shadow-inner"
+              className="inline-flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-amber-500/20 backdrop-blur-md border border-amber-500/30 text-amber-400 text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] mb-3 md:mb-4 shadow-inner"
             >
-              <Shield size={14} /> Leadership
+              <Shield size={12} className="md:w-[14px] md:h-[14px]" />{" "}
+              Leadership
             </motion.div>
             <h2 className="text-3xl md:text-5xl font-black uppercase italic tracking-tighter text-white drop-shadow-lg">
               Meet Your <span className="text-amber-500">Coach</span>
@@ -524,20 +525,20 @@ export default function LandingPage() {
             whileInView="visible"
             viewport={{ once: true, margin: "-50px" }}
             variants={staggerContainer}
-            className="relative w-full max-w-6xl mx-auto flex flex-col lg:flex-row items-center gap-8 lg:gap-16 bg-black/40 backdrop-blur-2xl border border-white/10 rounded-[2rem] p-6 md:p-12 shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
+            className="relative w-full max-w-6xl mx-auto flex flex-col lg:flex-row items-center lg:items-stretch gap-8 lg:gap-16 bg-black/40 backdrop-blur-2xl border border-white/10 rounded-[1.5rem] md:rounded-[2rem] p-5 sm:p-8 md:p-12 shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
           >
-            {/* 📸 The Portrait */}
+            {/* 📸 The Portrait (Mobile Scaled Down) */}
             <motion.div
               variants={fadeUp}
-              className="w-full lg:w-2/5 relative group shrink-0"
+              className="w-[75%] sm:w-[60%] md:w-[50%] lg:w-2/5 relative group shrink-0 mt-2 lg:mt-0"
             >
-              <div className="relative z-10 aspect-[4/5] rounded-[20px] md:rounded-[24px] overflow-hidden border border-white/10 shadow-[0_20px_40px_rgba(0,0,0,0.6)]">
+              <div className="relative z-10 aspect-[4/5] rounded-[16px] md:rounded-[24px] overflow-hidden border border-white/10 shadow-[0_15px_30px_rgba(0,0,0,0.6)]">
                 <img
                   src="https://images.unsplash.com/photo-1574680096145-d05b474e2155?q=80&w=2069&auto=format&fit=crop"
                   alt="Head Coach Jitendra Saini"
                   className="absolute inset-0 w-full h-full object-cover grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 group-hover:scale-105 transition-all duration-[1.5s] ease-out"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F19] via-[#0B0F19]/20 to-transparent opacity-60 group-hover:opacity-30 transition-opacity duration-700" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F19] via-[#0B0F19]/20 to-transparent opacity-80 lg:opacity-60 group-hover:opacity-30 transition-opacity duration-700" />
               </div>
             </motion.div>
 
@@ -548,36 +549,39 @@ export default function LandingPage() {
             >
               <motion.div
                 variants={fadeUp}
-                className="flex flex-wrap justify-center lg:justify-start items-center gap-3 mb-4 md:mb-6"
+                className="flex flex-wrap justify-center lg:justify-start items-center gap-2 md:gap-3 mb-4 md:mb-6"
               >
-                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-amber-500 text-black shadow-[0_0_15px_rgba(245,158,11,0.5)]">
-                  <Briefcase size={14} />
+                <div className="flex items-center justify-center w-6 h-6 md:w-8 md:h-8 rounded-full bg-amber-500 text-black shadow-[0_0_15px_rgba(245,158,11,0.5)]">
+                  <Briefcase size={12} className="md:w-[14px] md:h-[14px]" />
                 </div>
-                <span className="text-amber-500 text-[10px] md:text-xs font-black uppercase tracking-[0.3em] drop-shadow-md">
+                <span className="text-amber-500 text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] md:tracking-[0.3em] drop-shadow-md">
                   Sprint Performance Coach
                 </span>
               </motion.div>
 
-              <h3 className="text-5xl md:text-6xl lg:text-7xl font-black italic uppercase tracking-tighter text-white mb-6 drop-shadow-lg leading-none">
-                Jitendra <br className="hidden md:block" />
+              <h3 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black italic uppercase tracking-tighter text-white mb-4 md:mb-6 drop-shadow-lg leading-none">
+                Jitendra <br className="hidden lg:block" />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">
                   Saini
                 </span>
               </h3>
 
               {/* Hook Statement */}
-              <motion.div variants={fadeUp} className="relative mb-8 w-full">
-                <p className="text-amber-500 text-sm md:text-base font-black uppercase tracking-widest leading-relaxed relative z-10 lg:pl-6 lg:border-l-2 lg:border-amber-500/50">
+              <motion.div
+                variants={fadeUp}
+                className="relative mb-6 md:mb-8 w-full"
+              >
+                <p className="text-amber-500 text-[11px] sm:text-xs md:text-sm font-black uppercase tracking-widest leading-relaxed relative z-10 lg:pl-6 lg:border-l-2 lg:border-amber-500/50">
                   Helping 100m & 200m sprinters become faster through
                   biomechanics, strength training, and evidence-based
                   programming.
                 </p>
               </motion.div>
 
-              {/* The Mission Statement (Paragraphs) */}
+              {/* The Mission Statement (Paragraphs) - Switched to text-left on mobile for readability */}
               <motion.div
                 variants={fadeUp}
-                className="space-y-4 mb-10 text-white/70 text-xs md:text-sm font-medium leading-relaxed max-w-2xl"
+                className="space-y-4 mb-8 md:mb-10 text-white/70 text-[11px] sm:text-xs md:text-sm font-medium leading-relaxed w-full text-left md:text-left"
               >
                 <p>
                   <strong className="text-white">
@@ -615,17 +619,23 @@ export default function LandingPage() {
               {/* Official Accolades/Tags */}
               <motion.div
                 variants={fadeUp}
-                className="flex flex-wrap items-center justify-center lg:justify-start gap-3 w-full"
+                className="flex flex-col sm:flex-row flex-wrap items-center justify-center lg:justify-start gap-2 md:gap-3 w-full"
               >
-                <div className="flex items-center gap-2 bg-white/5 backdrop-blur-md border border-white/10 px-4 py-2.5 rounded-xl hover:border-amber-500/30 transition-colors">
-                  <Award size={14} className="text-amber-500" />
-                  <p className="text-white text-[9px] font-bold uppercase tracking-widest">
+                <div className="flex w-full sm:w-auto items-center justify-center sm:justify-start gap-2 bg-white/5 backdrop-blur-md border border-white/10 px-3 py-2 md:px-4 md:py-2.5 rounded-lg md:rounded-xl hover:border-amber-500/30 transition-colors">
+                  <Award
+                    size={12}
+                    className="text-amber-500 md:w-[14px] md:h-[14px]"
+                  />
+                  <p className="text-white text-[8px] md:text-[9px] font-bold uppercase tracking-widest text-center">
                     Strength & Conditioning Specialist
                   </p>
                 </div>
-                <div className="flex items-center gap-2 bg-white/5 backdrop-blur-md border border-white/10 px-4 py-2.5 rounded-xl hover:border-amber-500/30 transition-colors">
-                  <Target size={14} className="text-amber-500" />
-                  <p className="text-white text-[9px] font-bold uppercase tracking-widest">
+                <div className="flex w-full sm:w-auto items-center justify-center sm:justify-start gap-2 bg-white/5 backdrop-blur-md border border-white/10 px-3 py-2 md:px-4 md:py-2.5 rounded-lg md:rounded-xl hover:border-amber-500/30 transition-colors">
+                  <Target
+                    size={12}
+                    className="text-amber-500 md:w-[14px] md:h-[14px]"
+                  />
+                  <p className="text-white text-[8px] md:text-[9px] font-bold uppercase tracking-widest text-center">
                     Sprint Mechanics Expert
                   </p>
                 </div>
