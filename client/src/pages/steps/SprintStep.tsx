@@ -1,8 +1,8 @@
-import { PlayCircle, UploadCloud, CheckCircle } from "lucide-react";
+import { PlayCircle, UploadCloud, CheckCircle, X } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import axios from "axios";
-import api from "../../services/api"; // Your custom Axios instance with credentials
+import api from "../../services/api";
 
 interface Props {
   data: { sprint30mSeconds: string; sprintVideoUrl: string };
@@ -16,12 +16,12 @@ interface Props {
 export default function SprintStep({ data, updateData }: Props) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [activeDemoVideo, setActiveDemoVideo] = useState<string | null>(null);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // 1. Client-Side Size Validation (50MB Limit)
     if (file.size > 50 * 1024 * 1024) {
       toast.error("File is too large. Maximum size is 50MB.");
       return;
@@ -31,19 +31,14 @@ export default function SprintStep({ data, updateData }: Props) {
     setUploadProgress(0);
 
     try {
-      // 2. Ask your backend for the R2 Presigned URL
-      // (Ensure the path matches how your routes are mounted in app.ts, likely /courses or /api/courses)
       const res = await api.post("/courses/get-upload-url", {
         fileName: file.name,
         contentType: file.type,
-        folder: "assessments", // Organizes it neatly in your R2 bucket
+        folder: "assessments",
       });
 
-      // Extract the URL and Key from your backend response
-      // Note: Adjust 'url' and 'fileKey' if your backend names them differently!
       const { uploadUrl, fileKey } = res.data.data;
 
-      // 3. PUT the file directly to Cloudflare R2 with progress tracking
       await axios.put(uploadUrl, file, {
         headers: {
           "Content-Type": file.type,
@@ -56,7 +51,6 @@ export default function SprintStep({ data, updateData }: Props) {
         },
       });
 
-      // 4. Save the final R2 key into our Assessment state
       updateData("sprinting", "sprintVideoUrl", fileKey);
       toast.success("Tape uploaded securely!");
     } catch (error) {
@@ -69,7 +63,12 @@ export default function SprintStep({ data, updateData }: Props) {
   };
 
   return (
-    <div className="animate-fade-up">
+    <div
+      className="animate-fade-up relative bg-cover bg-center bg-no-repeat p-6 sm:p-10 rounded-3xl border border-white/10 overflow-hidden shadow-2xl"
+      style={{
+        backgroundImage: `linear-gradient(to bottom, rgba(9,9,11,0.85), rgba(9,9,11,0.98)), url('https://media.theathleticzone.in/auth-bg-images/sprint.jpg')`,
+      }}
+    >
       <h2 className="text-3xl font-black uppercase italic tracking-tighter mb-2">
         Phase 3: <span className="text-amber-500">The Tape</span>
       </h2>
@@ -106,7 +105,15 @@ export default function SprintStep({ data, updateData }: Props) {
           <label className="text-sm font-bold uppercase tracking-widest text-white/90 block">
             2. Upload Sprint Video
           </label>
-          <button className="flex items-center gap-1.5 text-amber-500 text-[10px] font-black uppercase tracking-widest bg-amber-500/10 px-3 py-1.5 rounded-full hover:bg-amber-500/20 transition-colors">
+          <button
+            onClick={() =>
+              setActiveDemoVideo(
+                "https://media.theathleticzone.in/assessment-demo-videos/30m%20sprint.MOV",
+              )
+            }
+            className="flex items-center gap-1.5 text-amber-500 text-[10px] font-black uppercase tracking-widest bg-amber-500/10 px-3 py-1.5 rounded-full hover:bg-amber-500/20 transition-colors"
+            aria-label="Watch video demonstration for How to Film Sprint"
+          >
             <PlayCircle size={14} /> How to Film
           </button>
         </div>
@@ -123,7 +130,6 @@ export default function SprintStep({ data, updateData }: Props) {
               : "border-white/20 hover:border-amber-500/50 bg-black/40 hover:bg-amber-500/5"
           }`}
         >
-          {/* Background Progress Bar Fill */}
           {isUploading && (
             <div
               className="absolute left-0 bottom-0 h-full bg-amber-500/10 transition-all duration-300"
@@ -166,6 +172,35 @@ export default function SprintStep({ data, updateData }: Props) {
           />
         </label>
       </div>
+
+      {/* 🎥 DYNAMIC ASSESSMENT VIDEO DEMO MODAL */}
+      {activeDemoVideo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+          <div className="relative w-full max-w-2xl bg-zinc-900 border border-white/10 rounded-xl overflow-hidden shadow-2xl">
+            <div className="flex items-center justify-between p-3 border-b border-white/5 bg-zinc-950">
+              <span className="text-[10px] font-black uppercase tracking-widest text-amber-500">
+                Movement Demonstration
+              </span>
+              <button
+                onClick={() => setActiveDemoVideo(null)}
+                className="text-white/60 hover:text-white transition-colors p-1"
+                aria-label="Close demo player"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="aspect-video bg-black flex items-center justify-center">
+              <video
+                src={activeDemoVideo}
+                controls
+                autoPlay
+                className="w-full h-full object-contain"
+                controlsList="nodownload"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

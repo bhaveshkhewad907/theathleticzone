@@ -235,7 +235,12 @@ export default function StructuredCoursePlayer({
   ];
 
   return (
-    <div className="max-w-4xl mx-auto p-4 md:p-6 animate-in fade-in duration-700 relative">
+    <div
+      className="max-w-4xl mx-auto p-4 md:p-6 animate-in fade-in duration-700 relative"
+      style={{
+        backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.95)), url('https://media.theathleticzone.in/auth-bg-images/video-player-bg.jpg')`,
+      }}
+    >
       <div className="mb-8 space-y-6">
         <h3 className="text-xl md:text-2xl font-black italic uppercase text-white">
           Protocol <span className="text-amber-500">Navigator</span>
