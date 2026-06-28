@@ -38,7 +38,6 @@ interface DayTemplate {
   steps: TemplateStep[];
 }
 
-// 🚀 UPGRADED: Two-A-Days Schema
 interface Session {
   isRest: boolean;
   templateId?: DayTemplate | null;
@@ -100,7 +99,6 @@ export default function StructuredCoursePlayer({
   const [activeWeek, setActiveWeek] = useState<number>(1);
   const [activeDay, setActiveDay] = useState<number | null>(null);
 
-  // 🚀 NEW: Tracks which half of the day the athlete is viewing
   const [activeSession, setActiveSession] = useState<"morning" | "evening">(
     "morning",
   );
@@ -170,7 +168,7 @@ export default function StructuredCoursePlayer({
         const nextDay = sortedDays[currentIndex + 1];
         setActiveDay(nextDay.dayNumber);
         setActiveWeek(getWeekNumber(nextDay.dayNumber));
-        setActiveSession("morning"); // Reset to morning on next day
+        setActiveSession("morning");
       }
     }
   };
@@ -191,12 +189,11 @@ export default function StructuredCoursePlayer({
     setIsVideoModalOpen(true);
   };
 
-  // 🚀 SMART CHECK: Determines if a specific session (Morning/Evening) is completed
   const checkSessionComplete = (
     session: Session | undefined,
     dayNum: number,
   ) => {
-    if (!session || session.isRest || !session.templateId) return true; // Empty or Rest counts as "Done"
+    if (!session || session.isRest || !session.templateId) return true;
     const steps = session.templateId.steps || [];
     if (steps.length === 0) return true;
     return steps.every((item) =>
@@ -214,7 +211,6 @@ export default function StructuredCoursePlayer({
     (d) => getWeekNumber(d.dayNumber) === activeWeek,
   );
 
-  // Resolve current active block
   const currentSessionData = currentDayData
     ? currentDayData[activeSession]
     : null;
@@ -235,336 +231,344 @@ export default function StructuredCoursePlayer({
   ];
 
   return (
+    /* 🚀 FULL PAGE RAW BACKGROUND IMAGE WRAPPER */
     <div
-      className="max-w-4xl mx-auto p-4 md:p-6 animate-in fade-in duration-700 relative"
+      className="min-h-screen w-full bg-cover bg-center bg-no-repeat bg-fixed animate-in fade-in duration-700"
       style={{
-        backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.95)), url('https://media.theathleticzone.in/auth-bg-images/video-player-bg.jpg')`,
+        backgroundImage: `url('https://media.theathleticzone.in/auth-bg-images/video-player-bg.jpg')`,
       }}
     >
-      <div className="mb-8 space-y-6">
-        <h3 className="text-xl md:text-2xl font-black italic uppercase text-white">
-          Protocol <span className="text-amber-500">Navigator</span>
-        </h3>
+      <div className="max-w-4xl mx-auto p-4 md:p-6 pt-8 md:pt-12">
+        <div className="mb-8 space-y-6">
+          <h3 className="text-xl md:text-2xl font-black italic uppercase text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+            Protocol <span className="text-amber-500">Navigator</span>
+          </h3>
 
-        {/* TIER 1: THE WEEK SELECTOR */}
-        <div className="flex overflow-x-auto gap-8 border-b border-white/10 pb-3 snap-x [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {uniqueWeeks.map((week) => {
-            const isActiveWeek = activeWeek === week;
-            return (
-              <button
-                key={`week-${week}`}
-                onClick={() => handleWeekSwitch(week)}
-                className={`relative pb-2 shrink-0 font-black uppercase tracking-widest text-sm transition-colors duration-300 ${
-                  isActiveWeek
-                    ? "text-white"
-                    : "text-[#8A94A6] hover:text-white/70"
-                }`}
-              >
-                Week {week}
-                {isActiveWeek && (
-                  <motion.div
-                    layoutId="activeWeekUnderline"
-                    className="absolute -bottom-[3px] left-0 right-0 h-[3px] bg-amber-500 rounded-t-full shadow-[0_0_10px_rgba(245,158,11,0.5)]"
-                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                  />
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* TIER 2: THE DAY SELECTOR */}
-        <div className="flex overflow-x-auto gap-3 pb-2 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-          {daysInActiveWeek.map((day) => {
-            const isActive = activeDay === day.dayNumber;
-            const isDayCompleteByDB = progress?.completedDays?.includes(
-              day.dayNumber,
-            );
-
-            // 🚀 NEW: Checks BOTH morning and evening to see if the full day is green!
-            const isMorningDone = checkSessionComplete(
-              day.morning,
-              day.dayNumber,
-            );
-            const isEveningDone = checkSessionComplete(
-              day.evening,
-              day.dayNumber,
-            );
-            const isFullyComplete =
-              isDayCompleteByDB || (isMorningDone && isEveningDone);
-
-            // If the ENTIRE day is Rest (Both morning and evening are true)
-            const isFullRestDay = day.morning?.isRest && day.evening?.isRest;
-
-            return (
-              <button
-                key={day.dayNumber}
-                onClick={() => setActiveDay(day.dayNumber)}
-                className={`relative shrink-0 snap-start px-5 py-3 rounded-2xl font-black text-[10px] md:text-xs uppercase tracking-widest transition-all duration-300 ${
-                  isActive
-                    ? "bg-amber-500 text-black shadow-[0_5px_15px_rgba(245,158,11,0.2)] scale-105"
-                    : isFullRestDay
-                      ? "bg-[#090D12] border border-[#1A2230] text-[#4A5568] hover:bg-[#0F141A]" // Rest Day Styling
-                      : "bg-[#0F1724] border border-white/5 text-[#8A94A6] hover:bg-white/5"
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  {isFullyComplete ? (
-                    <CheckCircle
-                      size={14}
-                      className={isActive ? "text-black" : "text-emerald-500"}
-                    />
-                  ) : isFullRestDay ? (
-                    <BatteryCharging
-                      size={14}
-                      className={
-                        isActive ? "text-black" : "text-emerald-500/50"
-                      }
-                    />
-                  ) : null}
-                  {getDayNameOnly(day.dayNumber)}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* 🚀 TIER 3: SESSION TOGGLE (MORNING VS EVENING) */}
-        {currentDayData && (
-          <div className="flex p-1 bg-black/40 border border-white/5 rounded-2xl max-w-sm backdrop-blur-md">
-            <button
-              onClick={() => setActiveSession("morning")}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all duration-300 ${
-                activeSession === "morning"
-                  ? "bg-[#121821] text-amber-500 shadow-[0_0_20px_rgba(245,158,11,0.1)] border border-amber-500/20"
-                  : "text-[#8A94A6] hover:text-white"
-              }`}
-            >
-              <Sun size={14} /> Morning
-            </button>
-            <button
-              onClick={() => setActiveSession("evening")}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all duration-300 ${
-                activeSession === "evening"
-                  ? "bg-[#121821] text-blue-400 shadow-[0_0_20px_rgba(96,165,250,0.1)] border border-blue-400/20"
-                  : "text-[#8A94A6] hover:text-white"
-              }`}
-            >
-              <Moon size={14} /> Evening
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* CARD SWAPPING CONTAINER (Protocol Steps) */}
-      <div className="relative overflow-hidden bg-[#0F1724]/60 backdrop-blur-xl border border-white/[0.05] rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] min-h-[400px]">
-        <AnimatePresence mode="wait">
-          {currentSessionData?.isRest ? (
-            // 🚀 CINEMATIC REST MODE UI
-            <motion.div
-              key={`rest-${currentDayData?.dayNumber}-${activeSession}`}
-              initial={{ opacity: 0, filter: "blur(10px)", scale: 0.95 }}
-              animate={{ opacity: 1, filter: "blur(0px)", scale: 1 }}
-              exit={{ opacity: 0, filter: "blur(10px)", scale: 0.95 }}
-              transition={{ duration: 0.4 }}
-              className="absolute inset-0 flex flex-col items-center justify-center text-center p-10 bg-[radial-gradient(ellipse_at_center,rgba(16,185,129,0.05),transparent_70%)]"
-            >
-              <BatteryCharging
-                size={64}
-                className="text-emerald-500/50 mb-6 drop-shadow-[0_0_30px_rgba(16,185,129,0.3)] animate-pulse"
-              />
-              <h4 className="text-2xl md:text-3xl font-black uppercase tracking-tighter italic text-emerald-400 leading-none mb-4">
-                Recovery Protocol
-              </h4>
-              <p className="text-xs md:text-sm font-bold text-[#8A94A6] max-w-md uppercase tracking-widest leading-relaxed">
-                Central Nervous System restoration in progress. Hydrate, focus
-                on nutrition, and allow your body to absorb the training
-                adaptations.
-              </p>
-            </motion.div>
-          ) : currentSessionData?.templateId ? (
-            // 🏋️ STANDARD PROTOCOL UI
-            <motion.div
-              key={`active-${currentDayData?.dayNumber}-${activeSession}`}
-              initial={{ opacity: 0, x: 20, filter: "blur(4px)" }}
-              animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
-              exit={{ opacity: 0, x: -20, filter: "blur(4px)" }}
-              transition={{ duration: 0.3, ease: "easeInOut" }}
-              className="p-6 md:p-8"
-            >
-              <div className="mb-8">
-                <h4 className="text-2xl md:text-3xl font-black uppercase tracking-tighter italic text-white leading-none">
-                  {currentSessionData.templateId.name}
-                </h4>
-                <p
-                  className={`text-[10px] uppercase tracking-widest mt-2 font-bold ${activeSession === "morning" ? "text-amber-500" : "text-blue-400"}`}
+          {/* TIER 1: THE WEEK SELECTOR */}
+          <div className="flex overflow-x-auto gap-8 border-b border-white/10 pb-3 snap-x [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {uniqueWeeks.map((week) => {
+              const isActiveWeek = activeWeek === week;
+              return (
+                <button
+                  key={`week-${week}`}
+                  onClick={() => handleWeekSwitch(week)}
+                  className={`relative pb-2 shrink-0 font-black uppercase tracking-widest text-sm transition-colors duration-300 drop-shadow-md ${
+                    isActiveWeek
+                      ? "text-white"
+                      : "text-white/60 hover:text-white"
+                  }`}
                 >
-                  Day {currentDayData?.dayNumber} • {activeSession} Block •{" "}
-                  {currentSessionData.templateId.steps.length} Actions Required
+                  Week {week}
+                  {isActiveWeek && (
+                    <motion.div
+                      layoutId="activeWeekUnderline"
+                      className="absolute -bottom-[3px] left-0 right-0 h-[3px] bg-amber-500 rounded-t-full shadow-[0_0_10px_rgba(245,158,11,0.5)]"
+                      transition={{
+                        type: "spring",
+                        stiffness: 500,
+                        damping: 30,
+                      }}
+                    />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* TIER 2: THE DAY SELECTOR */}
+          <div className="flex overflow-x-auto gap-3 pb-2 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            {daysInActiveWeek.map((day) => {
+              const isActive = activeDay === day.dayNumber;
+              const isDayCompleteByDB = progress?.completedDays?.includes(
+                day.dayNumber,
+              );
+              const isMorningDone = checkSessionComplete(
+                day.morning,
+                day.dayNumber,
+              );
+              const isEveningDone = checkSessionComplete(
+                day.evening,
+                day.dayNumber,
+              );
+              const isFullyComplete =
+                isDayCompleteByDB || (isMorningDone && isEveningDone);
+              const isFullRestDay = day.morning?.isRest && day.evening?.isRest;
+
+              return (
+                <button
+                  key={day.dayNumber}
+                  onClick={() => setActiveDay(day.dayNumber)}
+                  // 🚀 GLASSMORPHIC DAY BUTTONS
+                  className={`relative shrink-0 snap-start px-5 py-3 rounded-2xl font-black text-[10px] md:text-xs uppercase tracking-widest transition-all duration-300 backdrop-blur-md border ${
+                    isActive
+                      ? "bg-amber-500 text-black border-amber-400 shadow-[0_5px_20px_rgba(245,158,11,0.3)] scale-105"
+                      : isFullRestDay
+                        ? "bg-black/40 border-white/5 text-white/50 hover:bg-black/60"
+                        : "bg-black/40 border-white/10 text-white hover:bg-white/10"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    {isFullyComplete ? (
+                      <CheckCircle
+                        size={14}
+                        className={isActive ? "text-black" : "text-emerald-500"}
+                      />
+                    ) : isFullRestDay ? (
+                      <BatteryCharging
+                        size={14}
+                        className={
+                          isActive ? "text-black" : "text-emerald-500/50"
+                        }
+                      />
+                    ) : null}
+                    {getDayNameOnly(day.dayNumber)}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* TIER 3: SESSION TOGGLE (GLASSMORPHIC) */}
+          {currentDayData && (
+            <div className="flex p-1.5 bg-black/40 border border-white/10 rounded-2xl max-w-sm backdrop-blur-xl shadow-2xl">
+              <button
+                onClick={() => setActiveSession("morning")}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all duration-300 ${
+                  activeSession === "morning"
+                    ? "bg-black/60 text-amber-500 shadow-[0_0_20px_rgba(245,158,11,0.2)] border border-amber-500/30"
+                    : "text-white/60 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <Sun size={14} /> Morning
+              </button>
+              <button
+                onClick={() => setActiveSession("evening")}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all duration-300 ${
+                  activeSession === "evening"
+                    ? "bg-black/60 text-blue-400 shadow-[0_0_20px_rgba(96,165,250,0.2)] border border-blue-400/30"
+                    : "text-white/60 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <Moon size={14} /> Evening
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* 🚀 CARD SWAPPING CONTAINER (HEAVY GLASSMORPHISM) */}
+        <div className="relative overflow-hidden bg-black/40 backdrop-blur-2xl border border-white/10 rounded-[2rem] shadow-[0_8px_32px_rgba(0,0,0,0.5)] min-h-[400px]">
+          <AnimatePresence mode="wait">
+            {currentSessionData?.isRest ? (
+              <motion.div
+                key={`rest-${currentDayData?.dayNumber}-${activeSession}`}
+                initial={{ opacity: 0, filter: "blur(10px)", scale: 0.95 }}
+                animate={{ opacity: 1, filter: "blur(0px)", scale: 1 }}
+                exit={{ opacity: 0, filter: "blur(10px)", scale: 0.95 }}
+                transition={{ duration: 0.4 }}
+                className="absolute inset-0 flex flex-col items-center justify-center text-center p-10 bg-[radial-gradient(ellipse_at_center,rgba(16,185,129,0.1),transparent_70%)]"
+              >
+                <BatteryCharging
+                  size={64}
+                  className="text-emerald-500/50 mb-6 drop-shadow-[0_0_30px_rgba(16,185,129,0.3)] animate-pulse"
+                />
+                <h4 className="text-2xl md:text-3xl font-black uppercase tracking-tighter italic text-emerald-400 leading-none mb-4">
+                  Recovery Protocol
+                </h4>
+                <p className="text-xs md:text-sm font-bold text-white/70 max-w-md uppercase tracking-widest leading-relaxed">
+                  Central Nervous System restoration in progress. Hydrate, focus
+                  on nutrition, and allow your body to absorb the training
+                  adaptations.
                 </p>
-              </div>
+              </motion.div>
+            ) : currentSessionData?.templateId ? (
+              <motion.div
+                key={`active-${currentDayData?.dayNumber}-${activeSession}`}
+                initial={{ opacity: 0, x: 20, filter: "blur(4px)" }}
+                animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
+                exit={{ opacity: 0, x: -20, filter: "blur(4px)" }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                className="p-6 md:p-8"
+              >
+                <div className="mb-8">
+                  <h4 className="text-2xl md:text-3xl font-black uppercase tracking-tighter italic text-white leading-none">
+                    {currentSessionData.templateId.name}
+                  </h4>
+                  <p
+                    className={`text-[10px] uppercase tracking-widest mt-2 font-bold ${activeSession === "morning" ? "text-amber-500" : "text-blue-400"}`}
+                  >
+                    Day {currentDayData?.dayNumber} • {activeSession} Block •{" "}
+                    {currentSessionData.templateId.steps.length} Actions
+                    Required
+                  </p>
+                </div>
 
-              <div className="space-y-8">
-                {stepCategories.map((category) => {
-                  const stepsInCategory =
-                    currentSessionData.templateId!.steps.filter(
-                      (item) => item.step?.type === category.id,
-                    );
+                <div className="space-y-8">
+                  {stepCategories.map((category) => {
+                    const stepsInCategory =
+                      currentSessionData.templateId!.steps.filter(
+                        (item) => item.step?.type === category.id,
+                      );
 
-                  if (stepsInCategory.length === 0) return null;
+                    if (stepsInCategory.length === 0) return null;
 
-                  return (
-                    <div key={category.id}>
-                      <h5
-                        className={`flex items-center gap-2 font-black text-[10px] md:text-xs uppercase tracking-widest mb-4 border-b border-white/5 pb-2 ${activeSession === "morning" ? "text-amber-500" : "text-blue-400"}`}
-                      >
-                        {category.icon} {category.label}
-                      </h5>
+                    return (
+                      <div key={category.id}>
+                        <h5
+                          className={`flex items-center gap-2 font-black text-[10px] md:text-xs uppercase tracking-widest mb-4 border-b border-white/5 pb-2 ${activeSession === "morning" ? "text-amber-500" : "text-blue-400"}`}
+                        >
+                          {category.icon} {category.label}
+                        </h5>
 
-                      <div className="space-y-3">
-                        {stepsInCategory.map((item) => {
-                          if (!item || !item.step) return null;
+                        <div className="space-y-3">
+                          {stepsInCategory.map((item) => {
+                            if (!item || !item.step) return null;
 
-                          const scopedStepId = `${currentDayData?.dayNumber}-${item.step._id}`;
-                          const isDayCompleteByDB =
-                            progress?.completedDays?.includes(
-                              currentDayData!.dayNumber,
-                            );
-                          const isStepComplete =
-                            progress?.completedSteps?.includes(scopedStepId) ||
-                            isDayCompleteByDB;
+                            const scopedStepId = `${currentDayData?.dayNumber}-${item.step._id}`;
+                            const isDayCompleteByDB =
+                              progress?.completedDays?.includes(
+                                currentDayData!.dayNumber,
+                              );
+                            const isStepComplete =
+                              progress?.completedSteps?.includes(
+                                scopedStepId,
+                              ) || isDayCompleteByDB;
 
-                          return (
-                            <div
-                              key={scopedStepId}
-                              onClick={() => openVideo(item.step.videoUrl)}
-                              className={`p-4 rounded-[16px] bg-black/40 border border-white/5 hover:bg-[#121821] transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 group shadow-inner ${
-                                activeSession === "morning"
-                                  ? "hover:border-amber-500/40"
-                                  : "hover:border-blue-400/40"
-                              }`}
-                            >
-                              <div className="flex items-center gap-4 overflow-hidden flex-1">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleStepComplete(scopedStepId);
-                                  }}
-                                  className="active:scale-90 transition-transform shrink-0"
-                                >
-                                  {isStepComplete ? (
-                                    <CheckCircle
-                                      size={22}
-                                      className="text-emerald-500 drop-shadow-[0_0_8px_rgba(16,185,129,0.4)]"
-                                    />
-                                  ) : (
-                                    <Circle
-                                      size={22}
-                                      className={`text-[#8A94A6]/50 ${activeSession === "morning" ? "group-hover:text-amber-500/50" : "group-hover:text-blue-400/50"}`}
-                                    />
-                                  )}
-                                </button>
-                                <div className="truncate">
-                                  <p
-                                    className={`text-sm md:text-base font-black uppercase tracking-widest text-white truncate transition-colors ${activeSession === "morning" ? "group-hover:text-amber-500" : "group-hover:text-blue-400"}`}
+                            return (
+                              <div
+                                key={scopedStepId}
+                                onClick={() => openVideo(item.step.videoUrl)}
+                                // 🚀 EXERCISE ITEMS (DEEP GLASSMORPHISM)
+                                className={`p-4 md:p-5 rounded-[20px] bg-black/50 backdrop-blur-xl border border-white/10 hover:bg-black/70 transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 group shadow-lg ${
+                                  activeSession === "morning"
+                                    ? "hover:border-amber-500/40"
+                                    : "hover:border-blue-400/40"
+                                }`}
+                              >
+                                <div className="flex items-center gap-4 overflow-hidden flex-1">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleStepComplete(scopedStepId);
+                                    }}
+                                    className="active:scale-90 transition-transform shrink-0"
                                   >
-                                    {item.step.title}
-                                  </p>
-                                </div>
-                              </div>
-
-                              <div className="flex items-center justify-between sm:justify-end gap-4 pl-10 sm:pl-0">
-                                {(item.sets !== "-" || item.reps !== "-") && (
-                                  <div className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-center shrink-0">
-                                    <p className="text-[8px] text-[#8A94A6] font-black uppercase tracking-widest leading-none mb-1">
-                                      Target
-                                    </p>
-                                    <p className="text-xs font-black text-white leading-none">
-                                      {item.sets}{" "}
-                                      <span
-                                        className={
-                                          activeSession === "morning"
-                                            ? "text-amber-500 mx-0.5"
-                                            : "text-blue-400 mx-0.5"
-                                        }
-                                      >
-                                        x
-                                      </span>{" "}
-                                      {item.reps}
+                                    {isStepComplete ? (
+                                      <CheckCircle
+                                        size={22}
+                                        className="text-emerald-500 drop-shadow-[0_0_8px_rgba(16,185,129,0.4)]"
+                                      />
+                                    ) : (
+                                      <Circle
+                                        size={22}
+                                        className={`text-white/40 ${activeSession === "morning" ? "group-hover:text-amber-500/50" : "group-hover:text-blue-400/50"}`}
+                                      />
+                                    )}
+                                  </button>
+                                  <div className="truncate">
+                                    <p
+                                      className={`text-sm md:text-base font-black uppercase tracking-widest text-white truncate transition-colors ${activeSession === "morning" ? "group-hover:text-amber-500" : "group-hover:text-blue-400"}`}
+                                    >
+                                      {item.step.title}
                                     </p>
                                   </div>
-                                )}
+                                </div>
 
-                                <div
-                                  className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-all shadow-inner ${
-                                    activeSession === "morning"
-                                      ? "bg-amber-500/10 text-amber-500 group-hover:bg-amber-500 group-hover:text-black"
-                                      : "bg-blue-400/10 text-blue-400 group-hover:bg-blue-400 group-hover:text-black"
-                                  }`}
-                                >
-                                  <PlayCircle
-                                    size={20}
-                                    className={
-                                      !isStepComplete ? "animate-pulse" : ""
-                                    }
-                                  />
+                                <div className="flex items-center justify-between sm:justify-end gap-4 pl-10 sm:pl-0">
+                                  {(item.sets !== "-" || item.reps !== "-") && (
+                                    <div className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-center shrink-0">
+                                      <p className="text-[8px] text-white/60 font-black uppercase tracking-widest leading-none mb-1">
+                                        Target
+                                      </p>
+                                      <p className="text-xs font-black text-white leading-none">
+                                        {item.sets}{" "}
+                                        <span
+                                          className={
+                                            activeSession === "morning"
+                                              ? "text-amber-500 mx-0.5"
+                                              : "text-blue-400 mx-0.5"
+                                          }
+                                        >
+                                          x
+                                        </span>{" "}
+                                        {item.reps}
+                                      </p>
+                                    </div>
+                                  )}
+
+                                  <div
+                                    className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-all shadow-inner ${
+                                      activeSession === "morning"
+                                        ? "bg-amber-500/10 text-amber-500 group-hover:bg-amber-500 group-hover:text-black"
+                                        : "bg-blue-400/10 text-blue-400 group-hover:bg-blue-400 group-hover:text-black"
+                                    }`}
+                                  >
+                                    <PlayCircle
+                                      size={20}
+                                      className={
+                                        !isStepComplete ? "animate-pulse" : ""
+                                      }
+                                    />
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          );
-                        })}
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
 
-              {/* Day Completion Button Logic */}
-              {(() => {
-                if (!currentDayData) return null;
-                const isDayCompleteByDB = progress?.completedDays?.includes(
-                  currentDayData.dayNumber,
-                );
-                const isMorningDone = checkSessionComplete(
-                  currentDayData.morning,
-                  currentDayData.dayNumber,
-                );
-                const isEveningDone = checkSessionComplete(
-                  currentDayData.evening,
-                  currentDayData.dayNumber,
-                );
-                const areAllStepsChecked = isMorningDone && isEveningDone;
-
-                if (!isDayCompleteByDB && !areAllStepsChecked) {
-                  return (
-                    <button
-                      onClick={() =>
-                        handleDayComplete(currentDayData.dayNumber)
-                      }
-                      className="mt-8 w-full py-5 rounded-xl bg-amber-500 text-black font-black text-xs uppercase tracking-[0.2em] hover:bg-amber-400 transition-all shadow-[0_10px_30px_rgba(245,158,11,0.2)] active:scale-95"
-                    >
-                      Log Full Day as Complete
-                    </button>
+                {/* Day Completion Button Logic */}
+                {(() => {
+                  if (!currentDayData) return null;
+                  const isDayCompleteByDB = progress?.completedDays?.includes(
+                    currentDayData.dayNumber,
                   );
-                }
-                return null;
-              })()}
-            </motion.div>
-          ) : (
-            // 🚫 EMPTY STATE (No template assigned to this block)
-            <motion.div
-              key={`empty-${currentDayData?.dayNumber}-${activeSession}`}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="p-10 flex flex-col items-center justify-center text-center min-h-[400px]"
-            >
-              <Circle size={48} className="text-white/10 mb-4 animate-pulse" />
-              <p className="text-[#8A94A6] font-black uppercase tracking-widest text-xs">
-                No Protocol Assigned
-              </p>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                  const isMorningDone = checkSessionComplete(
+                    currentDayData.morning,
+                    currentDayData.dayNumber,
+                  );
+                  const isEveningDone = checkSessionComplete(
+                    currentDayData.evening,
+                    currentDayData.dayNumber,
+                  );
+                  const areAllStepsChecked = isMorningDone && isEveningDone;
+
+                  if (!isDayCompleteByDB && !areAllStepsChecked) {
+                    return (
+                      <button
+                        onClick={() =>
+                          handleDayComplete(currentDayData.dayNumber)
+                        }
+                        className="mt-8 w-full py-5 rounded-xl bg-amber-500 text-black font-black text-xs uppercase tracking-[0.2em] hover:bg-amber-400 transition-all shadow-[0_10px_30px_rgba(245,158,11,0.2)] active:scale-95"
+                      >
+                        Log Full Day as Complete
+                      </button>
+                    );
+                  }
+                  return null;
+                })()}
+              </motion.div>
+            ) : (
+              // 🚫 EMPTY STATE
+              <motion.div
+                key={`empty-${currentDayData?.dayNumber}-${activeSession}`}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="p-10 flex flex-col items-center justify-center text-center min-h-[400px]"
+              >
+                <Circle
+                  size={48}
+                  className="text-white/20 mb-4 animate-pulse"
+                />
+                <p className="text-white/60 font-black uppercase tracking-widest text-xs">
+                  No Protocol Assigned
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
 
       {/* 🎬 IMMERSIVE VERTICAL REEL MODAL */}
@@ -614,13 +618,18 @@ export default function StructuredCoursePlayer({
 // ==========================================
 function ClassicSingleVideoPlayer() {
   return (
-    <div className="max-w-4xl mx-auto p-6 animate-in fade-in duration-700">
-      <div className="aspect-video bg-[#0B0F14] rounded-2xl overflow-hidden border border-white/10 relative shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center justify-center flex-col text-[#8A94A6]">
-        <PlayCircle size={48} className="mb-4 opacity-20" />
-        <p className="font-black uppercase tracking-widest text-xs text-amber-500 mb-2">
+    <div
+      className="min-h-screen w-full bg-cover bg-center bg-no-repeat bg-fixed animate-in fade-in duration-700 flex items-center justify-center p-6"
+      style={{
+        backgroundImage: `url('https://media.theathleticzone.in/auth-bg-images/video-player-bg.jpg')`,
+      }}
+    >
+      <div className="w-full max-w-4xl aspect-video bg-black/40 backdrop-blur-2xl rounded-2xl overflow-hidden border border-white/10 relative shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center justify-center flex-col text-white/60">
+        <PlayCircle size={48} className="mb-4 opacity-40" />
+        <p className="font-black uppercase tracking-widest text-xs text-amber-500 mb-2 drop-shadow-md">
           Protocol Pending Deployment
         </p>
-        <p className="text-[10px] text-[#8A94A6] max-w-xs text-center leading-relaxed">
+        <p className="text-[10px] text-white/60 max-w-xs text-center leading-relaxed">
           The administrator is currently configuring your Day-by-Day training
           schedule. Please stand by.
         </p>
