@@ -161,20 +161,25 @@ export default function AthleteProfile() {
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
-            <div className="bg-black/40 border border-white/5 rounded-2xl p-5 flex items-center gap-4 shadow-inner hover:border-amber-500/20 transition-colors">
-              <div className="p-3 bg-amber-500/10 rounded-xl text-amber-500 shadow-inner">
+            <div className="bg-black/40 border border-white/5 rounded-2xl p-4 md:p-5 flex items-center gap-3 md:gap-4 shadow-inner hover:border-amber-500/20 transition-colors overflow-hidden">
+              <div className="p-3 bg-amber-500/10 rounded-xl text-amber-500 shadow-inner shrink-0">
                 <Mail size={18} />
               </div>
-              <div className="text-xs font-black text-[#8A94A6] uppercase tracking-wider">
-                {user?.email}
+              <div className="flex-1 min-w-0">
+                <div className="text-[10px] md:text-xs font-black text-[#8A94A6] uppercase tracking-wider truncate">
+                  {user?.email}
+                </div>
               </div>
             </div>
-            <div className="bg-black/40 border border-white/5 rounded-2xl p-5 flex items-center gap-4 shadow-inner hover:border-amber-500/20 transition-colors">
-              <div className="p-3 bg-amber-500/10 rounded-xl text-amber-500 shadow-inner">
+
+            <div className="bg-black/40 border border-white/5 rounded-2xl p-4 md:p-5 flex items-center gap-3 md:gap-4 shadow-inner hover:border-amber-500/20 transition-colors overflow-hidden">
+              <div className="p-3 bg-amber-500/10 rounded-xl text-amber-500 shadow-inner shrink-0">
                 <Shield size={18} />
               </div>
-              <div className="text-xs font-black text-[#8A94A6] uppercase tracking-wider">
-                {user?.role || "ATHLETE"}
+              <div className="flex-1 min-w-0">
+                <div className="text-[10px] md:text-xs font-black text-[#8A94A6] uppercase tracking-wider truncate">
+                  {user?.role || "ATHLETE"}
+                </div>
               </div>
             </div>
           </div>
