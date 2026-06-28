@@ -332,50 +332,73 @@ export default function AthleteDashboard() {
         )}
       </AnimatePresence>
 
-      {/* 🏆 THE CONGRATULATIONS POPUP MODAL (Kept Exactly as before) */}
+      {/* 🏆 THE CONGRATULATIONS POPUP MODAL (Glassmorphic Upgrade) */}
       <AnimatePresence>
         {isVictoryModalOpen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-[#0B0F14]/90 backdrop-blur-xl"
+            className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-[#0B0F14]/80 backdrop-blur-lg"
           >
             <motion.div
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className="max-w-lg w-full bg-[#121821] border border-amber-500/30 rounded-[24px] p-8 md:p-10 text-center shadow-[0_30px_60px_rgba(245,158,11,0.15)] relative overflow-hidden"
+              className="max-w-lg w-full bg-black/40 backdrop-blur-2xl border border-amber-500/30 rounded-[24px] p-8 md:p-10 text-center shadow-[0_40px_100px_rgba(0,0,0,0.8)] relative overflow-hidden"
             >
+              {/* Ambient Glow */}
               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[150px] bg-amber-500/20 blur-[80px] pointer-events-none rounded-full" />
+
               <div className="relative z-10">
-                <div className="w-20 h-20 mx-auto bg-amber-500/10 border border-amber-500/20 rounded-full flex items-center justify-center text-amber-500 mb-6 shadow-inner">
-                  <Trophy size={40} />
+                {/* Trophy Icon */}
+                <div className="w-20 h-20 mx-auto bg-amber-500/10 backdrop-blur-md border border-amber-500/20 rounded-full flex items-center justify-center text-amber-500 mb-6 shadow-inner">
+                  <Trophy
+                    size={40}
+                    className="drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]"
+                  />
                 </div>
-                <h2 className="text-3xl font-black italic uppercase tracking-tighter text-white mb-4">
+
+                {/* Heading */}
+                <h2 className="text-3xl md:text-4xl font-black italic uppercase tracking-tighter text-white mb-4 drop-shadow-lg">
                   Protocol <span className="text-amber-500">Completed!</span>
                 </h2>
-                <p className="text-[#8A94A6] text-sm font-medium leading-relaxed mb-8">
+
+                {/* Body Text */}
+                <p className="text-white/70 text-xs md:text-sm font-medium leading-relaxed mb-8 drop-shadow-md px-2">
                   Congratulations! You have successfully mastered your current
                   training block. Your central nervous system is primed. It's
                   time to recalibrate your biomechanics and push to the next
                   tier.
                 </p>
+
+                {/* Action Buttons */}
                 <div className="space-y-4">
                   <button
                     onClick={handleInitiateRenewal}
                     disabled={isResetting}
-                    className="w-full py-4 bg-amber-500 text-black font-black uppercase tracking-widest rounded-xl hover:bg-amber-400 transition-all shadow-[0_0_20px_rgba(245,158,11,0.3)] flex justify-center items-center gap-2 active:scale-95"
+                    className="relative overflow-hidden w-full py-4 md:py-5 bg-amber-500 text-black font-black text-xs md:text-sm uppercase tracking-widest rounded-xl hover:bg-amber-400 transition-all shadow-[0_10px_30px_rgba(245,158,11,0.3)] hover:shadow-[0_15px_40px_rgba(245,158,11,0.5)] flex justify-center items-center gap-2 active:scale-95 group disabled:opacity-70 disabled:cursor-not-allowed"
                   >
-                    {isResetting
-                      ? "Initializing..."
-                      : "Move Ahead & Unlock Phase 2"}
-                    {!isResetting && <ArrowRight size={18} />}
+                    {/* Shimmer Sweep Effect */}
+                    <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent group-hover:animate-[shimmer_1.5s_infinite]" />
+
+                    <span className="relative z-10 flex items-center gap-2">
+                      {isResetting
+                        ? "Initializing..."
+                        : "Move Ahead & Unlock Phase 2"}
+                      {!isResetting && (
+                        <ArrowRight
+                          size={18}
+                          className="group-hover:translate-x-1 transition-transform"
+                        />
+                      )}
+                    </span>
                   </button>
+
                   <button
                     onClick={() => setIsVictoryModalOpen(false)}
                     disabled={isResetting}
-                    className="w-full py-3 text-[10px] font-black uppercase tracking-widest text-[#8A94A6]/60 hover:text-white transition-colors"
+                    className="w-full py-3 text-[9px] md:text-[10px] font-black uppercase tracking-widest text-white/50 hover:text-white transition-colors"
                   >
                     Cancel & Stay on Dashboard
                   </button>
