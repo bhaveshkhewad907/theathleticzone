@@ -31,12 +31,12 @@ export const runRecommendationEngine = async (
   let beginnerPoints = 0;
   let intermediatePoints = 0;
 
-  if (trainingAgeYears < 2) beginnerPoints++;
+  if (trainingAgeYears < 1) beginnerPoints++;
   if (relativeSquat < 1.5) beginnerPoints++;
   if (sprint30mSeconds > 4.6) beginnerPoints++;
   if (broadJumpMeters < 2.0) beginnerPoints++;
 
-  if (trainingAgeYears >= 2) intermediatePoints++;
+  if (trainingAgeYears >= 1) intermediatePoints++;
   if (relativeSquat >= 1.5) intermediatePoints++;
   if (broadJumpMeters > 2.1) intermediatePoints++;
   if (sprint30mSeconds <= 4.5) intermediatePoints++;
@@ -52,7 +52,7 @@ export const runRecommendationEngine = async (
   // 2. DETERMINE SPECIFIC DEFICIT
   // ==========================================
   let identifiedDeficit = "";
-  const hasMobilityDeficit = kneeToWallCm < 8 || deepSquatHold === "Poor";
+  const hasMobilityDeficit = kneeToWallCm < 6 || deepSquatHold === "Poor";
 
   if (assignedLevel === "Beginner") {
     if (hasMobilityDeficit) identifiedDeficit = "Mobility";
