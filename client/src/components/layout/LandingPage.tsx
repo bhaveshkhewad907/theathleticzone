@@ -534,7 +534,7 @@ export default function LandingPage() {
             >
               <div className="relative z-10 aspect-[4/5] rounded-[16px] md:rounded-[24px] overflow-hidden border border-white/10 shadow-[0_15px_30px_rgba(0,0,0,0.6)]">
                 <img
-                  src="https://media.theathleticzone.in/auth-bg-images/jitu-saini.HEIC"
+                  src="https://media.theathleticzone.in/auth-bg-images/jitu-saini%20(1).jpg"
                   alt="Head Coach Jitendra Saini"
                   className="absolute inset-0 w-full h-full object-cover grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 group-hover:scale-105 transition-all duration-[1.5s] ease-out"
                 />
