@@ -37,13 +37,13 @@ export default function PhysicalStep({ data, updateData }: PhysicalStepProps) {
   ];
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-black text-white uppercase tracking-tight mb-4">
+    <div className="animate-fade-up space-y-6 relative">
+      <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter mb-6">
         Athlete Profile
       </h2>
       {inputs.map((input) => (
         <div key={input.field}>
-          <label className="block text-xs font-bold uppercase tracking-widest text-white/50 mb-2">
+          <label className="block text-xs font-bold uppercase tracking-widest text-white/70 mb-2">
             {input.label}
           </label>
           <input
@@ -53,11 +53,11 @@ export default function PhysicalStep({ data, updateData }: PhysicalStepProps) {
             onChange={(e) =>
               updateData("physical", input.field, e.target.value)
             }
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-amber-500 transition-colors"
+            className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-4 text-white text-lg font-bold placeholder:text-white/20 focus:outline-none focus:border-amber-500 transition-all shadow-inner"
           />
         </div>
       ))}
-      <p className="text-[10px] text-white/30 italic">
+      <p className="text-[10px] text-white/40 italic font-bold tracking-wide mt-4">
         *Data is used exclusively by the recommendation engine to determine your
         course tier.
       </p>

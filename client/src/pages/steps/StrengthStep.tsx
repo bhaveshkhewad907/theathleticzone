@@ -14,12 +14,7 @@ export default function StrengthStep({ data, updateData }: Props) {
   const [activeDemoVideo, setActiveDemoVideo] = useState<string | null>(null);
 
   return (
-    <div
-      className="animate-fade-up relative bg-cover bg-center bg-no-repeat p-6 sm:p-10 rounded-3xl border border-white/10 overflow-hidden shadow-2xl"
-      style={{
-        backgroundImage: `linear-gradient(to bottom, rgba(9,9,11,0.85), rgba(9,9,11,0.98)), url('https://media.theathleticzone.in/auth-bg-images/strength.jpg')`,
-      }}
-    >
+    <div className="animate-fade-up relative">
       <h2 className="text-3xl font-black uppercase italic tracking-tighter mb-2">
         Phase 4: <span className="text-amber-500">Absolute Strength</span>
       </h2>
@@ -60,7 +55,7 @@ export default function StrengthStep({ data, updateData }: Props) {
               updateData("strength", "backSquatMaxKg", e.target.value)
             }
             placeholder="e.g. 120"
-            className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-4 text-white text-lg font-bold placeholder:text-white/20 focus:border-amber-500 focus:outline-none transition-all"
+            className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-4 text-white text-lg font-bold placeholder:text-white/20 focus:border-amber-500 focus:outline-none transition-all shadow-inner"
           />
           <span className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 font-bold">
             kg

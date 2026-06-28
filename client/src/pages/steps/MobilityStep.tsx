@@ -14,12 +14,7 @@ export default function MobilityStep({ data, updateData }: Props) {
   const [activeDemoVideo, setActiveDemoVideo] = useState<string | null>(null);
 
   return (
-    <div
-      className="animate-fade-up relative bg-cover bg-center bg-no-repeat p-6 sm:p-10 rounded-3xl border border-white/10 overflow-hidden shadow-2xl"
-      style={{
-        backgroundImage: `linear-gradient(to bottom, rgba(9,9,11,0.85), rgba(9,9,11,0.98)), url('https://media.theathleticzone.in/auth-bg-images/mobility.jpg')`,
-      }}
-    >
+    <div className="animate-fade-up relative">
       <h2 className="text-3xl font-black uppercase italic tracking-tighter mb-2">
         Phase 1: <span className="text-amber-500">Mobility</span>
       </h2>
@@ -60,7 +55,7 @@ export default function MobilityStep({ data, updateData }: Props) {
               updateData("mobility", "kneeToWallCm", e.target.value)
             }
             placeholder="e.g. 10"
-            className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-4 text-white text-lg font-bold placeholder:text-white/20 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 transition-all"
+            className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-4 text-white text-lg font-bold placeholder:text-white/20 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 transition-all shadow-inner"
           />
           <span className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 font-bold">
             cm
@@ -97,10 +92,10 @@ export default function MobilityStep({ data, updateData }: Props) {
             <button
               key={option}
               onClick={() => updateData("mobility", "deepSquatHold", option)}
-              className={`px-4 py-4 rounded-xl border text-left font-bold transition-all ${
+              className={`px-4 py-4 rounded-xl border text-left font-bold transition-all shadow-inner ${
                 data.deepSquatHold === option
                   ? "bg-amber-500/20 border-amber-500 text-amber-500"
-                  : "bg-black/40 border-white/10 text-white/60 hover:bg-white/5"
+                  : "bg-black/40 border-white/10 text-white/60 hover:bg-white/10 hover:text-white"
               }`}
             >
               {option === "Good" && "Good (Comfortable, heels flat, chest up)"}

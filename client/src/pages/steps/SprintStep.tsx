@@ -63,12 +63,7 @@ export default function SprintStep({ data, updateData }: Props) {
   };
 
   return (
-    <div
-      className="animate-fade-up relative bg-cover bg-center bg-no-repeat p-6 sm:p-10 rounded-3xl border border-white/10 overflow-hidden shadow-2xl"
-      style={{
-        backgroundImage: `linear-gradient(to bottom, rgba(9,9,11,0.85), rgba(9,9,11,0.98)), url('https://media.theathleticzone.in/auth-bg-images/sprint.jpg')`,
-      }}
-    >
+    <div className="animate-fade-up relative">
       <h2 className="text-3xl font-black uppercase italic tracking-tighter mb-2">
         Phase 3: <span className="text-amber-500">The Tape</span>
       </h2>
@@ -91,7 +86,7 @@ export default function SprintStep({ data, updateData }: Props) {
               updateData("sprinting", "sprint30mSeconds", e.target.value)
             }
             placeholder="e.g. 4.25"
-            className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-4 text-white text-lg font-bold placeholder:text-white/20 focus:border-amber-500 focus:outline-none transition-all"
+            className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-4 text-white text-lg font-bold placeholder:text-white/20 focus:border-amber-500 focus:outline-none transition-all shadow-inner"
           />
           <span className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 font-bold">
             sec
@@ -127,7 +122,7 @@ export default function SprintStep({ data, updateData }: Props) {
           className={`relative overflow-hidden flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-xl transition-all cursor-pointer ${
             data.sprintVideoUrl
               ? "border-green-500/50 bg-green-500/5"
-              : "border-white/20 hover:border-amber-500/50 bg-black/40 hover:bg-amber-500/5"
+              : "border-white/20 hover:border-amber-500/50 bg-black/40 hover:bg-amber-500/5 shadow-inner"
           }`}
         >
           {isUploading && (
