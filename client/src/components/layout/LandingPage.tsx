@@ -169,7 +169,7 @@ export default function LandingPage() {
       {/* 🚀 1. THE GLOBAL FIXED BACKGROUND LAYER */}
       <div className="fixed inset-0 z-[-1] bg-[#0B0F14]">
         <img
-          src="https://images.unsplash.com/photo-1461896836934-ffe607ba8211?q=80&w=2070&auto=format&fit=crop"
+          src="https://media.theathleticzone.in/auth-bg-images/hero-bg.jpg"
           alt="Athletic Zone Background"
           className="w-full h-full object-cover opacity-60"
         />
