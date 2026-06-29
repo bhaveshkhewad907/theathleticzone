@@ -98,7 +98,7 @@ export default function AdminAthletes() {
 
     try {
       // Fetch the array of assessments from the updated backend
-      const res = await api.get(`/admin/athletes/${athlete._id}/assessments`);
+      const res = await api.get(`/admin/athletes/${athlete._id}/assessment`);
       setAssessmentHistory(res.data.data);
     } catch (err) {
       const apiError = err as {
