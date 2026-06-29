@@ -6,12 +6,17 @@ interface PhysicalData {
   heightCm: number;
   bodyweightKg: number;
   trainingAgeYears: number;
+  trainingAgeMonths?: number;
 }
 
 interface MetricsData {
   mobility: { kneeToWallCm: number; deepSquatHold: string };
   power: { broadJumpMeters: number; verticalJumpCm: number };
-  sprinting: { sprint30mSeconds: number };
+  sprinting: {
+    sprint30mSeconds: number;
+    sprint100mSeconds?: number;
+    sprint200mSeconds?: number;
+  };
   strength: { backSquatMaxKg: number };
 }
 
@@ -23,7 +28,11 @@ export const runRecommendationEngine = async (
   const { broadJumpMeters } = metrics.power;
   const { sprint30mSeconds } = metrics.sprinting;
   const { kneeToWallCm, deepSquatHold } = metrics.mobility;
-  const { trainingAgeYears } = physical;
+
+  // 🚀 MATHEMATICAL FIX: Calculate precise decimal training age
+  const years = physical.trainingAgeYears || 0;
+  const months = physical.trainingAgeMonths || 0;
+  const preciseTrainingAge = years + months / 12;
 
   // ==========================================
   // 1. DETERMINE ATHLETE LEVEL
@@ -31,12 +40,14 @@ export const runRecommendationEngine = async (
   let beginnerPoints = 0;
   let intermediatePoints = 0;
 
-  if (trainingAgeYears < 1) beginnerPoints++;
+  // 🚀 Now uses preciseTrainingAge
+  if (preciseTrainingAge < 1) beginnerPoints++;
   if (relativeSquat < 1.5) beginnerPoints++;
   if (sprint30mSeconds > 4.6) beginnerPoints++;
   if (broadJumpMeters < 2.0) beginnerPoints++;
 
-  if (trainingAgeYears >= 1) intermediatePoints++;
+  // 🚀 Now uses preciseTrainingAge
+  if (preciseTrainingAge >= 1) intermediatePoints++;
   if (relativeSquat >= 1.5) intermediatePoints++;
   if (broadJumpMeters > 2.1) intermediatePoints++;
   if (sprint30mSeconds <= 4.5) intermediatePoints++;
@@ -73,7 +84,6 @@ export const runRecommendationEngine = async (
   // ==========================================
   // 3. AUTOMATIC COURSE ASSIGNMENT
   // ==========================================
-  // 🚀 ARCHITECTURE FIX: Query explicitly against the structured metadata fields
   const Course = mongoose.model("Course");
   const assignedCourse = await Course.findOne({
     "meta.tier": assignedLevel,
@@ -82,7 +92,6 @@ export const runRecommendationEngine = async (
   });
 
   if (!assignedCourse) {
-    // Return null so the controller can safely assign the fallback course
     return {
       assignedLevel,
       identifiedDeficit,

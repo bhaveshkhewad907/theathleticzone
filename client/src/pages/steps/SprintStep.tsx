@@ -5,7 +5,12 @@ import axios from "axios";
 import api from "../../services/api";
 
 interface Props {
-  data: { sprint30mSeconds: string; sprintVideoUrl: string };
+  data: {
+    sprint30mSeconds: string;
+    sprint100mSeconds?: string; // 🚀 NEW
+    sprint200mSeconds?: string; // 🚀 NEW
+    sprintVideoUrl: string;
+  };
   updateData: (
     category: "mobility" | "power" | "sprinting" | "strength",
     field: string,
@@ -71,26 +76,72 @@ export default function SprintStep({ data, updateData }: Props) {
         Numbers tell us half the story. The tape tells us the rest.
       </p>
 
-      {/* 30m SPRINT TIME INPUT */}
+      {/* 🚀 SPRINT TIMES GRID */}
       <div className="mb-10">
         <label className="text-sm font-bold uppercase tracking-widest text-white/90 block mb-3">
-          1. 30m Sprint Time
+          1. Track Metrics
         </label>
 
-        <div className="relative">
-          <input
-            type="number"
-            step="0.01"
-            value={data.sprint30mSeconds}
-            onChange={(e) =>
-              updateData("sprinting", "sprint30mSeconds", e.target.value)
-            }
-            placeholder="e.g. 4.25"
-            className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-4 text-white text-lg font-bold placeholder:text-white/20 focus:border-amber-500 focus:outline-none transition-all shadow-inner"
-          />
-          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 font-bold">
-            sec
-          </span>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* 30m Input */}
+          <div className="relative">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-amber-500 text-[10px] font-black uppercase tracking-widest">
+              30m
+            </span>
+            <input
+              type="number"
+              step="0.01"
+              value={data.sprint30mSeconds}
+              onChange={(e) =>
+                updateData("sprinting", "sprint30mSeconds", e.target.value)
+              }
+              placeholder="e.g. 4.25"
+              className="w-full bg-black/40 border border-white/10 rounded-xl py-4 pl-14 pr-12 text-white text-base font-bold placeholder:text-white/20 focus:border-amber-500 focus:outline-none transition-all shadow-inner"
+            />
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 font-bold text-sm">
+              sec
+            </span>
+          </div>
+
+          {/* 100m Input */}
+          <div className="relative">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-amber-500 text-[10px] font-black uppercase tracking-widest">
+              100m
+            </span>
+            <input
+              type="number"
+              step="0.01"
+              value={data.sprint100mSeconds || ""}
+              onChange={(e) =>
+                updateData("sprinting", "sprint100mSeconds", e.target.value)
+              }
+              placeholder="e.g. 11.50"
+              className="w-full bg-black/40 border border-white/10 rounded-xl py-4 pl-14 pr-12 text-white text-base font-bold placeholder:text-white/20 focus:border-amber-500 focus:outline-none transition-all shadow-inner"
+            />
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 font-bold text-sm">
+              sec
+            </span>
+          </div>
+
+          {/* 200m Input */}
+          <div className="relative">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-amber-500 text-[10px] font-black uppercase tracking-widest">
+              200m
+            </span>
+            <input
+              type="number"
+              step="0.01"
+              value={data.sprint200mSeconds || ""}
+              onChange={(e) =>
+                updateData("sprinting", "sprint200mSeconds", e.target.value)
+              }
+              placeholder="e.g. 23.20"
+              className="w-full bg-black/40 border border-white/10 rounded-xl py-4 pl-14 pr-12 text-white text-base font-bold placeholder:text-white/20 focus:border-amber-500 focus:outline-none transition-all shadow-inner"
+            />
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 font-bold text-sm">
+              sec
+            </span>
+          </div>
         </div>
       </div>
 
@@ -107,7 +158,6 @@ export default function SprintStep({ data, updateData }: Props) {
               )
             }
             className="flex items-center gap-1.5 text-amber-500 text-[10px] font-black uppercase tracking-widest bg-amber-500/10 px-3 py-1.5 rounded-full hover:bg-amber-500/20 transition-colors"
-            aria-label="Watch video demonstration for How to Film Sprint"
           >
             <PlayCircle size={14} /> How to Film
           </button>
@@ -168,7 +218,7 @@ export default function SprintStep({ data, updateData }: Props) {
         </label>
       </div>
 
-      {/* 🎥 DYNAMIC ASSESSMENT VIDEO DEMO MODAL */}
+      {/* DYNAMIC ASSESSMENT VIDEO DEMO MODAL */}
       {activeDemoVideo && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
           <div className="relative w-full max-w-2xl bg-zinc-900 border border-white/10 rounded-xl overflow-hidden shadow-2xl">
@@ -179,7 +229,6 @@ export default function SprintStep({ data, updateData }: Props) {
               <button
                 onClick={() => setActiveDemoVideo(null)}
                 className="text-white/60 hover:text-white transition-colors p-1"
-                aria-label="Close demo player"
               >
                 <X size={18} />
               </button>

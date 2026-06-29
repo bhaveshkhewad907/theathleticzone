@@ -9,6 +9,7 @@ export interface IAssessment extends Document {
     heightCm: number;
     bodyweightKg: number;
     trainingAgeYears: number;
+    trainingAgeMonths?: number;
   };
 
   // 🏃‍♂️ Core Sprint Metrics
@@ -23,6 +24,8 @@ export interface IAssessment extends Document {
     };
     sprinting: {
       sprint30mSeconds: number;
+      sprint100mSeconds?: number; // 🚀 NEW
+      sprint200mSeconds?: number; // 🚀 NEW
       sprintVideoUrl?: string;
     };
     strength: {
@@ -61,6 +64,7 @@ const assessmentSchema = new Schema<IAssessment>(
       heightCm: { type: Number, required: true },
       bodyweightKg: { type: Number, required: true },
       trainingAgeYears: { type: Number, required: true },
+      trainingAgeMonths: { type: Number, default: 0 },
     },
 
     metrics: {
@@ -78,6 +82,8 @@ const assessmentSchema = new Schema<IAssessment>(
       },
       sprinting: {
         sprint30mSeconds: { type: Number, required: true },
+        sprint100mSeconds: { type: Number },
+        sprint200mSeconds: { type: Number },
         sprintVideoUrl: { type: String }, // Optional, if upload fails
       },
       strength: {

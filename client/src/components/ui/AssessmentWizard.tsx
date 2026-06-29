@@ -29,10 +29,21 @@ export default function AssessmentWizard() {
   const [scoreData, setScoreData] = useState<ScorePayload | null>(null);
 
   const [formData, setFormData] = useState({
-    physical: { age: "", heightCm: "", bodyweightKg: "", trainingAgeYears: "" },
+    physical: {
+      age: "",
+      heightCm: "",
+      bodyweightKg: "",
+      trainingAgeYears: "",
+      trainingAgeMonths: "",
+    },
     mobility: { kneeToWallCm: "", deepSquatHold: "" },
     power: { broadJumpMeters: "", verticalJumpCm: "" },
-    sprinting: { sprint30mSeconds: "", sprintVideoUrl: "" },
+    sprinting: {
+      sprint30mSeconds: "",
+      sprint100mSeconds: "",
+      sprint200mSeconds: "",
+      sprintVideoUrl: "",
+    },
     strength: { backSquatMaxKg: "" },
   });
 
@@ -59,6 +70,7 @@ export default function AssessmentWizard() {
           heightCm: Number(formData.physical.heightCm),
           bodyweightKg: Number(formData.physical.bodyweightKg),
           trainingAgeYears: Number(formData.physical.trainingAgeYears),
+          trainingAgeMonths: Number(formData.physical.trainingAgeMonths),
         },
         metrics: {
           mobility: {
@@ -71,6 +83,8 @@ export default function AssessmentWizard() {
           },
           sprinting: {
             sprint30mSeconds: Number(formData.sprinting.sprint30mSeconds),
+            sprint100mSeconds: Number(formData.sprinting.sprint100mSeconds),
+            sprint200mSeconds: Number(formData.sprinting.sprint200mSeconds),
             sprintVideoUrl: formData.sprinting.sprintVideoUrl || undefined,
           },
           strength: {
@@ -82,10 +96,12 @@ export default function AssessmentWizard() {
       const response = await api.post("/assessments", payload);
       toast.success("Assessment Processed! Algorithm Analysis Complete.");
 
-      const trainingAge = payload.physical.trainingAgeYears || 0;
+      const trainingYears = payload.physical.trainingAgeYears;
+      const trainingMonths = payload.physical.trainingAgeMonths;
+      const totalTrainingExperience = trainingYears + trainingMonths / 12;
       const calculatedOverall = Math.min(
         96,
-        45 + trainingAge * 12 + Math.floor(Math.random() * 8),
+        45 + totalTrainingExperience * 12 + Math.floor(Math.random() * 8),
       );
 
       const calculatedStrength = Math.min(
