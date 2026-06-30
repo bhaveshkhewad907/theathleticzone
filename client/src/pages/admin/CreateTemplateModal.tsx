@@ -1,8 +1,17 @@
 import { useState } from "react";
-import { X, Search, Save, Trash2, Dumbbell, Timer } from "lucide-react";
+import {
+  X,
+  Search,
+  Save,
+  Trash2,
+  Dumbbell,
+  Timer,
+  ChevronUp,
+  ChevronDown,
+} from "lucide-react";
 import api from "../../services/api";
 import toast from "react-hot-toast";
-import StepPickerModal from "./StepPickerModal"; // Adjust path if needed
+import StepPickerModal from "./StepPickerModal";
 
 interface CreateTemplateModalProps {
   onClose: () => void;
@@ -51,9 +60,27 @@ export default function CreateTemplateModal({
     setShowStepPicker(false);
   };
 
-  const removeStep = (index: number) => {
-    setSteps(steps.filter((_, i) => i !== index));
+  // 🚀 REORDERING LOGIC
+  const moveStep = (index: number, direction: "up" | "down") => {
+    setSteps((prev) => {
+      const newSteps = [...prev];
+      if (direction === "up" && index > 0) {
+        [newSteps[index - 1], newSteps[index]] = [
+          newSteps[index],
+          newSteps[index - 1],
+        ];
+      } else if (direction === "down" && index < newSteps.length - 1) {
+        [newSteps[index + 1], newSteps[index]] = [
+          newSteps[index],
+          newSteps[index + 1],
+        ];
+      }
+      return newSteps;
+    });
   };
+
+  const removeStep = (index: number) =>
+    setSteps(steps.filter((_, i) => i !== index));
 
   const updateStepFields = (
     index: number,
@@ -61,7 +88,7 @@ export default function CreateTemplateModal({
     value: string,
   ) => {
     const updated = [...steps];
-    updated[index] = { ...updated[index], [field]: value };
+    updated[index] = { ...updated[index], [field]: value as never };
     setSteps(updated);
   };
 
@@ -124,7 +151,6 @@ export default function CreateTemplateModal({
               onSubmit={handleSave}
               className="space-y-8"
             >
-              {/* Core Metadata */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8A94A6]">
@@ -187,18 +213,37 @@ export default function CreateTemplateModal({
                           <h4 className="text-sm font-black text-white uppercase tracking-wider pr-8">
                             {index + 1}. {step.stepTitle}
                           </h4>
-                          <button
-                            type="button"
-                            onClick={() => removeStep(index)}
-                            className="absolute top-4 right-4 text-white/20 hover:text-red-500 transition-colors"
-                          >
-                            <Trash2 size={16} />
-                          </button>
+
+                          {/* 🚀 EXERCISE REORDERING CONTROLS */}
+                          <div className="flex items-center gap-2 bg-[#121821] border border-white/5 rounded-xl p-1">
+                            <button
+                              type="button"
+                              onClick={() => moveStep(index, "up")}
+                              disabled={index === 0}
+                              className="p-2 text-white/40 hover:text-white hover:bg-white/10 rounded-lg disabled:opacity-30 transition-colors"
+                            >
+                              <ChevronUp size={16} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => moveStep(index, "down")}
+                              disabled={index === steps.length - 1}
+                              className="p-2 text-white/40 hover:text-white hover:bg-white/10 rounded-lg disabled:opacity-30 transition-colors"
+                            >
+                              <ChevronDown size={16} />
+                            </button>
+                            <div className="w-px h-4 bg-white/10 mx-1" />
+                            <button
+                              type="button"
+                              onClick={() => removeStep(index)}
+                              className="p-2 text-white/40 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
                         </div>
 
-                        {/* 🚀 PROGRAMMING VARIABLES GRID */}
                         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                          {/* Sets */}
                           <div className="space-y-1">
                             <label className="text-[9px] font-black uppercase text-[#8A94A6]">
                               Sets
@@ -212,7 +257,6 @@ export default function CreateTemplateModal({
                               className="w-full bg-[#121821] border border-white/5 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-amber-500/50"
                             />
                           </div>
-                          {/* Reps */}
                           <div className="space-y-1">
                             <label className="text-[9px] font-black uppercase text-[#8A94A6]">
                               Reps
@@ -226,8 +270,6 @@ export default function CreateTemplateModal({
                               className="w-full bg-[#121821] border border-white/5 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-amber-500/50"
                             />
                           </div>
-
-                          {/* Intensity Type */}
                           <div className="space-y-1">
                             <label className="text-[9px] font-black uppercase text-[#8A94A6]">
                               Intensity
@@ -251,8 +293,6 @@ export default function CreateTemplateModal({
                               <option value="Custom">Custom</option>
                             </select>
                           </div>
-
-                          {/* Intensity Value */}
                           <div className="space-y-1">
                             <label className="text-[9px] font-black uppercase text-[#8A94A6]">
                               Target Value
@@ -276,8 +316,6 @@ export default function CreateTemplateModal({
                               className="w-full bg-[#121821] border border-white/5 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-amber-500/50 disabled:opacity-50"
                             />
                           </div>
-
-                          {/* Recovery Time */}
                           <div className="space-y-1">
                             <label className="text-[9px] font-black uppercase text-blue-400 flex items-center gap-1">
                               <Timer size={10} /> Recovery
@@ -319,7 +357,7 @@ export default function CreateTemplateModal({
               disabled={isSaving || !name || steps.length === 0}
               className="px-8 py-3 rounded-xl bg-amber-500 text-black font-black text-[10px] uppercase tracking-[0.2em] hover:bg-amber-400 transition-all disabled:opacity-50 flex items-center gap-2 shadow-[0_10px_30px_rgba(245,158,11,0.2)]"
             >
-              {isSaving ? "Saving..." : "Lock Blueprint"}
+              {isSaving ? "Saving..." : "Lock Blueprint"}{" "}
               {!isSaving && <Save size={14} />}
             </button>
           </div>

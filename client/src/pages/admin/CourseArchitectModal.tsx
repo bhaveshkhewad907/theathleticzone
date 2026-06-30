@@ -9,10 +9,13 @@ import {
   BatteryCharging,
   Dumbbell,
   Timer,
+  ChevronUp,
+  ChevronDown,
+  PlusCircle,
 } from "lucide-react";
 import api from "../../services/api";
 import toast from "react-hot-toast";
-import StepPickerModal from "./StepPickerModal"; // Ensures we can add ad-hoc exercises
+import StepPickerModal from "./StepPickerModal";
 
 // ==========================================
 // 🛡️ TYPESCRIPT INTERFACES
@@ -38,7 +41,7 @@ interface Session {
   steps: InlineStep[];
 }
 
-interface CourseDay {
+export interface CourseDay {
   dayNumber: number;
   morning: Session;
   evening: Session;
@@ -66,13 +69,11 @@ export default function CourseArchitectModal({
   onClose,
   onSuccess,
 }: CourseArchitectModalProps) {
-  // 1. Core State
   const [days, setDays] = useState<CourseDay[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 2. Editor State
   const [activeDay, setActiveDay] = useState<number>(1);
   const [activeSession, setActiveSession] = useState<"morning" | "evening">(
     "morning",
@@ -80,21 +81,18 @@ export default function CourseArchitectModal({
   const [showStepPicker, setShowStepPicker] = useState(false);
 
   // ==========================================
-  // 🔄 INITIALIZATION (Fetch Plan & Blueprints)
+  // 🔄 INITIALIZATION
   // ==========================================
   useEffect(() => {
     const initializeArchitect = async () => {
       try {
-        // Fetch Blueprints (Templates)
         const templatesRes = await api.get("/chapters/templates");
         setTemplates(templatesRes.data.data);
 
-        // Fetch Existing Plan
         const planRes = await api.get(`/chapters/plan/${courseId}`);
         const existingPlan = planRes.data.data;
 
         if (existingPlan && existingPlan.days && existingPlan.days.length > 0) {
-          // Normalize existing data to ensure it matches our strict UI state
           const normalizedDays = existingPlan.days.map((d: CourseDay) => ({
             dayNumber: d.dayNumber,
             morning: {
@@ -109,17 +107,17 @@ export default function CourseArchitectModal({
             },
           }));
           setDays(normalizedDays);
+          setActiveDay(normalizedDays[0].dayNumber);
         } else {
-          // Generate a blank 42-day (6-week) slate if no plan exists
-          const initialDays: CourseDay[] = Array.from(
-            { length: 42 },
-            (_, i) => ({
-              dayNumber: i + 1,
+          // 🚀 FIX: Start with a clean slate of just Day 1 instead of 42 empty days
+          setDays([
+            {
+              dayNumber: 1,
               morning: { isRest: false, templateRefName: "", steps: [] },
               evening: { isRest: false, templateRefName: "", steps: [] },
-            }),
-          );
-          setDays(initialDays);
+            },
+          ]);
+          setActiveDay(1);
         }
       } catch (error) {
         console.error(error);
@@ -133,11 +131,51 @@ export default function CourseArchitectModal({
   }, [courseId]);
 
   // ==========================================
-  // 🛠️ DAY EDITOR FUNCTIONS
+  // 🛠️ DAY & TIMELINE MANAGEMENT
   // ==========================================
   const currentDayIndex = days.findIndex((d) => d.dayNumber === activeDay);
   const activeDayData = days[currentDayIndex];
   const activeSessionData = activeDayData ? activeDayData[activeSession] : null;
+
+  const addNewDay = () => {
+    setDays((prev) => {
+      const nextDayNum =
+        prev.length > 0 ? Math.max(...prev.map((d) => d.dayNumber)) + 1 : 1;
+      return [
+        ...prev,
+        {
+          dayNumber: nextDayNum,
+          morning: { isRest: false, templateRefName: "", steps: [] },
+          evening: { isRest: false, templateRefName: "", steps: [] },
+        },
+      ];
+    });
+  };
+
+  const removeActiveDay = () => {
+    if (
+      !window.confirm(
+        `Are you sure you want to permanently delete Day ${activeDay}?`,
+      )
+    )
+      return;
+
+    setDays((prev) => {
+      const newDays = prev.filter((d) => d.dayNumber !== activeDay);
+      if (newDays.length > 0) {
+        setActiveDay(newDays[0].dayNumber);
+      } else {
+        // If they delete the very last day, generate a fresh Day 1
+        newDays.push({
+          dayNumber: 1,
+          morning: { isRest: false, templateRefName: "", steps: [] },
+          evening: { isRest: false, templateRefName: "", steps: [] },
+        });
+        setActiveDay(1);
+      }
+      return newDays;
+    });
+  };
 
   const updateActiveSession = (updater: (session: Session) => Session) => {
     setDays((prevDays) => {
@@ -152,37 +190,51 @@ export default function CourseArchitectModal({
     });
   };
 
-  const toggleRestDay = () => {
-    updateActiveSession((session) => {
-      session.isRest = !session.isRest;
-      return session;
+  const toggleRestDay = () =>
+    updateActiveSession((s) => {
+      s.isRest = !s.isRest;
+      return s;
     });
-  };
 
-  // 🚀 IMPORT BLUEPRINT: Copies steps from Template into the active Day
   const importBlueprint = (templateId: string) => {
     if (!templateId) return;
     const template = templates.find((t) => t._id === templateId);
     if (!template) return;
-
     if (activeSessionData && activeSessionData.steps.length > 0) {
       if (
         !window.confirm(
-          "Importing a Blueprint will overwrite the current exercises for this session. Continue?",
+          "Importing a Blueprint will overwrite current exercises. Continue?",
         )
       )
         return;
     }
-
     updateActiveSession((session) => {
       session.templateRefName = template.name;
-      // Deep copy to prevent reference mutation
       session.steps = template.steps.map((s) => ({ ...s }));
       return session;
     });
   };
 
-  // 🚀 INLINE STEP EDITING
+  // 🚀 REORDERING LOGIC
+  const moveStep = (index: number, direction: "up" | "down") => {
+    updateActiveSession((session) => {
+      const newSteps = [...session.steps];
+      if (direction === "up" && index > 0) {
+        [newSteps[index - 1], newSteps[index]] = [
+          newSteps[index],
+          newSteps[index - 1],
+        ];
+      } else if (direction === "down" && index < newSteps.length - 1) {
+        [newSteps[index + 1], newSteps[index]] = [
+          newSteps[index],
+          newSteps[index + 1],
+        ];
+      }
+      session.steps = newSteps;
+      return session;
+    });
+  };
+
   const addStepFromPicker = (stepData: StepRef) => {
     updateActiveSession((session) => {
       session.steps.push({
@@ -198,41 +250,34 @@ export default function CourseArchitectModal({
     setShowStepPicker(false);
   };
 
-  const removeStep = (stepIndex: number) => {
-    updateActiveSession((session) => {
-      session.steps.splice(stepIndex, 1);
-      return session;
+  const removeStep = (stepIndex: number) =>
+    updateActiveSession((s) => {
+      s.steps.splice(stepIndex, 1);
+      return s;
     });
-  };
-
   const updateStepField = (
     stepIndex: number,
     field: keyof InlineStep,
     value: string,
-  ) => {
-    updateActiveSession((session) => {
-      session.steps[stepIndex] = {
-        ...session.steps[stepIndex],
-        [field]: value,
-      };
-      return session;
+  ) =>
+    updateActiveSession((s) => {
+      s.steps[stepIndex] = { ...s.steps[stepIndex], [field]: value };
+      return s;
     });
-  };
 
   // ==========================================
-  // 💾 SAVING TO DATABASE
+  // 💾 SAVING
   // ==========================================
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      // Map state down to Mongoose expected payload (convert step object back to ObjectIds)
       const mappedDays = days.map((d) => ({
         dayNumber: d.dayNumber,
         morning: {
           isRest: d.morning.isRest,
           templateRefName: d.morning.templateRefName,
           steps: d.morning.steps.map((s) => ({
-            step: s.step._id, // Extract ID
+            step: s.step._id,
             sets: s.sets,
             reps: s.reps,
             intensityType: s.intensityType,
@@ -253,12 +298,7 @@ export default function CourseArchitectModal({
           })),
         },
       }));
-
-      await api.post("/chapters/plan", {
-        courseId,
-        days: mappedDays,
-      });
-
+      await api.post("/chapters/plan", { courseId, days: mappedDays });
       toast.success("Course Plan fully synchronized!");
       onSuccess();
       onClose();
@@ -270,22 +310,17 @@ export default function CourseArchitectModal({
     }
   };
 
-  // ==========================================
-  // 🎨 RENDERERS
-  // ==========================================
-  if (isLoading) {
+  if (isLoading)
     return (
       <div className="fixed inset-0 z-[50] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
         <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
-  }
 
   return (
     <>
       <div className="fixed inset-0 z-[50] flex items-center justify-center p-2 md:p-4 bg-black/90 backdrop-blur-xl animate-in fade-in">
         <div className="bg-[#0F1724] border border-white/10 rounded-[2rem] w-full max-w-[1400px] h-[95vh] overflow-hidden shadow-2xl flex flex-col md:flex-row relative">
-          {/* Header (Mobile Only) */}
           <div className="md:hidden flex justify-between items-center p-4 border-b border-white/5 bg-[#121821]">
             <h2 className="text-lg font-black italic uppercase text-white truncate">
               Architect: {courseName}
@@ -306,14 +341,13 @@ export default function CourseArchitectModal({
               </p>
             </div>
 
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-3 md:p-4 space-y-2 flex flex-row md:flex-col overflow-x-auto md:overflow-x-hidden">
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-3 md:p-4 space-y-2 flex flex-row md:flex-col overflow-x-auto md:overflow-x-hidden gap-2 md:gap-0">
               {days.map((day) => {
                 const isActive = activeDay === day.dayNumber;
                 const mRest = day.morning.isRest;
                 const eRest = day.evening.isRest;
                 const mSteps = day.morning.steps.length;
                 const eSteps = day.evening.steps.length;
-
                 let statusText = "Pending Setup";
                 let statusColor = "text-white/30";
 
@@ -329,11 +363,7 @@ export default function CourseArchitectModal({
                   <button
                     key={day.dayNumber}
                     onClick={() => setActiveDay(day.dayNumber)}
-                    className={`w-[140px] md:w-full shrink-0 flex flex-col text-left p-3 md:p-4 rounded-2xl transition-all duration-300 border ${
-                      isActive
-                        ? "bg-amber-500/10 border-amber-500/50 shadow-inner"
-                        : "bg-[#121821] border-white/5 hover:border-white/20"
-                    }`}
+                    className={`w-[140px] md:w-full shrink-0 flex flex-col text-left p-3 md:p-4 rounded-2xl transition-all duration-300 border ${isActive ? "bg-amber-500/10 border-amber-500/50 shadow-inner" : "bg-[#121821] border-white/5 hover:border-white/20"}`}
                   >
                     <div className="flex justify-between items-center mb-1">
                       <span
@@ -353,6 +383,17 @@ export default function CourseArchitectModal({
                   </button>
                 );
               })}
+
+              {/* 🚀 DYNAMIC TIMELINE ADD BUTTON */}
+              <button
+                onClick={addNewDay}
+                className="w-[140px] md:w-full shrink-0 flex flex-col items-center justify-center p-3 md:p-4 rounded-2xl transition-all duration-300 border-2 border-dashed border-white/10 bg-transparent text-white/40 hover:text-amber-500 hover:border-amber-500/50 hover:bg-amber-500/5"
+              >
+                <PlusCircle size={20} className="mb-1" />
+                <span className="text-[10px] font-black uppercase tracking-widest">
+                  Add Day
+                </span>
+              </button>
             </div>
 
             <div className="p-4 border-t border-white/5 bg-[#121821] hidden md:block">
@@ -361,7 +402,7 @@ export default function CourseArchitectModal({
                 disabled={isSaving}
                 className="w-full py-4 rounded-xl bg-amber-500 text-black font-black text-[10px] uppercase tracking-[0.2em] hover:bg-amber-400 transition-all disabled:opacity-50 flex justify-center items-center gap-2 shadow-[0_10px_30px_rgba(245,158,11,0.2)]"
               >
-                {isSaving ? "Synchronizing..." : "Deploy Course Plan"}
+                {isSaving ? "Synchronizing..." : "Deploy Course Plan"}{" "}
                 {!isSaving && <Save size={16} />}
               </button>
             </div>
@@ -369,7 +410,6 @@ export default function CourseArchitectModal({
 
           {/* RIGHT PANEL: DYNAMIC DAY EDITOR */}
           <div className="flex-1 flex flex-col h-full bg-[#121821] relative overflow-hidden">
-            {/* Desktop Close Button */}
             <button
               onClick={onClose}
               className="hidden md:flex absolute top-6 right-6 z-20 text-white/50 hover:text-white bg-black/40 p-2 rounded-full backdrop-blur-md border border-white/10 transition-colors"
@@ -379,46 +419,45 @@ export default function CourseArchitectModal({
 
             {activeSessionData && (
               <>
-                {/* Editor Header: Session Toggle */}
                 <div className="p-6 md:p-8 border-b border-white/5 bg-gradient-to-b from-black/40 to-transparent sticky top-0 z-10 backdrop-blur-md">
-                  <div className="flex items-end justify-between mb-6">
+                  <div className="flex items-start justify-between mb-6">
                     <div>
-                      <h3 className="text-3xl md:text-4xl font-black italic uppercase text-white drop-shadow-md">
-                        Day <span className="text-amber-500">{activeDay}</span>
+                      <h3 className="text-3xl md:text-4xl font-black italic uppercase text-white drop-shadow-md flex items-center gap-4">
+                        <span>
+                          Day{" "}
+                          <span className="text-amber-500">{activeDay}</span>
+                        </span>
                       </h3>
                       <p className="text-[10px] text-[#8A94A6] uppercase tracking-widest mt-1 font-bold">
                         Week {Math.ceil(activeDay / 7)} Editor
                       </p>
                     </div>
+                    <button
+                      onClick={removeActiveDay}
+                      className="flex items-center gap-2 px-3 py-2 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white border border-red-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+                    >
+                      <Trash2 size={14} />{" "}
+                      <span className="hidden sm:inline">Delete Day</span>
+                    </button>
                   </div>
 
                   <div className="flex p-1.5 bg-black/60 border border-white/10 rounded-2xl shadow-inner max-w-sm">
                     <button
                       onClick={() => setActiveSession("morning")}
-                      className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all duration-300 ${
-                        activeSession === "morning"
-                          ? "bg-[#121821] text-amber-500 shadow-[0_0_20px_rgba(245,158,11,0.2)] border border-amber-500/30"
-                          : "text-white/40 hover:text-white"
-                      }`}
+                      className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all duration-300 ${activeSession === "morning" ? "bg-[#121821] text-amber-500 shadow-[0_0_20px_rgba(245,158,11,0.2)] border border-amber-500/30" : "text-white/40 hover:text-white"}`}
                     >
                       <Sun size={14} /> Morning Block
                     </button>
                     <button
                       onClick={() => setActiveSession("evening")}
-                      className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all duration-300 ${
-                        activeSession === "evening"
-                          ? "bg-[#121821] text-blue-400 shadow-[0_0_20px_rgba(96,165,250,0.2)] border border-blue-400/30"
-                          : "text-white/40 hover:text-white"
-                      }`}
+                      className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all duration-300 ${activeSession === "evening" ? "bg-[#121821] text-blue-400 shadow-[0_0_20px_rgba(96,165,250,0.2)] border border-blue-400/30" : "text-white/40 hover:text-white"}`}
                     >
                       <Moon size={14} /> Evening Block
                     </button>
                   </div>
                 </div>
 
-                {/* Editor Body */}
                 <div className="flex-1 overflow-y-auto p-6 md:p-8 custom-scrollbar">
-                  {/* Rest Day Override */}
                   <div className="flex items-center justify-between p-5 md:p-6 bg-black/40 border border-white/5 rounded-[20px] mb-8 group hover:border-white/10 transition-colors">
                     <div>
                       <h4 className="text-sm font-black uppercase tracking-widest text-white flex items-center gap-2">
@@ -429,7 +468,7 @@ export default function CourseArchitectModal({
                               ? "text-emerald-500"
                               : "text-white/40"
                           }
-                        />
+                        />{" "}
                         Recovery Status
                       </h4>
                       <p className="text-[10px] text-[#8A94A6] uppercase tracking-widest mt-1 font-bold">
@@ -438,25 +477,16 @@ export default function CourseArchitectModal({
                     </div>
                     <button
                       onClick={toggleRestDay}
-                      className={`relative w-14 h-8 rounded-full transition-all duration-300 border ${
-                        activeSessionData.isRest
-                          ? "bg-emerald-500/20 border-emerald-500"
-                          : "bg-white/5 border-white/20"
-                      }`}
+                      className={`relative w-14 h-8 rounded-full transition-all duration-300 border ${activeSessionData.isRest ? "bg-emerald-500/20 border-emerald-500" : "bg-white/5 border-white/20"}`}
                     >
                       <div
-                        className={`absolute top-1 left-1 w-5 h-5 rounded-full transition-all duration-300 ${
-                          activeSessionData.isRest
-                            ? "translate-x-6 bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.8)]"
-                            : "bg-white/50"
-                        }`}
+                        className={`absolute top-1 left-1 w-5 h-5 rounded-full transition-all duration-300 ${activeSessionData.isRest ? "translate-x-6 bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.8)]" : "bg-white/50"}`}
                       />
                     </button>
                   </div>
 
                   {!activeSessionData.isRest && (
                     <div className="space-y-6">
-                      {/* Blueprint Importer */}
                       <div className="bg-amber-500/5 border border-amber-500/20 rounded-[20px] p-5 md:p-6">
                         <div className="flex flex-col md:flex-row md:items-end gap-4">
                           <div className="flex-1">
@@ -491,7 +521,6 @@ export default function CourseArchitectModal({
                         </div>
                       </div>
 
-                      {/* Inline Steps Timeline */}
                       <div>
                         <div className="flex justify-between items-center mb-6">
                           <h4 className="text-sm font-black uppercase tracking-widest text-white">
@@ -531,18 +560,40 @@ export default function CourseArchitectModal({
                                       {stepData.step.type}
                                     </p>
                                   </div>
-                                  <button
-                                    type="button"
-                                    onClick={() => removeStep(index)}
-                                    className="text-white/20 hover:text-red-500 transition-colors bg-white/5 p-2 rounded-lg"
-                                  >
-                                    <Trash2 size={16} />
-                                  </button>
+
+                                  {/* 🚀 EXERCISE REORDERING CONTROLS */}
+                                  <div className="flex items-center gap-2 bg-black/40 border border-white/5 rounded-xl p-1">
+                                    <button
+                                      type="button"
+                                      onClick={() => moveStep(index, "up")}
+                                      disabled={index === 0}
+                                      className="p-2 text-white/40 hover:text-white hover:bg-white/10 rounded-lg disabled:opacity-30 transition-colors"
+                                    >
+                                      <ChevronUp size={16} />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => moveStep(index, "down")}
+                                      disabled={
+                                        index ===
+                                        activeSessionData.steps.length - 1
+                                      }
+                                      className="p-2 text-white/40 hover:text-white hover:bg-white/10 rounded-lg disabled:opacity-30 transition-colors"
+                                    >
+                                      <ChevronDown size={16} />
+                                    </button>
+                                    <div className="w-px h-4 bg-white/10 mx-1" />
+                                    <button
+                                      type="button"
+                                      onClick={() => removeStep(index)}
+                                      className="p-2 text-white/40 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                                    >
+                                      <Trash2 size={16} />
+                                    </button>
+                                  </div>
                                 </div>
 
-                                {/* Editor Grid */}
                                 <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                                  {/* Sets */}
                                   <div className="space-y-1.5">
                                     <label className="text-[9px] font-black uppercase text-[#8A94A6]">
                                       Sets
@@ -560,7 +611,6 @@ export default function CourseArchitectModal({
                                       className="w-full bg-[#121821] border border-white/5 rounded-lg px-3 py-2.5 text-xs font-bold text-white outline-none focus:border-amber-500/50 shadow-inner"
                                     />
                                   </div>
-                                  {/* Reps */}
                                   <div className="space-y-1.5">
                                     <label className="text-[9px] font-black uppercase text-[#8A94A6]">
                                       Reps
@@ -578,7 +628,6 @@ export default function CourseArchitectModal({
                                       className="w-full bg-[#121821] border border-white/5 rounded-lg px-3 py-2.5 text-xs font-bold text-white outline-none focus:border-amber-500/50 shadow-inner"
                                     />
                                   </div>
-                                  {/* Intensity Type */}
                                   <div className="space-y-1.5">
                                     <label className="text-[9px] font-black uppercase text-[#8A94A6]">
                                       Intensity
@@ -589,7 +638,8 @@ export default function CourseArchitectModal({
                                         updateStepField(
                                           index,
                                           "intensityType",
-                                          e.target.value,
+                                          e.target
+                                            .value as InlineStep["intensityType"],
                                         )
                                       }
                                       className="w-full appearance-none bg-[#121821] border border-white/5 rounded-lg px-3 py-2.5 text-[10px] font-black uppercase tracking-widest text-white outline-none focus:border-amber-500/50 shadow-inner cursor-pointer"
@@ -600,7 +650,6 @@ export default function CourseArchitectModal({
                                       <option value="Custom">Custom</option>
                                     </select>
                                   </div>
-                                  {/* Intensity Value */}
                                   <div className="space-y-1.5">
                                     <label className="text-[9px] font-black uppercase text-[#8A94A6]">
                                       Target Value
@@ -626,7 +675,6 @@ export default function CourseArchitectModal({
                                       className="w-full bg-[#121821] border border-white/5 rounded-lg px-3 py-2.5 text-xs font-bold text-white outline-none focus:border-amber-500/50 disabled:opacity-30 shadow-inner"
                                     />
                                   </div>
-                                  {/* Recovery */}
                                   <div className="space-y-1.5">
                                     <label className="text-[9px] font-black uppercase text-blue-400 flex items-center gap-1">
                                       <Timer size={10} /> Recovery
@@ -657,7 +705,6 @@ export default function CourseArchitectModal({
               </>
             )}
 
-            {/* Mobile Save Button */}
             <div className="md:hidden p-4 border-t border-white/5 bg-[#121821]">
               <button
                 onClick={handleSave}
