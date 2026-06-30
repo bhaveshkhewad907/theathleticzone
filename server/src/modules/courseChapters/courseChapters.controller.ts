@@ -137,16 +137,7 @@ export const saveCoursePlan: RequestHandler = async (req, res, next) => {
 export const getCoursePlan: RequestHandler = async (req, res, next) => {
   try {
     const plan = await CoursePlan.findOne({ courseId: req.params.courseId })
-      // Legacy Population (Leaves older plans intact)
-      .populate({
-        path: "days.morning.templateId",
-        populate: { path: "steps.step" },
-      })
-      .populate({
-        path: "days.evening.templateId",
-        populate: { path: "steps.step" },
-      })
-      // 🚀 NEW: Inline Step Population (For our new scalable architecture)
+      // 🚀 Only populating the NEW inline architecture! (No legacy templateId)
       .populate("days.morning.steps.step")
       .populate("days.evening.steps.step")
       .lean();
