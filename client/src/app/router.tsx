@@ -7,6 +7,7 @@ import NotFound from "../components/ui/NotFound";
 import AthleteLayout from "../components/layout/AthleteLayout";
 import AdminLayout from "../components/layout/AdminPanelLayout";
 import { Loadable } from "../components/ui/Loadable";
+import AdminSteps from "../pages/admin/AdminSteps";
 
 const LoginPage = lazy(() => import("../pages/auth/LoginPage"));
 const RegisterPage = lazy(() => import("../pages/auth/RegisterPage"));
@@ -66,6 +67,7 @@ const router = createBrowserRouter([
       { path: "/admin", element: Loadable(AdminDashboard) },
       { path: "/admin/courses", element: Loadable(AdminCourses) },
       { path: "/admin/athletes", element: Loadable(AdminAthletes) },
+      { path: "/admin/steps", element: Loadable(AdminSteps) },
     ],
   },
 ]);

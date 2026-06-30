@@ -26,17 +26,6 @@ export const getSteps: RequestHandler = async (_req, res, next) => {
   }
 };
 
-export const updateStep: RequestHandler = async (req, res, next) => {
-  try {
-    const step = await Step.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
-    res.status(200).json({ success: true, data: step });
-  } catch (error) {
-    next(error);
-  }
-};
-
 // ==============================
 // PROTOCOL BUILDER (TEMPLATES)
 // ==============================
@@ -170,6 +159,88 @@ export const updateCourseProgress: RequestHandler = async (
 
     await progress.save();
     res.status(200).json({ success: true, data: progress });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getAllSteps: RequestHandler = async (req, res, next) => {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const search = (req.query.search as string) || "";
+    const type = (req.query.type as string) || "";
+
+    const query: any = {};
+    if (search) query.title = { $regex: search, $options: "i" };
+    if (type) query.type = type;
+
+    const skip = (page - 1) * limit;
+
+    const [steps, total] = await Promise.all([
+      Step.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      Step.countDocuments(query),
+    ]);
+
+    res.status(200).json({
+      success: true,
+      data: steps,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        totalItems: total,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// 2. FULL UPDATE STEP (PATCH/PUT)
+export const updateStep: RequestHandler = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { title, type, videoUrl } = req.body;
+
+    // Only update fields that are provided (Partial Update)
+    const updateData: any = {};
+    if (title) updateData.title = title;
+    if (type) updateData.type = type;
+    if (videoUrl) updateData.videoUrl = videoUrl;
+
+    const updatedStep = await Step.findByIdAndUpdate(
+      id,
+      { $set: updateData },
+      { new: true, runValidators: true },
+    );
+
+    if (!updatedStep) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Step not found." });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Step updated successfully.",
+      data: updatedStep,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// 3. DELETE STEP
+export const deleteStep: RequestHandler = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    // OPTIONAL BUT RECOMMENDED: Prevent deletion if step is used in a course template
+    // const isUsed = await CoursePlan.findOne({ "days.morning.templateId.steps.step": id });
+    // if (isUsed) return res.status(400).json({ success: false, message: "Cannot delete step currently used in a course." });
+
+    await Step.findByIdAndDelete(id);
+    res.status(200).json({ success: true, message: "Step purged from vault." });
   } catch (error) {
     next(error);
   }
