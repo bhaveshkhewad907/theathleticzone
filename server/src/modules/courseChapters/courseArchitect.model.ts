@@ -80,7 +80,7 @@ export interface ICoursePlan extends Document {
     dayNumber: number;
     morning: {
       isRest: boolean;
-      templateRefName?: string; // Remembers what blueprint was used to create this
+      templateRefName?: string; // Tracks origin instead of locking to ID
       steps: {
         step: mongoose.Types.ObjectId;
         sets?: string;
@@ -119,8 +119,8 @@ const coursePlanSchema = new Schema<ICoursePlan>(
         // ☀️ MORNING BLOCK
         morning: {
           isRest: { type: Boolean, default: false },
-          templateRefName: { type: String, default: "" }, // 🚀 Tracks origin instead of locking to ID
-          steps: [inlineStepSchema], // 🚀 Inline array allows per-day, per-week editing!
+          templateRefName: { type: String, default: "" },
+          steps: [inlineStepSchema], // 🚀 Inline array allows per-day editing
         },
         // 🌙 EVENING BLOCK
         evening: {
