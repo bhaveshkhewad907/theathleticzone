@@ -4,6 +4,7 @@ import {
   createStep,
   getSteps,
   updateStep,
+  deleteStep, // 🚀 NEW: Import added!
   createTemplate,
   getTemplates,
   saveCoursePlan,
@@ -28,6 +29,7 @@ const adminOnly = requireRole("ADMIN");
 router.post("/steps", adminOnly, createStep);
 router.get("/steps", adminOnly, getSteps);
 router.put("/steps/:id", adminOnly, updateStep);
+router.delete("/steps/:id", adminOnly, deleteStep); // 🚀 NEW: Delete Route Wired Up!
 
 // Protocol Builder
 router.post("/templates", adminOnly, createTemplate);

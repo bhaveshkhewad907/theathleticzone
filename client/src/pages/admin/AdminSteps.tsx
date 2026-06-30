@@ -55,7 +55,15 @@ export default function AdminSteps() {
         `/chapters/steps?page=${page}&limit=10&search=${search}&type=${type}`,
       );
       setSteps(res.data.data);
-      setPagination(res.data.pagination);
+      if (res.data.pagination) {
+        setPagination(res.data.pagination);
+      } else {
+        setPagination({
+          totalPages: 1,
+          totalItems: res.data.data?.length || 0,
+          itemsPerPage: 10,
+        });
+      }
     } catch (error) {
       console.error("Failed to fetch steps", error);
       toast.error("Failed to retrieve Content Vault.");
@@ -75,6 +83,7 @@ export default function AdminSteps() {
       fetchSteps(1, searchTerm, filterType);
     }, 500);
     return () => clearTimeout(timeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm]);
 
   const handleDelete = async (id: string) => {
