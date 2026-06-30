@@ -4,9 +4,9 @@ import { Shield } from "lucide-react";
 
 // 🎬 Cinematic Background Array
 const BACKGROUND_IMAGES = [
-  "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=2070&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1574680096145-d05b474e2155?q=80&w=2069&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1526506114642-54bc23e75bb5?q=80&w=2070&auto=format&fit=crop",
+  "https://media.theathleticzone.in/auth-bg-images/auth-bg-three.jpg",
+  "https://media.theathleticzone.in/auth-bg-images/auth-bg-four.jpg",
+  "https://media.theathleticzone.in/auth-bg-images/auth-bg-five.jpg",
 ];
 
 interface LegalPageProps {

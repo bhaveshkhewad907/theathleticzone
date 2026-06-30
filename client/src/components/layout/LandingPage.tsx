@@ -169,7 +169,7 @@ export default function LandingPage() {
       {/* 🚀 1. THE GLOBAL FIXED BACKGROUND LAYER */}
       <div className="fixed inset-0 z-[-1] bg-[#0B0F14]">
         <img
-          src="https://media.theathleticzone.in/auth-bg-images/hero-bg.jpg"
+          src="https://media.theathleticzone.in/auth-bg-images/hero-bg%20(2).jpg"
           alt="Athletic Zone Background"
           className="w-full h-full object-cover opacity-60"
         />
@@ -317,7 +317,7 @@ export default function LandingPage() {
                   transition: { duration: 1.5, ease: "easeOut" },
                 },
               }}
-              src="https://images.unsplash.com/photo-1698671823406-035c77ff6fcd?q=80&w=715&auto=format&fit=crop&ixlib=rb-4.1.0"
+              src="https://media.theathleticzone.in/auth-bg-images/CTA-card_landing-page.jpg"
               alt="Sprinter exploding off blocks"
               className="w-full h-full object-cover group-hover:scale-110 group-hover:opacity-50 transition-all duration-[2s] ease-out mix-blend-luminosity"
             />

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   PlayCircle,
   CheckCircle,
@@ -14,6 +14,9 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import api from "../../services/api";
+
+// 🚀 NEW: Import the Progressive Background
+import ProgressiveBackground from "../../components/ui/ProgressiveBackground";
 
 // ==========================================
 // 🛡️ TYPESCRIPT INTERFACES
@@ -231,15 +234,11 @@ export default function StructuredCoursePlayer({
   ];
 
   return (
-    <>
-      {/* 🚀 FIXED BACKGROUND LAYER: Solves top/bottom clipping on mobile */}
-      <div
-        className="fixed inset-0 z-[-1] bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage: `url('https://media.theathleticzone.in/auth-bg-images/video-player-bg.jpg')`,
-        }}
-      />
-
+    // 🚀 NEW: The Progressive Background Wrapper replaces the empty <> fragments
+    <ProgressiveBackground
+      src="https://media.theathleticzone.in/auth-bg-images/video-player-bg.jpg"
+      className="fixed inset-0 w-full min-h-screen overflow-y-auto"
+    >
       {/* 🎬 MAIN SCROLLABLE CONTENT */}
       <div className="w-full min-h-screen animate-in fade-in duration-700 pb-24">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-6 md:pt-12">
@@ -443,7 +442,6 @@ export default function StructuredCoursePlayer({
                                 <div
                                   key={scopedStepId}
                                   onClick={() => openVideo(item.step.videoUrl)}
-                                  // 🚀 MOBILE ALIGNED: Clean flex-row that never breaks layout
                                   className={`p-3 md:p-5 rounded-[16px] md:rounded-[20px] bg-black/50 backdrop-blur-xl border border-white/10 hover:bg-black/70 transition-all cursor-pointer flex items-center justify-between gap-2 md:gap-4 group shadow-lg ${
                                     activeSession === "morning"
                                       ? "hover:border-amber-500/40"
@@ -610,7 +608,7 @@ export default function StructuredCoursePlayer({
                 src={
                   activeVideo.startsWith("http")
                     ? activeVideo
-                    : `https://pub-your-r2-domain.r2.dev/${activeVideo}`
+                    : `https://media.theathleticzone.in/${activeVideo}`
                 }
                 controls
                 autoPlay
@@ -621,7 +619,7 @@ export default function StructuredCoursePlayer({
           </motion.div>
         )}
       </AnimatePresence>
-    </>
+    </ProgressiveBackground>
   );
 }
 
@@ -630,13 +628,11 @@ export default function StructuredCoursePlayer({
 // ==========================================
 function ClassicSingleVideoPlayer() {
   return (
-    <>
-      <div
-        className="fixed inset-0 z-[-1] bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage: `url('https://media.theathleticzone.in/auth-bg-images/video-player-bg.jpg')`,
-        }}
-      />
+    // 🚀 NEW: The wrapper also replaces the empty <> for the fallback!
+    <ProgressiveBackground
+      src="https://media.theathleticzone.in/auth-bg-images/video-player-bg.jpg"
+      className="fixed inset-0 w-full min-h-screen overflow-y-auto"
+    >
       <div className="w-full min-h-screen flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-700">
         <div className="w-full max-w-4xl aspect-video bg-black/40 backdrop-blur-2xl rounded-[2rem] overflow-hidden border border-white/10 relative shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center justify-center flex-col text-white/60 p-6">
           <PlayCircle size={48} className="mb-4 opacity-40" />
@@ -649,6 +645,6 @@ function ClassicSingleVideoPlayer() {
           </p>
         </div>
       </div>
-    </>
+    </ProgressiveBackground>
   );
 }

@@ -8,6 +8,9 @@ import PowerStep from "../../pages/steps/PowerStep";
 import SprintStep from "../../pages/steps/SprintStep";
 import StrengthStep from "../../pages/steps/StrengthStep";
 
+// 🚀 NEW: Import the Progressive Background
+import ProgressiveBackground from "./ProgressiveBackground";
+
 interface ScorePayload {
   engine: {
     assignedLevel?: string;
@@ -148,14 +151,11 @@ export default function AssessmentWizard() {
   // =========================================================
   if (scoreData) {
     return (
-      <>
-        {/* Fixed Background for Scorecard */}
-        <div
-          className="fixed inset-0 z-[-1] bg-cover bg-center bg-no-repeat"
-          style={{
-            backgroundImage: `url('https://media.theathleticzone.in/auth-bg-images/video-player-bg.jpg')`,
-          }}
-        />
+      // 🚀 NEW: Progressive Background Wrapper
+      <ProgressiveBackground
+        src="https://media.theathleticzone.in/auth-bg-images/video-player-bg.jpg"
+        className="fixed inset-0 w-full min-h-screen overflow-y-auto"
+      >
         <div className="min-h-[80vh] flex items-center justify-center p-6 animate-in fade-in zoom-in duration-700 w-full pb-24">
           <div className="max-w-4xl w-full bg-black/60 backdrop-blur-2xl border border-amber-500/30 p-10 md:p-14 rounded-[2rem] shadow-[0_30px_60px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.05)] relative overflow-hidden">
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[200px] bg-amber-500/10 blur-[80px] pointer-events-none rounded-full" />
@@ -268,21 +268,19 @@ export default function AssessmentWizard() {
             </div>
           </div>
         </div>
-      </>
+      </ProgressiveBackground>
     );
   }
 
   // =========================================================
-  // 📝 STANDARD ASSESSMENT WIZARD VIEW
+  // ⚡ STANDARD ASSESSMENT WIZARD VIEW
   // =========================================================
   return (
-    <>
-      {/* 🚀 FIXED DYNAMIC BACKGROUND LAYER */}
-      <div
-        className="fixed inset-0 z-[-1] bg-cover bg-center bg-no-repeat transition-all duration-700 ease-in-out"
-        style={{ backgroundImage: `url('${currentBgUrl}')` }}
-      />
-
+    // 🚀 NEW: The Progressive Background dynamically updates `src` as steps change
+    <ProgressiveBackground
+      src={currentBgUrl}
+      className="fixed inset-0 w-full min-h-screen overflow-y-auto"
+    >
       <div className="min-h-screen text-white flex flex-col pt-12 md:pt-24 px-4 pb-24">
         <div className="max-w-xl mx-auto w-full">
           <div className="mb-8">
@@ -298,7 +296,7 @@ export default function AssessmentWizard() {
             </div>
           </div>
 
-          {/* 🚀 MASTER GLASSMORPHIC WRAPPER FOR ALL STEPS */}
+          {/* 💎 MASTER GLASSMORPHIC WRAPPER FOR ALL STEPS */}
           <div className="bg-black/60 border border-white/10 p-6 md:p-10 rounded-[2rem] shadow-[0_8px_32px_rgba(0,0,0,0.5)] backdrop-blur-2xl">
             {currentStep === 1 && (
               <PhysicalStep data={formData.physical} updateData={updateData} />
@@ -346,6 +344,6 @@ export default function AssessmentWizard() {
           </div>
         </div>
       </div>
-    </>
+    </ProgressiveBackground>
   );
 }

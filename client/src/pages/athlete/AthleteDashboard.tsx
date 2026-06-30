@@ -97,7 +97,7 @@ export default function AthleteDashboard() {
               thumbnailUrl:
                 courseObj.meta?.coverImageUrl ||
                 courseObj.thumbnailUrl ||
-                "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=2070&auto=format&fit=crop",
+                "https://media.theathleticzone.in/auth-bg-images/course-thumbnail-backup.jpg",
               videoUrl: courseObj.meta?.videoUrl || courseObj.videoUrl,
             });
           } else {

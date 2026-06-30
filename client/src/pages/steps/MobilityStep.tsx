@@ -107,31 +107,26 @@ export default function MobilityStep({ data, updateData }: Props) {
         </div>
       </div>
 
-      {/* 🎥 DYNAMIC ASSESSMENT VIDEO DEMO MODAL */}
+      {/* 🎬 DYNAMIC VERTICAL REEL DEMO MODAL */}
       {activeDemoVideo && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-          <div className="relative w-full max-w-2xl bg-zinc-900 border border-white/10 rounded-xl overflow-hidden shadow-2xl">
-            <div className="flex items-center justify-between p-3 border-b border-white/5 bg-zinc-950">
-              <span className="text-[10px] font-black uppercase tracking-widest text-amber-500">
-                Movement Demonstration
-              </span>
-              <button
-                onClick={() => setActiveDemoVideo(null)}
-                className="text-white/60 hover:text-white transition-colors p-1"
-                aria-label="Close demo player"
-              >
-                <X size={18} />
-              </button>
-            </div>
-            <div className="aspect-video bg-black flex items-center justify-center">
-              <video
-                src={activeDemoVideo}
-                controls
-                autoPlay
-                className="w-full h-full object-contain"
-                controlsList="nodownload"
-              />
-            </div>
+        <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-[#0B0F14]/95 backdrop-blur-2xl animate-in fade-in duration-300">
+          <button
+            onClick={() => setActiveDemoVideo(null)}
+            className="absolute top-6 right-6 md:top-10 md:right-10 w-10 h-10 md:w-12 md:h-12 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full flex items-center justify-center text-white backdrop-blur-md transition-all active:scale-90 z-10"
+            aria-label="Close demo player"
+          >
+            <X size={20} className="md:w-6 md:h-6" />
+          </button>
+
+          <div className="relative w-full max-w-[45vh] aspect-[9/16] bg-black rounded-[2rem] overflow-hidden border border-white/10 shadow-[0_40px_100px_rgba(0,0,0,0.8)] animate-in slide-in-from-bottom-10 zoom-in-95 duration-500">
+            <video
+              src={activeDemoVideo}
+              controls
+              autoPlay
+              playsInline
+              className="absolute inset-0 w-full h-full object-cover"
+              controlsList="nodownload"
+            />
           </div>
         </div>
       )}
