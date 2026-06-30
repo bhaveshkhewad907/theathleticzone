@@ -1,6 +1,8 @@
 import mongoose, { Schema, Document } from "mongoose";
 
-// 1. STEP MODEL (Individual Exercises/Videos in the Vault)
+// ==========================================
+// 1. STEP MODEL (The Content Vault)
+// ==========================================
 export interface IStep extends Document {
   title: string;
   type: "WARMUP" | "EXERCISE" | "COOLDOWN" | "EDUCATION";
@@ -20,7 +22,33 @@ const stepSchema = new Schema<IStep>(
 );
 export const Step = mongoose.model<IStep>("Step", stepSchema);
 
-// 2. TEMPLATE MODEL (A Reusable Day's Routine)
+// ==========================================
+// 🚀 REUSABLE STEP STRUCTURE (For both Templates and Plans)
+// ==========================================
+const inlineStepSchema = new Schema(
+  {
+    step: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Step",
+      required: true,
+    },
+    sets: { type: String, default: "-" },
+    reps: { type: String, default: "-" },
+    // 🚀 NEW: Programming Variables
+    intensityType: {
+      type: String,
+      enum: ["Effort", "Load", "Custom", "None"],
+      default: "None",
+    },
+    intensityValue: { type: String, default: "-" },
+    recovery: { type: String, default: "-" },
+  },
+  { _id: false }, // Prevent Mongoose from making sub-IDs for every single row
+);
+
+// ==========================================
+// 2. TEMPLATE MODEL (The Blueprint)
+// ==========================================
 export interface ITemplate extends Document {
   name: string;
   description?: string;
@@ -28,43 +56,55 @@ export interface ITemplate extends Document {
     step: mongoose.Types.ObjectId;
     sets?: string;
     reps?: string;
+    intensityType?: "Effort" | "Load" | "Custom" | "None";
+    intensityValue?: string;
+    recovery?: string;
   }[];
 }
 const templateSchema = new Schema<ITemplate>(
   {
     name: { type: String, required: true },
     description: { type: String },
-    steps: [
-      {
-        step: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Step",
-          required: true,
-        },
-        sets: { type: String, default: "-" },
-        reps: { type: String, default: "-" },
-      },
-    ],
+    steps: [inlineStepSchema], // Uses the new comprehensive step schema
   },
   { timestamps: true },
 );
 export const Template = mongoose.model<ITemplate>("Template", templateSchema);
 
-// 3. COURSE PLAN MODEL (Mapping templates to days for a specific course)
+// ==========================================
+// 3. COURSE PLAN MODEL (The Editable Instance)
+// ==========================================
 export interface ICoursePlan extends Document {
   courseId: mongoose.Types.ObjectId;
   days: {
     dayNumber: number;
     morning: {
       isRest: boolean;
-      templateId?: mongoose.Types.ObjectId | null;
+      templateRefName?: string; // Remembers what blueprint was used to create this
+      steps: {
+        step: mongoose.Types.ObjectId;
+        sets?: string;
+        reps?: string;
+        intensityType?: "Effort" | "Load" | "Custom" | "None";
+        intensityValue?: string;
+        recovery?: string;
+      }[];
     };
     evening: {
       isRest: boolean;
-      templateId?: mongoose.Types.ObjectId | null;
+      templateRefName?: string;
+      steps: {
+        step: mongoose.Types.ObjectId;
+        sets?: string;
+        reps?: string;
+        intensityType?: "Effort" | "Load" | "Custom" | "None";
+        intensityValue?: string;
+        recovery?: string;
+      }[];
     };
   }[];
 }
+
 const coursePlanSchema = new Schema<ICoursePlan>(
   {
     courseId: {
@@ -79,20 +119,14 @@ const coursePlanSchema = new Schema<ICoursePlan>(
         // ☀️ MORNING BLOCK
         morning: {
           isRest: { type: Boolean, default: false },
-          templateId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Template",
-            default: null,
-          },
+          templateRefName: { type: String, default: "" }, // 🚀 Tracks origin instead of locking to ID
+          steps: [inlineStepSchema], // 🚀 Inline array allows per-day, per-week editing!
         },
         // 🌙 EVENING BLOCK
         evening: {
           isRest: { type: Boolean, default: false },
-          templateId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Template",
-            default: null,
-          },
+          templateRefName: { type: String, default: "" },
+          steps: [inlineStepSchema],
         },
       },
     ],

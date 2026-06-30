@@ -243,7 +243,7 @@ export default function AdminCourses() {
               onClick={() => setShowModal(true)}
               className="w-full xl:w-auto bg-amber-500 text-black px-8 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-amber-400 transition-all active:scale-95 shadow-xl shadow-amber-500/10"
             >
-              Deploy New Protocol
+              Deploy New Course
             </button>
           </div>
         </div>

@@ -136,9 +136,8 @@ export const saveCoursePlan: RequestHandler = async (req, res, next) => {
 
 export const getCoursePlan: RequestHandler = async (req, res, next) => {
   try {
-    // 🚀 PERFORMANCE & ARCHITECTURE UPGRADE:
-    // We now populate BOTH the Morning and Evening block templates!
     const plan = await CoursePlan.findOne({ courseId: req.params.courseId })
+      // Legacy Population (Leaves older plans intact)
       .populate({
         path: "days.morning.templateId",
         populate: { path: "steps.step" },
@@ -147,6 +146,9 @@ export const getCoursePlan: RequestHandler = async (req, res, next) => {
         path: "days.evening.templateId",
         populate: { path: "steps.step" },
       })
+      // 🚀 NEW: Inline Step Population (For our new scalable architecture)
+      .populate("days.morning.steps.step")
+      .populate("days.evening.steps.step")
       .lean();
 
     res.status(200).json({ success: true, data: plan || null });

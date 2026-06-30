@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import {
   PlayCircle,
   CheckCircle,
@@ -15,7 +15,6 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import api from "../../services/api";
 
-// 🚀 NEW: Import the Progressive Background
 import ProgressiveBackground from "../../components/ui/ProgressiveBackground";
 
 // ==========================================
@@ -31,8 +30,11 @@ interface Step {
 interface TemplateStep {
   _id?: string;
   step: Step;
-  sets: string;
-  reps: string;
+  sets?: string;
+  reps?: string;
+  intensityType?: "Effort" | "Load" | "Custom" | "None";
+  intensityValue?: string;
+  recovery?: string;
 }
 
 interface DayTemplate {
@@ -44,6 +46,8 @@ interface DayTemplate {
 interface Session {
   isRest: boolean;
   templateId?: DayTemplate | null;
+  templateRefName?: string;
+  steps?: TemplateStep[]; // 🚀 Supports the new inline architecture
 }
 
 interface CourseDay {
@@ -85,6 +89,25 @@ const getDayNameOnly = (dayNumber: number) => {
     "Sunday",
   ];
   return daysOfWeek[(dayNumber - 1) % 7];
+};
+
+// 🚀 ARCHITECTURE ADAPTERS
+const getSessionSteps = (
+  session: Session | undefined | null,
+): TemplateStep[] => {
+  if (!session) return [];
+  if (session.steps && session.steps.length > 0) return session.steps;
+  if (session.templateId && session.templateId.steps)
+    return session.templateId.steps;
+  return [];
+};
+
+const getSessionName = (session: Session | undefined | null): string => {
+  if (!session) return "";
+  if (session.templateRefName) return session.templateRefName;
+  if (session.templateId && session.templateId.name)
+    return session.templateId.name;
+  return "Training Block";
 };
 
 // ==========================================
@@ -196,8 +219,8 @@ export default function StructuredCoursePlayer({
     session: Session | undefined,
     dayNum: number,
   ) => {
-    if (!session || session.isRest || !session.templateId) return true;
-    const steps = session.templateId.steps || [];
+    if (!session || session.isRest) return true;
+    const steps = getSessionSteps(session);
     if (steps.length === 0) return true;
     return steps.every((item) =>
       progress?.completedSteps?.includes(`${dayNum}-${item.step?._id}`),
@@ -234,20 +257,19 @@ export default function StructuredCoursePlayer({
   ];
 
   return (
-    // 🚀 NEW: The Progressive Background Wrapper replaces the empty <> fragments
     <ProgressiveBackground
       src="https://media.theathleticzone.in/auth-bg-images/video-player-bg.jpg"
       className="fixed inset-0 w-full min-h-screen overflow-y-auto"
     >
-      {/* 🎬 MAIN SCROLLABLE CONTENT */}
       <div className="w-full min-h-screen animate-in fade-in duration-700 pb-24">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-6 md:pt-12">
+          {/* Controls Header */}
           <div className="mb-6 space-y-5">
             <h3 className="text-2xl md:text-3xl font-black italic uppercase text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
               Protocol <span className="text-amber-500">Navigator</span>
             </h3>
 
-            {/* TIER 1: THE WEEK SELECTOR (Now with Glassmorphism) */}
+            {/* TIER 1: THE WEEK SELECTOR */}
             <div className="flex overflow-x-auto gap-2 md:gap-4 bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl p-2 mb-2 snap-x [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {uniqueWeeks.map((week) => {
                 const isActiveWeek = activeWeek === week;
@@ -266,11 +288,6 @@ export default function StructuredCoursePlayer({
                       <motion.div
                         layoutId="activeWeekUnderline"
                         className="absolute bottom-0 left-1/4 right-1/4 h-[2px] bg-amber-500 rounded-t-full shadow-[0_0_10px_rgba(245,158,11,0.8)]"
-                        transition={{
-                          type: "spring",
-                          stiffness: 500,
-                          damping: 30,
-                        }}
                       />
                     )}
                   </button>
@@ -278,7 +295,7 @@ export default function StructuredCoursePlayer({
               })}
             </div>
 
-            {/* TIER 2: THE DAY SELECTOR (Mobile Optimized Spacing) */}
+            {/* TIER 2: THE DAY SELECTOR */}
             <div className="flex overflow-x-auto gap-3 pb-2 mb-4 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] px-1">
               {daysInActiveWeek.map((day) => {
                 const isActive = activeDay === day.dayNumber;
@@ -333,7 +350,7 @@ export default function StructuredCoursePlayer({
               })}
             </div>
 
-            {/* TIER 3: SESSION TOGGLE (Centered on Mobile) */}
+            {/* TIER 3: SESSION TOGGLE */}
             {currentDayData && (
               <div className="flex w-full sm:max-w-sm mx-auto p-1.5 bg-black/40 border border-white/10 rounded-2xl backdrop-blur-xl shadow-2xl mb-8">
                 <button
@@ -385,7 +402,7 @@ export default function StructuredCoursePlayer({
                     training adaptations.
                   </p>
                 </motion.div>
-              ) : currentSessionData?.templateId ? (
+              ) : getSessionSteps(currentSessionData).length > 0 ? (
                 <motion.div
                   key={`active-${currentDayData?.dayNumber}-${activeSession}`}
                   initial={{ opacity: 0, x: 20, filter: "blur(4px)" }}
@@ -396,23 +413,23 @@ export default function StructuredCoursePlayer({
                 >
                   <div className="mb-6 md:mb-8">
                     <h4 className="text-2xl md:text-3xl font-black uppercase tracking-tighter italic text-white leading-none">
-                      {currentSessionData.templateId.name}
+                      {getSessionName(currentSessionData)}
                     </h4>
                     <p
                       className={`text-[9px] md:text-[10px] uppercase tracking-widest mt-2 font-bold ${activeSession === "morning" ? "text-amber-500" : "text-blue-400"}`}
                     >
                       Day {currentDayData?.dayNumber} • {activeSession} Block •{" "}
-                      {currentSessionData.templateId.steps.length} Actions
+                      {getSessionSteps(currentSessionData).length} Actions
                       Required
                     </p>
                   </div>
 
                   <div className="space-y-8">
                     {stepCategories.map((category) => {
-                      const stepsInCategory =
-                        currentSessionData.templateId!.steps.filter(
-                          (item) => item.step?.type === category.id,
-                        );
+                      const sessionSteps = getSessionSteps(currentSessionData);
+                      const stepsInCategory = sessionSteps.filter(
+                        (item) => item.step?.type === category.id,
+                      );
 
                       if (stepsInCategory.length === 0) return null;
 
@@ -438,83 +455,107 @@ export default function StructuredCoursePlayer({
                                   scopedStepId,
                                 ) || isDayCompleteByDB;
 
+                              // 🚀 INTENSITY FORMATTING LOGIC
+                              const parts = [];
+                              if (item.sets && item.sets !== "-")
+                                parts.push(`${item.sets} SETS`);
+                              if (item.reps && item.reps !== "-")
+                                parts.push(`${item.reps} REPS`);
+                              const setRepString = parts.join(" / ");
+
+                              let intensityString = "";
+                              if (
+                                item.intensityType &&
+                                item.intensityType !== "None" &&
+                                item.intensityValue &&
+                                item.intensityValue !== "-"
+                              ) {
+                                intensityString = `${item.intensityValue} ${item.intensityType === "Custom" ? "" : item.intensityType}`;
+                              }
+
                               return (
                                 <div
                                   key={scopedStepId}
                                   onClick={() => openVideo(item.step.videoUrl)}
-                                  className={`p-3 md:p-5 rounded-[16px] md:rounded-[20px] bg-black/50 backdrop-blur-xl border border-white/10 hover:bg-black/70 transition-all cursor-pointer flex items-center justify-between gap-2 md:gap-4 group shadow-lg ${
+                                  className={`p-4 md:p-5 rounded-[16px] md:rounded-[20px] bg-black/50 backdrop-blur-xl border border-white/10 hover:bg-black/70 transition-all cursor-pointer flex items-center justify-between gap-4 group shadow-lg ${
                                     activeSession === "morning"
                                       ? "hover:border-amber-500/40"
                                       : "hover:border-blue-400/40"
                                   }`}
                                 >
-                                  {/* Left side: Icon & Text */}
-                                  <div className="flex items-center gap-3 md:gap-4 overflow-hidden flex-1 pr-2">
+                                  {/* Left side: Checkbox & Details */}
+                                  <div className="flex items-start gap-4 overflow-hidden flex-1">
                                     <button
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         handleStepComplete(scopedStepId);
                                       }}
-                                      className="active:scale-90 transition-transform shrink-0"
+                                      className="mt-1 active:scale-90 transition-transform shrink-0"
                                     >
                                       {isStepComplete ? (
                                         <CheckCircle
-                                          size={20}
-                                          className="text-emerald-500 md:w-[22px] md:h-[22px] drop-shadow-[0_0_8px_rgba(16,185,129,0.4)]"
+                                          size={22}
+                                          className="text-emerald-500 drop-shadow-[0_0_8px_rgba(16,185,129,0.4)]"
                                         />
                                       ) : (
                                         <Circle
-                                          size={20}
-                                          className={`text-white/40 md:w-[22px] md:h-[22px] ${activeSession === "morning" ? "group-hover:text-amber-500/50" : "group-hover:text-blue-400/50"}`}
+                                          size={22}
+                                          className={`text-white/40 ${activeSession === "morning" ? "group-hover:text-amber-500/50" : "group-hover:text-blue-400/50"}`}
                                         />
                                       )}
                                     </button>
-                                    <div className="truncate">
+
+                                    {/* 🚀 UPGRADED DATA HIERARCHY (Matches WhatsApp Reference) */}
+                                    <div className="flex flex-col gap-1.5 w-full">
                                       <p
-                                        className={`text-[11px] md:text-sm font-black uppercase tracking-widest text-white truncate transition-colors ${activeSession === "morning" ? "group-hover:text-amber-500" : "group-hover:text-blue-400"}`}
+                                        className={`text-sm md:text-base font-black uppercase tracking-widest text-white transition-colors ${activeSession === "morning" ? "group-hover:text-amber-500" : "group-hover:text-blue-400"}`}
                                       >
                                         {item.step.title}
                                       </p>
+
+                                      <div className="flex flex-col gap-0.5">
+                                        {(setRepString || intensityString) && (
+                                          <p className="text-[10px] md:text-[11px] font-bold text-[#8A94A6] uppercase tracking-wider">
+                                            {setRepString}
+                                            {setRepString &&
+                                              intensityString && (
+                                                <span className="mx-1">/</span>
+                                              )}
+                                            {intensityString && (
+                                              <span className="text-white/80">
+                                                {intensityString}
+                                              </span>
+                                            )}
+                                          </p>
+                                        )}
+
+                                        {item.recovery &&
+                                          item.recovery !== "-" &&
+                                          item.recovery !== "0 sec" && (
+                                            <p className="text-[10px] md:text-[11px] font-bold text-[#8A94A6] uppercase tracking-wider">
+                                              RECOVERY:{" "}
+                                              <span className="text-white/80">
+                                                {item.recovery}
+                                              </span>
+                                            </p>
+                                          )}
+                                      </div>
                                     </div>
                                   </div>
 
-                                  {/* Right side: Sets/Reps & Play Button */}
-                                  <div className="flex items-center gap-2 md:gap-4 shrink-0">
-                                    {(item.sets !== "-" ||
-                                      item.reps !== "-") && (
-                                      <div className="px-2 py-1 md:px-3 md:py-1.5 bg-white/5 border border-white/10 rounded-lg text-center">
-                                        <p className="text-[6px] md:text-[8px] text-white/60 font-black uppercase tracking-widest leading-none mb-1">
-                                          Target
-                                        </p>
-                                        <p className="text-[10px] md:text-xs font-black text-white leading-none">
-                                          {item.sets}{" "}
-                                          <span
-                                            className={
-                                              activeSession === "morning"
-                                                ? "text-amber-500 mx-0.5"
-                                                : "text-blue-400 mx-0.5"
-                                            }
-                                          >
-                                            x
-                                          </span>{" "}
-                                          {item.reps}
-                                        </p>
-                                      </div>
-                                    )}
-
+                                  {/* Right side: Play Button */}
+                                  <div className="shrink-0 pl-2 md:pl-4 border-l border-white/5">
                                     <div
-                                      className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center shrink-0 transition-all shadow-inner ${
+                                      className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all shadow-inner ${
                                         activeSession === "morning"
                                           ? "bg-amber-500/10 text-amber-500 group-hover:bg-amber-500 group-hover:text-black"
                                           : "bg-blue-400/10 text-blue-400 group-hover:bg-blue-400 group-hover:text-black"
                                       }`}
                                     >
                                       <PlayCircle
-                                        size={18}
+                                        size={20}
                                         className={
-                                          !isStepComplete
-                                            ? "animate-pulse md:w-5 md:h-5"
-                                            : "md:w-5 md:h-5"
+                                          !isStepComplete ? "animate-pulse" : ""
                                         }
                                       />
                                     </div>
@@ -560,7 +601,6 @@ export default function StructuredCoursePlayer({
                   })()}
                 </motion.div>
               ) : (
-                // 🚫 EMPTY STATE
                 <motion.div
                   key={`empty-${currentDayData?.dayNumber}-${activeSession}`}
                   initial={{ opacity: 0 }}
@@ -628,7 +668,6 @@ export default function StructuredCoursePlayer({
 // ==========================================
 function ClassicSingleVideoPlayer() {
   return (
-    // 🚀 NEW: The wrapper also replaces the empty <> for the fallback!
     <ProgressiveBackground
       src="https://media.theathleticzone.in/auth-bg-images/video-player-bg.jpg"
       className="fixed inset-0 w-full min-h-screen overflow-y-auto"
