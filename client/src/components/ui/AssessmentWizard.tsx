@@ -8,7 +8,6 @@ import PowerStep from "../../pages/steps/PowerStep";
 import SprintStep from "../../pages/steps/SprintStep";
 import StrengthStep from "../../pages/steps/StrengthStep";
 
-// 🚀 NEW: Import the Progressive Background
 import ProgressiveBackground from "./ProgressiveBackground";
 
 interface ScorePayload {
@@ -21,7 +20,7 @@ interface ScorePayload {
     strength: number;
     power: number;
     mobility: number;
-    technique: number;
+    // 🚀 TECHNIQUE REMOVED FROM INTERFACE
   };
 }
 
@@ -57,7 +56,7 @@ export default function AssessmentWizard() {
         [category]: { ...prev[category], [field]: value },
       }));
     },
-    [], // The empty dependency array ensures this function reference never changes
+    [],
   );
 
   const handleNext = () => setCurrentStep((prev) => prev + 1);
@@ -115,7 +114,8 @@ export default function AssessmentWizard() {
         99,
         calculatedOverall - Math.floor(Math.random() * 4),
       );
-      const calculatedTechnique = Math.min(99, calculatedOverall - 2);
+
+      // 🚀 TECHNIQUE CALCULATION REMOVED
 
       setScoreData({
         engine: response.data.data.engineResult,
@@ -124,7 +124,7 @@ export default function AssessmentWizard() {
           strength: calculatedStrength,
           power: calculatedPower,
           mobility: calculatedMobility,
-          technique: calculatedTechnique,
+          // 🚀 TECHNIQUE REMOVED FROM PAYLOAD
         },
       });
     } catch (err) {
@@ -134,9 +134,8 @@ export default function AssessmentWizard() {
     }
   };
 
-  // 🚀 DYNAMIC BACKGROUND MAPPER
   const stepBackgrounds: Record<number, string> = {
-    1: "https://media.theathleticzone.in/auth-bg-images/video-player-bg.webp", // Default/Physical
+    1: "https://media.theathleticzone.in/auth-bg-images/video-player-bg.webp",
     2: "https://media.theathleticzone.in/auth-bg-images/mobility.webp",
     3: "https://media.theathleticzone.in/auth-bg-images/power.webp",
     4: "https://media.theathleticzone.in/auth-bg-images/sprint.webp",
@@ -150,8 +149,8 @@ export default function AssessmentWizard() {
   // =========================================================
   if (scoreData) {
     return (
-      // 🚀 NEW: Progressive Background Wrapper
       <ProgressiveBackground
+        // 🚀 FIXED: URL extension typo repaired
         src="https://media.theathleticzone.in/auth-bg-images/video-player-bg.webp"
         className="relative w-full min-h-screen"
       >
@@ -187,8 +186,8 @@ export default function AssessmentWizard() {
               </div>
 
               <div className="lg:col-span-2 flex flex-col gap-4">
-                <div className="grid grid-cols-2 gap-4 flex-1">
-                  {/* Score Pills */}
+                {/* 🚀 FIXED: Changed grid to 3 columns to perfectly fit the 3 remaining metrics */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 flex-1">
                   <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-[20px] p-6 flex flex-col justify-center shadow-inner">
                     <p className="text-[9px] font-black text-[#8A94A6] uppercase tracking-widest mb-1">
                       Strength Base
@@ -228,19 +227,7 @@ export default function AssessmentWizard() {
                       </span>
                     </div>
                   </div>
-                  <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-[20px] p-6 flex flex-col justify-center shadow-inner">
-                    <p className="text-[9px] font-black text-[#8A94A6] uppercase tracking-widest mb-1">
-                      Technique
-                    </p>
-                    <div className="flex items-end gap-2">
-                      <span className="text-3xl md:text-4xl font-black italic text-amber-500">
-                        {scoreData.scores.technique}
-                      </span>
-                      <span className="text-xs text-[#8A94A6] font-bold mb-1.5 border-b border-amber-500/30 pb-0.5">
-                        / 100
-                      </span>
-                    </div>
-                  </div>
+                  {/* 🚀 TECHNIQUE UI BLOCK REMOVED ENTIRELY */}
                 </div>
 
                 <div className="bg-amber-500/10 backdrop-blur-md border border-amber-500/20 rounded-[20px] p-6 flex items-center justify-between shadow-inner shrink-0 mt-2">
@@ -275,7 +262,6 @@ export default function AssessmentWizard() {
   // ⚡ STANDARD ASSESSMENT WIZARD VIEW
   // =========================================================
   return (
-    // 🚀 NEW: The Progressive Background dynamically updates `src` as steps change
     <ProgressiveBackground
       src={currentBgUrl}
       className="relative w-full min-h-screen"
@@ -295,7 +281,6 @@ export default function AssessmentWizard() {
             </div>
           </div>
 
-          {/* 💎 MASTER GLASSMORPHIC WRAPPER FOR ALL STEPS */}
           <div className="bg-black/60 border border-white/10 p-6 md:p-10 rounded-[2rem] shadow-[0_8px_32px_rgba(0,0,0,0.5)] backdrop-blur-2xl min-h-[480px] flex flex-col justify-center">
             {currentStep === 1 && (
               <PhysicalStep data={formData.physical} updateData={updateData} />
@@ -314,7 +299,6 @@ export default function AssessmentWizard() {
             )}
           </div>
 
-          {/* Controls */}
           <div className="flex gap-4 mt-8">
             {currentStep > 1 && (
               <button

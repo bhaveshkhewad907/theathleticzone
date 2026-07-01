@@ -5,13 +5,7 @@ export const createCourseSchema = z.object({
     title: z.string().min(1, "Title is required"),
     description: z.string().min(1, "Description is required"),
     tier: z.enum(["Beginner", "Intermediate", "Advanced"]),
-    targetDeficit: z.enum([
-      "Strength",
-      "Power",
-      "Mobility",
-      "Technique",
-      "Seasonal",
-    ]),
+    targetDeficit: z.enum(["Strength", "Power", "Mobility", "Seasonal"]),
     coverImageUrl: z.string().min(1, "Cover Image is required"),
     videoUrl: z.string().optional(), // 🚀 Whitelisted the Intro Reel URL
   }),
@@ -24,7 +18,7 @@ export const updateCourseSchema = z.object({
       description: z.string().optional(),
       tier: z.enum(["Beginner", "Intermediate", "Advanced"]).optional(),
       targetDeficit: z
-        .enum(["Strength", "Power", "Mobility", "Technique", "Seasonal"])
+        .enum(["Strength", "Power", "Mobility", "Seasonal"])
         .optional(),
       coverImageUrl: z.string().optional(),
       videoUrl: z.string().optional(), // 🚀 Whitelisted the Intro Reel URL

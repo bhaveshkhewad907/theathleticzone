@@ -10,7 +10,7 @@ export interface CreateCourseInput {
     coverImageUrl: string;
     videoUrl?: string; // 🚀 FIX
     tier: "Beginner" | "Intermediate" | "Advanced"; // 🚀 FIX
-    targetDeficit: "Strength" | "Power" | "Mobility" | "Technique" | "Seasonal";
+    targetDeficit: "Strength" | "Power" | "Mobility";
   };
 }
 

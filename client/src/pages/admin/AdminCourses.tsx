@@ -378,7 +378,6 @@ export default function AdminCourses() {
                     <option value="Strength">Strength Deficit</option>
                     <option value="Power">Power Deficit</option>
                     <option value="Mobility">Mobility Deficit</option>
-                    <option value="Technique">Technique Deficit</option>
                   </select>
                 </div>
               </div>

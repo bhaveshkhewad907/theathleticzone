@@ -29,7 +29,6 @@ export const runRecommendationEngine = async (
   const { sprint30mSeconds } = metrics.sprinting;
   const { kneeToWallCm, deepSquatHold } = metrics.mobility;
 
-  // 🚀 MATHEMATICAL FIX: Calculate precise decimal training age
   const years = physical.trainingAgeYears || 0;
   const months = physical.trainingAgeMonths || 0;
   const preciseTrainingAge = years + months / 12;
@@ -40,13 +39,11 @@ export const runRecommendationEngine = async (
   let beginnerPoints = 0;
   let intermediatePoints = 0;
 
-  // 🚀 Now uses preciseTrainingAge
   if (preciseTrainingAge < 1) beginnerPoints++;
   if (relativeSquat < 1.5) beginnerPoints++;
   if (sprint30mSeconds > 4.6) beginnerPoints++;
   if (broadJumpMeters < 2.0) beginnerPoints++;
 
-  // 🚀 Now uses preciseTrainingAge
   if (preciseTrainingAge >= 1) intermediatePoints++;
   if (relativeSquat >= 1.5) intermediatePoints++;
   if (broadJumpMeters > 2.1) intermediatePoints++;
@@ -60,7 +57,7 @@ export const runRecommendationEngine = async (
   }
 
   // ==========================================
-  // 2. DETERMINE SPECIFIC DEFICIT
+  // 2. DETERMINE SPECIFIC DEFICIT (🚀 FIXED)
   // ==========================================
   let identifiedDeficit = "";
   const hasMobilityDeficit = kneeToWallCm < 6 || deepSquatHold === "Poor";
@@ -68,17 +65,15 @@ export const runRecommendationEngine = async (
   if (assignedLevel === "Beginner") {
     if (hasMobilityDeficit) identifiedDeficit = "Mobility";
     else if (relativeSquat < 1.4) identifiedDeficit = "Strength";
-    else if (relativeSquat >= 1.4 && broadJumpMeters < 2.0)
-      identifiedDeficit = "Power";
-    else identifiedDeficit = "Technique";
+    // 🚀 If they pass mobility AND strength, they get POWER as the ultimate capstone.
+    else identifiedDeficit = "Power";
   }
 
   if (assignedLevel === "Intermediate") {
     if (hasMobilityDeficit) identifiedDeficit = "Mobility";
     else if (relativeSquat < 1.8) identifiedDeficit = "Strength";
-    else if (relativeSquat >= 1.8 && broadJumpMeters < 2.3)
-      identifiedDeficit = "Power";
-    else identifiedDeficit = "Technique";
+    // 🚀 Technique removed. Power is now the final fallback.
+    else identifiedDeficit = "Power";
   }
 
   // ==========================================

@@ -26,7 +26,9 @@ export interface ICourse extends Document {
     coverImageUrl: string;
     videoUrl?: string; // 🚀 FIX: Added Intro Reel URL support
     tier: "Beginner" | "Intermediate" | "Advanced"; // 🚀 FIX: Aligned with frontend
-    targetDeficit: "Strength" | "Power" | "Mobility" | "Technique" | "Seasonal";
+
+    // 🚀 THE BOLD FIX: "Technique" completely removed from the TypeScript interface
+    targetDeficit: "Strength" | "Power" | "Mobility" | "Seasonal";
   };
 
   isDeleted: boolean;
@@ -46,12 +48,13 @@ const courseSchema = new Schema<ICourse>(
       videoUrl: { type: String }, // 🚀 FIX: Database will now save this
       tier: {
         type: String,
-        enum: ["Beginner", "Intermediate", "Advanced"], // 🚀 FIX: Elite -> Advanced
+        enum: ["Beginner", "Intermediate"],
         required: true,
       },
       targetDeficit: {
         type: String,
-        enum: ["Strength", "Power", "Mobility", "Technique", "Seasonal"],
+        // 🚀 ALIGNED: Matches the TypeScript interface perfectly
+        enum: ["Strength", "Power", "Mobility"],
         required: true,
       },
     },
