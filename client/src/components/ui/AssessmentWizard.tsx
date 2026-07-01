@@ -154,7 +154,7 @@ export default function AssessmentWizard() {
       // 🚀 NEW: Progressive Background Wrapper
       <ProgressiveBackground
         src="https://media.theathleticzone.in/auth-bg-images/video-player-bg.jpg"
-        className="fixed inset-0 w-full min-h-screen overflow-y-auto"
+        className="relative w-full min-h-screen"
       >
         <div className="min-h-[80vh] flex items-center justify-center p-6 animate-in fade-in zoom-in duration-700 w-full pb-24">
           <div className="max-w-4xl w-full bg-black/60 backdrop-blur-2xl border border-amber-500/30 p-10 md:p-14 rounded-[2rem] shadow-[0_30px_60px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.05)] relative overflow-hidden">
@@ -279,7 +279,7 @@ export default function AssessmentWizard() {
     // 🚀 NEW: The Progressive Background dynamically updates `src` as steps change
     <ProgressiveBackground
       src={currentBgUrl}
-      className="fixed inset-0 w-full min-h-screen overflow-y-auto"
+      className="relative w-full min-h-screen"
     >
       <div className="min-h-screen text-white flex flex-col pt-12 md:pt-24 px-4 pb-24">
         <div className="max-w-xl mx-auto w-full">
