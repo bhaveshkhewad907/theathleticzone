@@ -172,6 +172,8 @@ export default function LandingPage() {
           src="https://media.theathleticzone.in/auth-bg-images/hero-bg%20(2).webp"
           alt="Athletic Zone Background"
           className="w-full h-full object-cover opacity-60"
+          fetchPriority="high"
+          loading="eager"
         />
         {/* Subtle overlay so text remains readable without killing natural tones */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60" />
