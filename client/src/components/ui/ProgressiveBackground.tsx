@@ -27,7 +27,7 @@ export default function ProgressiveBackground({
   const isLoaded = loadedSrc === src;
 
   return (
-    <div className={className}>
+    <div className={`isolate ${className}`}>
       <img
         src={src}
         alt="Background"
