@@ -3,12 +3,11 @@ import { createBrowserRouter } from "react-router-dom";
 import ProtectedRoute from "../components/layout/ProtectedRoute";
 import RootRedirect from "../components/layout/RootRedirect";
 import NotFound from "../components/ui/NotFound";
-
 import AthleteLayout from "../components/layout/AthleteLayout";
 import AdminLayout from "../components/layout/AdminPanelLayout";
 import { Loadable } from "../components/ui/Loadable";
-import AdminSteps from "../pages/admin/AdminSteps";
 
+const AdminSteps = lazy(() => import("../pages/admin/AdminSteps"));
 const LoginPage = lazy(() => import("../pages/auth/LoginPage"));
 const RegisterPage = lazy(() => import("../pages/auth/RegisterPage"));
 const ForgotPassword = lazy(() => import("../pages/auth/ForgotPassword"));
@@ -36,8 +35,6 @@ const router = createBrowserRouter([
   { path: "/terms", element: Loadable(TermsOfService) },
   { path: "/privacy", element: Loadable(PrivacyPolicy) },
   { path: "/refund-policy", element: Loadable(RefundPolicy) },
-
-  // 🚀 THE BOLD FIX: The standalone /assessment route has been DELETED.
 
   // ==========================
   // ATHLETE ROUTES

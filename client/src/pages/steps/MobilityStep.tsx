@@ -1,5 +1,5 @@
 import { PlayCircle, X } from "lucide-react";
-import { useState } from "react";
+import { useState, memo } from "react";
 
 interface Props {
   data: { kneeToWallCm: string; deepSquatHold: string };
@@ -10,7 +10,7 @@ interface Props {
   ) => void;
 }
 
-export default function MobilityStep({ data, updateData }: Props) {
+function MobilityStep({ data, updateData }: Props) {
   const [activeDemoVideo, setActiveDemoVideo] = useState<string | null>(null);
 
   return (
@@ -133,3 +133,5 @@ export default function MobilityStep({ data, updateData }: Props) {
     </div>
   );
 }
+
+export default memo(MobilityStep);

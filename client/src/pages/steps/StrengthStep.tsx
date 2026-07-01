@@ -1,5 +1,5 @@
 import { PlayCircle, X } from "lucide-react";
-import { useState } from "react";
+import { useState, memo } from "react";
 
 interface Props {
   data: { backSquatMaxKg: string };
@@ -10,7 +10,7 @@ interface Props {
   ) => void;
 }
 
-export default function StrengthStep({ data, updateData }: Props) {
+function StrengthStep({ data, updateData }: Props) {
   const [activeDemoVideo, setActiveDemoVideo] = useState<string | null>(null);
 
   return (
@@ -89,3 +89,4 @@ export default function StrengthStep({ data, updateData }: Props) {
     </div>
   );
 }
+export default memo(StrengthStep);

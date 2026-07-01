@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import api from "../../services/api";
 import toast from "react-hot-toast";
 
@@ -50,16 +50,15 @@ export default function AssessmentWizard() {
     strength: { backSquatMaxKg: "" },
   });
 
-  const updateData = (
-    category: keyof typeof formData,
-    field: string,
-    value: string,
-  ) => {
-    setFormData((prev) => ({
-      ...prev,
-      [category]: { ...prev[category], [field]: value },
-    }));
-  };
+  const updateData = useCallback(
+    (category: keyof typeof formData, field: string, value: string) => {
+      setFormData((prev) => ({
+        ...prev,
+        [category]: { ...prev[category], [field]: value },
+      }));
+    },
+    [], // The empty dependency array ensures this function reference never changes
+  );
 
   const handleNext = () => setCurrentStep((prev) => prev + 1);
   const handleBack = () => setCurrentStep((prev) => prev - 1);
@@ -297,7 +296,7 @@ export default function AssessmentWizard() {
           </div>
 
           {/* 💎 MASTER GLASSMORPHIC WRAPPER FOR ALL STEPS */}
-          <div className="bg-black/60 border border-white/10 p-6 md:p-10 rounded-[2rem] shadow-[0_8px_32px_rgba(0,0,0,0.5)] backdrop-blur-2xl">
+          <div className="bg-black/60 border border-white/10 p-6 md:p-10 rounded-[2rem] shadow-[0_8px_32px_rgba(0,0,0,0.5)] backdrop-blur-2xl min-h-[480px] flex flex-col justify-center">
             {currentStep === 1 && (
               <PhysicalStep data={formData.physical} updateData={updateData} />
             )}

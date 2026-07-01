@@ -1,5 +1,5 @@
 import { PlayCircle, UploadCloud, CheckCircle, X } from "lucide-react";
-import { useState } from "react";
+import { memo, useState } from "react";
 import toast from "react-hot-toast";
 import axios from "axios";
 import api from "../../services/api";
@@ -18,7 +18,7 @@ interface Props {
   ) => void;
 }
 
-export default function SprintStep({ data, updateData }: Props) {
+function SprintStep({ data, updateData }: Props) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [activeDemoVideo, setActiveDemoVideo] = useState<string | null>(null);
@@ -244,3 +244,4 @@ export default function SprintStep({ data, updateData }: Props) {
     </div>
   );
 }
+export default memo(SprintStep);

@@ -11,26 +11,32 @@ export default function ProgressiveBackground({
   children,
   className = "",
 }: ProgressiveBackgroundProps) {
-  // 🚀 THE FIX: Track the URL of the loaded image instead of a true/false boolean
-  const [loadedSrc, setLoadedSrc] = useState<string | null>(null);
+  // 🚀 THE LCP FIX: Initialize with `src` instead of `null`!
+  // This forces the critical FIRST image to render immediately without waiting for JS.
+  const [loadedSrc, setLoadedSrc] = useState<string | null>(src);
 
   useEffect(() => {
-    // We no longer need to synchronously reset state here! The linter is happy.
-    const img = new Image();
-    img.src = src;
-    img.onload = () => {
-      setLoadedSrc(src);
-    };
-  }, [src]);
+    // Only trigger the background JS loader if the user navigates to a NEW step.
+    if (src !== loadedSrc) {
+      const img = new Image();
+      img.src = src;
+      img.onload = () => {
+        setLoadedSrc(src);
+      };
+    }
+  }, [src, loadedSrc]);
 
-  // If the current 'src' matches the 'loadedSrc', we know the new image is fully loaded!
   const isLoaded = loadedSrc === src;
 
   return (
     <div className={`isolate ${className}`}>
+      {/* 🚀 THE LCP FIX: fetchpriority="high" and loading="eager" forces the browser to skip the network queue */}
       <img
         src={src}
         alt="Background"
+        fetchPriority="high"
+        loading="eager"
+        decoding="async"
         className={`fixed inset-0 w-full h-full object-cover z-[-2] transition-opacity duration-700 ease-in-out ${
           isLoaded ? "opacity-100" : "opacity-0"
         }`}

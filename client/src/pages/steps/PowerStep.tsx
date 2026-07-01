@@ -1,5 +1,5 @@
 import { PlayCircle, X } from "lucide-react";
-import { useState } from "react";
+import { useState, memo } from "react";
 
 interface Props {
   data: { broadJumpMeters: string; verticalJumpCm: string };
@@ -10,7 +10,7 @@ interface Props {
   ) => void;
 }
 
-export default function PowerStep({ data, updateData }: Props) {
+function PowerStep({ data, updateData }: Props) {
   const [activeDemoVideo, setActiveDemoVideo] = useState<string | null>(null);
 
   return (
@@ -129,3 +129,4 @@ export default function PowerStep({ data, updateData }: Props) {
     </div>
   );
 }
+export default memo(PowerStep);

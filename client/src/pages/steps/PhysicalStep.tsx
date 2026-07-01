@@ -1,3 +1,5 @@
+import { memo } from "react";
+
 interface PhysicalStepProps {
   data: {
     age: string;
@@ -9,7 +11,7 @@ interface PhysicalStepProps {
   updateData: (category: "physical", field: string, value: string) => void;
 }
 
-export default function PhysicalStep({ data, updateData }: PhysicalStepProps) {
+function PhysicalStep({ data, updateData }: PhysicalStepProps) {
   return (
     <div className="animate-fade-up space-y-6 relative">
       <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter mb-6 drop-shadow-lg">
@@ -107,3 +109,4 @@ export default function PhysicalStep({ data, updateData }: PhysicalStepProps) {
     </div>
   );
 }
+export default memo(PhysicalStep);
