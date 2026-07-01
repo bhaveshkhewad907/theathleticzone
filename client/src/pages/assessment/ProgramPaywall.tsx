@@ -15,7 +15,7 @@ export default function ProgramPaywall({
   const [isProcessing, setIsProcessing] = useState(false);
 
   const COUPONS: Record<string, number> = {
-    "JASON-TAZ": 50,
+    "JAYSON-TAZ": 50,
   };
 
   const handleApplyCoupon = () => {
