@@ -8,6 +8,7 @@ import { ErrorBoundary } from "react-error-boundary";
 import GlobalErrorFallback from "./components/ui/GlobalErrorFallback";
 import { Toaster } from "react-hot-toast";
 import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -61,5 +62,6 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 
     {/* 🚀 THE FIX: Analytics is now safely inside the React tree! */}
     <Analytics />
+    <SpeedInsights />
   </React.StrictMode>,
 );
