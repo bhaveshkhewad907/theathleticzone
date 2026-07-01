@@ -22,12 +22,12 @@ export default function ProgramPaywall({
     const code = coupon.toUpperCase();
     if (COUPONS[code]) {
       const discount = COUPONS[code];
-      setDisplayPrice(10 - (10 * discount) / 100);
+      setDisplayPrice(1000 - (1000 * discount) / 100);
       setActiveCoupon(code);
       toast.success(`${discount}% Discount Applied!`);
     } else {
       toast.error("Invalid or expired code");
-      setDisplayPrice(10);
+      setDisplayPrice(1000);
       setActiveCoupon(null);
     }
   };
