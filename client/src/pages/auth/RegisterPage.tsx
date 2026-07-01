@@ -1,8 +1,8 @@
-import { useState, useContext, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Eye, EyeOff, Mail, Lock, User, ChevronRight } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import AuthLayout from "../../layout/AuthLayout";
-import AuthContext from "../../context/AuthContext";
+
 import api from "../../services/api";
 import toast from "react-hot-toast";
 
@@ -30,7 +30,6 @@ export default function RegisterPage() {
   const [currentBg, setCurrentBg] = useState(0);
 
   const navigate = useNavigate();
-  const auth = useContext(AuthContext);
 
   // 🎬 Cinematic Background Preloader & Looper
   useEffect(() => {
@@ -67,24 +66,23 @@ export default function RegisterPage() {
     }
 
     try {
-      const response = await api.post("/auth/register", {
+      await api.post("/auth/register", {
         name,
         email,
         password,
       });
+
       toast.success(
         "Account created! Please check your email for the verification code.",
       );
+
+      // 🚀 THE FIX: We only navigate to the login page to trigger the OTP modal.
       navigate("/login", {
         state: { email: email, requiresVerification: true },
       });
 
-      const { data } = response.data;
-      auth?.setAuth(data);
-
-      if (data.role === "ADMIN") navigate("/admin");
-      else if (data.role === "COACH") navigate("/coach/dashboard");
-      else navigate("/athlete");
+      // 🚨 WE DELETED THE auth?.setAuth() AND THE /athlete REDIRECTS FROM HERE!
+      // The user is not fully "logged in" until they verify the OTP on the login page.
     } catch {
       setError("Registration failed. Email may already be in use.");
     } finally {
