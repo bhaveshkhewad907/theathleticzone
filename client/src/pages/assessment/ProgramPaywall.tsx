@@ -11,11 +11,11 @@ export default function ProgramPaywall({
 }) {
   const [coupon, setCoupon] = useState("");
   const [activeCoupon, setActiveCoupon] = useState<string | null>(null);
-  const [displayPrice, setDisplayPrice] = useState(10);
+  const [displayPrice, setDisplayPrice] = useState(1000);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const COUPONS: Record<string, number> = {
-    JAYSON30: 30,
+    "JASON-TAZ": 50,
   };
 
   const handleApplyCoupon = () => {
@@ -147,7 +147,7 @@ export default function ProgramPaywall({
                 </h3>
                 {activeCoupon && (
                   <span className="text-white/40 line-through text-xl md:text-2xl font-bold">
-                    ₹10
+                    ₹1000
                   </span>
                 )}
               </div>
