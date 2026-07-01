@@ -136,11 +136,11 @@ export default function AssessmentWizard() {
 
   // 🚀 DYNAMIC BACKGROUND MAPPER
   const stepBackgrounds: Record<number, string> = {
-    1: "https://media.theathleticzone.in/auth-bg-images/video-player-bg.jpg", // Default/Physical
-    2: "https://media.theathleticzone.in/auth-bg-images/mobility.jpg",
-    3: "https://media.theathleticzone.in/auth-bg-images/power.jpg",
-    4: "https://media.theathleticzone.in/auth-bg-images/sprint.jpg",
-    5: "https://media.theathleticzone.in/auth-bg-images/strength.jpg",
+    1: "https://media.theathleticzone.in/auth-bg-images/video-player-bg.webp", // Default/Physical
+    2: "https://media.theathleticzone.in/auth-bg-images/mobility.webp",
+    3: "https://media.theathleticzone.in/auth-bg-images/power.webp",
+    4: "https://media.theathleticzone.in/auth-bg-images/sprint.webp",
+    5: "https://media.theathleticzone.in/auth-bg-images/strength.webp",
   };
 
   const currentBgUrl = stepBackgrounds[currentStep] || stepBackgrounds[1];
@@ -152,7 +152,7 @@ export default function AssessmentWizard() {
     return (
       // 🚀 NEW: Progressive Background Wrapper
       <ProgressiveBackground
-        src="https://media.theathleticzone.in/auth-bg-images/video-player-bg.jpg"
+        src="https://media.theathleticzone.in/auth-bg-images/video-player-bg.webp"
         className="relative w-full min-h-screen"
       >
         <div className="min-h-[80vh] flex items-center justify-center p-6 animate-in fade-in zoom-in duration-700 w-full pb-24">

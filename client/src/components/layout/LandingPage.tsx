@@ -120,7 +120,7 @@ export default function LandingPage() {
 
   const GALLERY = Array.from({ length: 15 }).map(
     (_, index) =>
-      `https://media.theathleticzone.in/center-images/center-image-${index + 1}.jpg`,
+      `https://media.theathleticzone.in/center-images/center-image-${index + 1}.webp`,
   );
 
   const [reviews, setReviews] = useState<ReviewData[]>([]);
@@ -169,7 +169,7 @@ export default function LandingPage() {
       {/* 🚀 1. THE GLOBAL FIXED BACKGROUND LAYER */}
       <div className="fixed inset-0 z-[-1] bg-[#0B0F14]">
         <img
-          src="https://media.theathleticzone.in/auth-bg-images/hero-bg%20(2).jpg"
+          src="https://media.theathleticzone.in/auth-bg-images/hero-bg%20(2).webp"
           alt="Athletic Zone Background"
           className="w-full h-full object-cover opacity-60"
         />
@@ -317,7 +317,7 @@ export default function LandingPage() {
                   transition: { duration: 1.5, ease: "easeOut" },
                 },
               }}
-              src="https://media.theathleticzone.in/auth-bg-images/CTA-card_landing-page.jpg"
+              src="https://media.theathleticzone.in/auth-bg-images/CTA-card_landing-page.webp"
               alt="Sprinter exploding off blocks"
               className="w-full h-full object-cover group-hover:scale-110 group-hover:opacity-50 transition-all duration-[2s] ease-out mix-blend-luminosity"
             />
@@ -534,7 +534,7 @@ export default function LandingPage() {
             >
               <div className="relative z-10 aspect-[4/5] rounded-[16px] md:rounded-[24px] overflow-hidden border border-white/10 shadow-[0_15px_30px_rgba(0,0,0,0.6)]">
                 <img
-                  src="https://media.theathleticzone.in/auth-bg-images/jitu-saini%20(1).jpg"
+                  src="https://media.theathleticzone.in/auth-bg-images/jitu-saini%20(1).webp"
                   alt="Head Coach Jitendra Saini"
                   className="absolute inset-0 w-full h-full object-cover grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 group-hover:scale-105 transition-all duration-[1.5s] ease-out"
                 />

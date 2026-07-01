@@ -109,7 +109,7 @@ export default function ProgramPaywall({
         {/* 📸 Left Side: Cinematic Image */}
         <div className="md:w-1/2 relative min-h-[300px] md:min-h-[500px]">
           <img
-            src="https://media.theathleticzone.in/auth-bg-images/paywall.jpg"
+            src="https://media.theathleticzone.in/auth-bg-images/paywall.webp"
             alt="Sprint Athlete"
             className="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-luminosity transition-all duration-700 hover:scale-105 hover:opacity-80"
           />

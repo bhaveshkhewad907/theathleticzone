@@ -258,7 +258,7 @@ export default function StructuredCoursePlayer({
 
   return (
     <ProgressiveBackground
-      src="https://media.theathleticzone.in/auth-bg-images/video-player-bg.jpg"
+      src="https://media.theathleticzone.in/auth-bg-images/video-player-bg.webp"
       className="fixed inset-0 w-full min-h-screen overflow-y-auto"
     >
       <div className="w-full min-h-screen animate-in fade-in duration-700 pb-24">
@@ -674,7 +674,7 @@ export default function StructuredCoursePlayer({
 function ClassicSingleVideoPlayer() {
   return (
     <ProgressiveBackground
-      src="https://media.theathleticzone.in/auth-bg-images/video-player-bg.jpg"
+      src="https://media.theathleticzone.in/auth-bg-images/video-player-bg.webp"
       className="fixed inset-0 w-full min-h-screen overflow-y-auto"
     >
       <div className="w-full min-h-screen flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-700">

@@ -4,9 +4,9 @@ import { Shield } from "lucide-react";
 
 // 🎬 Cinematic Background Array
 const BACKGROUND_IMAGES = [
-  "https://media.theathleticzone.in/auth-bg-images/auth-bg-three.jpg",
-  "https://media.theathleticzone.in/auth-bg-images/auth-bg-four.jpg",
-  "https://media.theathleticzone.in/auth-bg-images/auth-bg-five.jpg",
+  "https://media.theathleticzone.in/auth-bg-images/auth-bg-three.webp",
+  "https://media.theathleticzone.in/auth-bg-images/auth-bg-four.webp",
+  "https://media.theathleticzone.in/auth-bg-images/auth-bg-five.webp",
 ];
 
 interface LegalPageProps {

@@ -25,7 +25,7 @@ export default function AdminLayout() {
       <div
         className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat grayscale-[20%]"
         style={{
-          backgroundImage: `url('https://media.theathleticzone.in/auth-bg-images/admin-bg.jpg')`,
+          backgroundImage: `url('https://media.theathleticzone.in/auth-bg-images/admin-bg.webp')`,
         }}
       >
         {/* Deep Gradient Overlay */}
