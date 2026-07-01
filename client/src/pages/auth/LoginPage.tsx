@@ -50,25 +50,30 @@ export default function LoginPage() {
 
     const interval = setInterval(() => {
       setCurrentBg((prev) => (prev + 1) % BACKGROUND_IMAGES.length);
-    }, 7000); // 7 seconds per image
+    }, 7000);
 
     return () => clearInterval(interval);
   }, []);
 
+  // 🚀 THE FIX: Consume the Router State to prevent the "Stuck on Verify" trap
   useEffect(() => {
     if (location.state?.email && email !== location.state.email) {
       setEmail(location.state.email);
     }
+
     if (location.state?.requiresVerification && step !== "VERIFY") {
       setStep("VERIFY");
-    }
-  }, [
-    location.state?.email,
-    location.state?.requiresVerification,
-    email,
-    step,
-  ]);
 
+      // CRITICAL: We clear the 'requiresVerification' flag from the router memory
+      // so when they successfully verify, this useEffect doesn't force them back!
+      navigate(location.pathname, {
+        replace: true,
+        state: { email: location.state.email },
+      });
+    }
+  }, [location.state, email, step, navigate, location.pathname]);
+
+  // Handle automatic redirects if already logged in
   useEffect(() => {
     if (auth?.isAuthenticated && auth?.user) {
       if (auth.user.role === "ADMIN") navigate("/admin", { replace: true });
@@ -95,6 +100,7 @@ export default function LoginPage() {
       setLoading(false);
       return;
     }
+
     try {
       const response = await api.post("/auth/login", { email, password });
       toast.success("Login successful.");
@@ -124,7 +130,8 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await api.post("/auth/verify-email", { email, otp });
-      toast.success("Account verified successfully.");
+      // 🚀 Notify user and smoothly transition back to standard login
+      toast.success("Account activated successfully! Please log in.");
       setStep("LOGIN");
       setOtp("");
       setPassword("");
@@ -153,11 +160,8 @@ export default function LoginPage() {
           />
         ))}
 
-        {/* Layer 1: Deep Navy/Charcoal Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-[#0F1724]/80 via-[#0B0F14]/40 to-[#0F1724]/80 mix-blend-multiply" />
-        {/* Layer 2: Dark Vignette Edge Blur */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_10%,#0B0F14_100%)] opacity-90" />
-        {/* Layer 3: Cinematic Grain Texture */}
         <div
           className="absolute inset-0 opacity-[0.03] mix-blend-overlay"
           style={{
@@ -172,7 +176,7 @@ export default function LoginPage() {
         <div className="p-10 md:p-14 flex flex-col justify-center relative bg-black/10">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-amber-500 to-transparent opacity-40" />
 
-          {/* 📱 MOBILE ONLY: Clickable AZ Logo to return to Landing Page */}
+          {/* 📱 MOBILE ONLY: Clickable AZ Logo */}
           <Link
             to="/"
             className="md:hidden h-12 w-12 mb-8 bg-amber-500/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.2)] hover:bg-amber-500/20 transition-all active:scale-95 group"
