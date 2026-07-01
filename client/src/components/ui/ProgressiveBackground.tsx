@@ -1,36 +1,44 @@
 import { useState, useEffect } from "react";
 
+interface ProgressiveBackgroundProps {
+  src: string;
+  children: React.ReactNode;
+  className?: string;
+}
+
 export default function ProgressiveBackground({
   src,
-  className = "",
   children,
-}: {
-  src: string;
-  className?: string;
-  children?: React.ReactNode;
-}) {
-  const [isLoaded, setIsLoaded] = useState(false);
+  className = "",
+}: ProgressiveBackgroundProps) {
+  // 🚀 THE FIX: Track the URL of the loaded image instead of a true/false boolean
+  const [loadedSrc, setLoadedSrc] = useState<string | null>(null);
 
   useEffect(() => {
-    // Silently download the image in the browser cache
+    // We no longer need to synchronously reset state here! The linter is happy.
     const img = new Image();
     img.src = src;
-    img.onload = () => setIsLoaded(true);
+    img.onload = () => {
+      setLoadedSrc(src);
+    };
   }, [src]);
 
-  return (
-    <div className={`relative ${className}`}>
-      {/* Fallback solid background color */}
-      <div className="absolute inset-0 bg-[#0B0F14] z-[-2]" />
+  // If the current 'src' matches the 'loadedSrc', we know the new image is fully loaded!
+  const isLoaded = loadedSrc === src;
 
-      {/* The actual image that fades in smoothly */}
-      <div
-        className={`absolute inset-0 z-[-1] bg-cover bg-center bg-no-repeat transition-opacity duration-1000 ease-in-out ${isLoaded ? "opacity-100" : "opacity-0"}`}
-        style={{ backgroundImage: `url('${src}')` }}
+  return (
+    <div className={className}>
+      <img
+        src={src}
+        alt="Background"
+        className={`fixed inset-0 w-full h-full object-cover z-[-2] transition-opacity duration-700 ease-in-out ${
+          isLoaded ? "opacity-100" : "opacity-0"
+        }`}
       />
 
-      {/* Your page content goes on top */}
-      <div className="relative z-10 w-full h-full">{children}</div>
+      <div className="fixed inset-0 bg-black/30 z-[-1]" />
+
+      <div className="relative z-10">{children}</div>
     </div>
   );
 }

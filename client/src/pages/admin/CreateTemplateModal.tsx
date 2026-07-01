@@ -96,7 +96,6 @@ export default function CreateTemplateModal({
     e.preventDefault();
     if (!name) return toast.error("Blueprint Name is required.");
     if (steps.length === 0) return toast.error("Please add at least one step.");
-
     setIsSaving(true);
     try {
       const payload = {

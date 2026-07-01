@@ -628,15 +628,9 @@ export default function StructuredCoursePlayer({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-[#0B0F14]/95 backdrop-blur-2xl"
+            // Increased z-index to ensure it overlaps any other floating navigation
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-[#0B0F14]/95 backdrop-blur-2xl"
           >
-            <button
-              onClick={() => setIsVideoModalOpen(false)}
-              className="absolute top-6 right-6 md:top-10 md:right-10 w-10 h-10 md:w-12 md:h-12 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full flex items-center justify-center text-white backdrop-blur-md transition-all active:scale-90 z-10"
-            >
-              <X size={20} className="md:w-6 md:h-6" />
-            </button>
-
             <motion.div
               initial={{ scale: 0.9, y: 50 }}
               animate={{ scale: 1, y: 0 }}
@@ -644,6 +638,17 @@ export default function StructuredCoursePlayer({
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
               className="relative w-full max-w-[45vh] aspect-[9/16] bg-black rounded-[2rem] overflow-hidden border border-white/10 shadow-[0_40px_100px_rgba(0,0,0,0.8)]"
             >
+              {/* 🚀 UPGRADED: Close Button moved INSIDE the video frame so it never gets hidden by mobile notches! */}
+              <button
+                onClick={() => {
+                  setIsVideoModalOpen(false);
+                  setTimeout(() => setActiveVideo(null), 300); // 🚀 Clears the video so audio actually stops!
+                }}
+                className="absolute top-4 right-4 w-10 h-10 bg-black/60 hover:bg-red-500 border border-white/20 rounded-full flex items-center justify-center text-white backdrop-blur-md transition-all active:scale-90 z-50 shadow-xl"
+              >
+                <X size={20} />
+              </button>
+
               <video
                 src={
                   activeVideo.startsWith("http")
@@ -653,7 +658,7 @@ export default function StructuredCoursePlayer({
                 controls
                 autoPlay
                 playsInline
-                className="absolute inset-0 w-full h-full object-cover"
+                className="absolute inset-0 w-full h-full object-cover z-0"
               />
             </motion.div>
           </motion.div>
