@@ -658,6 +658,8 @@ export default function StructuredCoursePlayer({
                 controls
                 autoPlay
                 playsInline
+                controlsList="nodownload"
+                onContextMenu={(e) => e.preventDefault()}
                 className="absolute inset-0 w-full h-full object-cover z-0"
               />
             </motion.div>
