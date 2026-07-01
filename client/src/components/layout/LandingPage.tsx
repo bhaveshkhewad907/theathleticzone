@@ -467,32 +467,40 @@ export default function LandingPage() {
             variants={fadeUp}
             className="relative pt-6"
           >
+            {/* 🚀 THE SCROLL JUMP FIX: Grid structure is now static and permanent */}
             <div className="grid grid-cols-2 md:grid-cols-4 md:grid-rows-2 gap-3 md:gap-4 md:h-[600px] w-full relative mt-4">
-              <AnimatePresence mode="popLayout">
-                {currentGallerySet.map((img, i) => {
-                  const isHero = i === 0;
-                  const gridClasses = isHero
-                    ? "col-span-2 md:col-span-2 md:row-span-2 aspect-[16/10] md:aspect-auto"
-                    : "col-span-1 md:col-span-1 md:row-span-1 aspect-square md:aspect-auto";
+              {[0, 1, 2, 3, 4].map((i) => {
+                const img = currentGallerySet[i];
+                if (!img) return null; // Safety check
 
-                  return (
-                    <motion.div
-                      key={img}
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.95 }}
-                      transition={{ duration: 0.8, delay: i * 0.1 }}
-                      className={`relative rounded-[16px] md:rounded-[24px] overflow-hidden group shadow-[0_10px_30px_rgba(0,0,0,0.5)] border border-white/[0.05] bg-black/40 ${gridClasses}`}
-                    >
-                      <img
+                const isHero = i === 0;
+                const gridClasses = isHero
+                  ? "col-span-2 md:col-span-2 md:row-span-2 aspect-[16/10] md:aspect-auto"
+                  : "col-span-1 md:col-span-1 md:row-span-1 aspect-square md:aspect-auto";
+
+                return (
+                  // 1. Grid Cells use the index (i) as the key, so they NEVER unmount. Layout is locked.
+                  <div
+                    key={`gallery-cell-${i}`}
+                    className={`relative rounded-[16px] md:rounded-[24px] overflow-hidden group shadow-[0_10px_30px_rgba(0,0,0,0.5)] border border-white/[0.05] bg-black/40 ${gridClasses}`}
+                  >
+                    {/* 2. AnimatePresence now lives INSIDE the cell, only crossfading the images */}
+                    <AnimatePresence>
+                      <motion.img
+                        key={img} // The key changes every 5 seconds, triggering the crossfade
+                        initial={{ opacity: 0, scale: 1.05 }}
+                        animate={{ opacity: 0.8, scale: 1 }}
+                        exit={{ opacity: 0, scale: 1.05 }}
+                        transition={{ duration: 0.8, ease: "easeInOut" }}
                         src={img}
                         alt={`Facility View ${i}`}
-                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-[2s] opacity-80 group-hover:opacity-100"
+                        // 3. Absolute positioning guarantees the animation never alters page height
+                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-[2s] group-hover:opacity-100"
                       />
-                    </motion.div>
-                  );
-                })}
-              </AnimatePresence>
+                    </AnimatePresence>
+                  </div>
+                );
+              })}
             </div>
           </motion.div>
         </div>
