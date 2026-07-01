@@ -14,20 +14,17 @@ import { AuthenticatedRequest } from "./types/auth.types"; // Adjust path if nee
 
 import apiRoutes from "./modules/index.routes";
 
-const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  message: {
-    success: false,
-    message: "High traffic detected from this IP. Please wait 15 minutes.",
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
 const app = express();
+
+// ==========================================
+// 1. CORE SETUP & TRUST PROXY
+// ==========================================
+// Required for Rate Limiting & IPs behind Render/Cloudflare
 app.set("trust proxy", 1);
 
+// ==========================================
+// 2. OBSERVABILITY & METRICS (Must be first)
+// ==========================================
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
   environment: process.env.NODE_ENV,
@@ -46,29 +43,9 @@ const metricsMiddleware = promBundle({
 });
 app.use(metricsMiddleware);
 
-/* Security Middleware */
-app.use(
-  helmet({
-    crossOriginEmbedderPolicy: false,
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "https://checkout.razorpay.com"],
-        frameSrc: ["'self'", "https://checkout.razorpay.com"], // Removed Mux since you use R2
-        imgSrc: ["'self'", "data:", "https:"],
-        mediaSrc: ["'self'", "https:", "blob:"], // 🚀 FIX: Explicitly allows R2 videos to play
-        connectSrc: [
-          "'self'",
-          "https://api.razorpay.com",
-          "https://*.r2.cloudflarestorage.com",
-        ], // Allow hitting R2 securely
-      },
-    },
-  }),
-);
-app.use(globalLimiter);
-
-app.use(cookieParser());
+// ==========================================
+// 3. CORS (Must be early for preflight requests)
+// ==========================================
 const allowedOrigins = [
   "http://localhost:5173",
   "https://theathleticzone.in",
@@ -80,7 +57,7 @@ app.use(
     origin: function (origin, callback) {
       if (!origin) return callback(null, true);
       if (allowedOrigins.indexOf(origin) === -1) {
-        var msg =
+        const msg =
           "The CORS policy for this site does not allow access from the specified Origin.";
         return callback(new Error(msg), false);
       }
@@ -90,8 +67,61 @@ app.use(
   }),
 );
 
+// ==========================================
+// 4. SECURITY HEADERS
+// ==========================================
+app.use(
+  helmet({
+    crossOriginEmbedderPolicy: false,
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "https://checkout.razorpay.com"],
+        frameSrc: ["'self'", "https://checkout.razorpay.com"],
+        imgSrc: ["'self'", "data:", "https:"],
+        mediaSrc: ["'self'", "https:", "blob:"], // Allows R2 videos to play
+        connectSrc: [
+          "'self'",
+          "https://api.razorpay.com",
+          "https://*.r2.cloudflarestorage.com",
+        ], // Allow hitting R2 securely
+      },
+    },
+  }),
+);
+
+// ==========================================
+// 5. 🏥 HIGH-PRIORITY INFRASTRUCTURE ROUTES
+// ==========================================
+// Render Health Check - MUST bypass rate limits and body parsers!
+app.get("/health", (_req: Request, res: Response) => {
+  res.status(200).send("OK");
+});
+
+// ==========================================
+// 6. RATE LIMITING
+// ==========================================
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: {
+    success: false,
+    message: "High traffic detected from this IP. Please wait 15 minutes.",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use(globalLimiter);
+
+// ==========================================
+// 7. BODY PARSERS & COOKIES
+// ==========================================
+app.use(cookieParser());
 app.use(express.json({ limit: "10kb" }));
 
+// ==========================================
+// 8. DATA SANITIZATION
+// ==========================================
 app.use((req: Request, _res: Response, next: NextFunction) => {
   if (req.body) req.body = mongoSanitize.sanitize(req.body);
   if (req.params) req.params = mongoSanitize.sanitize(req.params);
@@ -103,11 +133,17 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
   next();
 });
 
+// ==========================================
+// 9. AUTHENTICATION INIT
+// ==========================================
 app.use(passport.initialize());
 
+// ==========================================
+// 10. API ROUTES
+// ==========================================
 app.use("/api", apiRoutes);
 
-/* Health Check Route */
+/* Welcome / Root Route */
 app.get("/", (_req: Request, res: Response) => {
   res.status(200).json({
     success: true,
@@ -115,7 +151,9 @@ app.get("/", (_req: Request, res: Response) => {
   });
 });
 
-// 404 Handler
+// ==========================================
+// 11. 404 HANDLER
+// ==========================================
 app.use((_req: Request, res: Response) => {
   res.status(404).json({
     success: false,
@@ -123,9 +161,13 @@ app.use((_req: Request, res: Response) => {
   });
 });
 
+// ==========================================
+// 12. ERROR HANDLING (Order is strictly required)
+// ==========================================
+// 12a. Sentry Error Catcher
 Sentry.setupExpressErrorHandler(app);
 
-// 🚀 FIX: Added strict typing to the Custom Error Logger
+// 12b. Custom Error Logger
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   const authReq = req as AuthenticatedRequest;
   logger.error(err.message, {
@@ -136,10 +178,10 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
     stack: err.stack,
     payload: req.body,
   });
-  next(err);
+  next(err); // Pass down to global handler
 });
 
-// 5. GLOBAL ERROR HANDLER
+// 12c. Global Error Response Formatter
 app.use(errorHandler);
 
 export default app;
