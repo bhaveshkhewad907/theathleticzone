@@ -32,26 +32,21 @@ export default function AdminDashboard() {
     fetchDashboardData();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="min-h-[400px] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-amber-500/30 border-t-amber-500 rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  if (!data) return null;
+  // 🚀 PERFORMANCE FIX: We removed the global `if(loading)` block.
+  // The page shell renders immediately now, dropping LCP significantly!
 
   const StatCard = ({
     label,
     value,
     isHighlight = false,
     colorClass = "text-white",
+    isLoading = false,
   }: {
     label: string;
-    value: number | string;
+    value?: number | string;
     isHighlight?: boolean;
     colorClass?: string;
+    isLoading?: boolean;
   }) => (
     <div className="group relative overflow-hidden bg-[#0F1724]/80 backdrop-blur-md border border-white/[0.05] rounded-[16px] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-amber-500/30 shadow-[0_10px_30px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.04)] hover:shadow-[0_15px_40px_rgba(245,158,11,0.1),inset_0_1px_0_rgba(255,255,255,0.04)]">
       <div className="absolute inset-0 bg-gradient-to-b from-white/[0.03] to-transparent pointer-events-none" />
@@ -61,11 +56,17 @@ export default function AdminDashboard() {
         <p className="text-[#8A94A6] text-xs font-bold uppercase tracking-wider mb-3">
           {label}
         </p>
-        <h3
-          className={`text-4xl font-black tracking-tighter ${isHighlight ? "text-amber-500" : colorClass}`}
-        >
-          {value.toLocaleString()}
-        </h3>
+
+        {/* Skeleton Loader inside the component */}
+        {isLoading ? (
+          <div className="h-10 w-24 bg-white/5 rounded-md animate-pulse" />
+        ) : (
+          <h3
+            className={`text-4xl font-black tracking-tighter ${isHighlight ? "text-amber-500" : colorClass}`}
+          >
+            {value?.toLocaleString() || "0"}
+          </h3>
+        )}
       </div>
       <div className="absolute bottom-0 left-0 h-[2px] w-0 bg-amber-500 transition-all duration-500 group-hover:w-full opacity-50" />
     </div>
@@ -101,48 +102,65 @@ export default function AdminDashboard() {
                 <span className="h-2 w-2 rounded-full bg-amber-500" /> Training
                 Active
               </p>
-              <p className="text-lg font-black text-white">
-                {data.athletesInTraining}
-              </p>
+              {loading ? (
+                <div className="h-6 w-12 bg-white/5 animate-pulse rounded mt-1" />
+              ) : (
+                <p className="text-lg font-black text-white">
+                  {data?.athletesInTraining || 0}
+                </p>
+              )}
             </div>
             <div className="bg-black/40 border border-white/5 rounded-xl p-4">
               <p className="text-[10px] font-bold uppercase tracking-wider text-[#8A94A6] flex items-center gap-1.5 mb-1">
                 <span className="h-2 w-2 rounded-full bg-red-500" /> Needs
                 Assessment
               </p>
-              <p className="text-lg font-black text-white">
-                {data.athletesNeedingAssessment}
-              </p>
+              {loading ? (
+                <div className="h-6 w-12 bg-white/5 animate-pulse rounded mt-1" />
+              ) : (
+                <p className="text-lg font-black text-white">
+                  {data?.athletesNeedingAssessment || 0}
+                </p>
+              )}
             </div>
             <div className="bg-black/40 border border-white/5 rounded-xl p-4">
               <p className="text-[10px] font-bold uppercase tracking-wider text-[#8A94A6] flex items-center gap-1.5 mb-1">
                 <span className="h-2 w-2 rounded-full bg-blue-500" /> Total
                 Athletes
               </p>
-              <p className="text-lg font-black text-white">
-                {data.totalAthletes}
-              </p>
+              {loading ? (
+                <div className="h-6 w-12 bg-white/5 animate-pulse rounded mt-1" />
+              ) : (
+                <p className="text-lg font-black text-white">
+                  {data?.totalAthletes || 0}
+                </p>
+              )}
             </div>
           </div>
         </div>
 
         {/* Main Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <StatCard label="Total Athletes" value={data.totalAthletes} />
+          <StatCard
+            label="Total Athletes"
+            value={data?.totalAthletes}
+            isLoading={loading}
+          />
           <StatCard
             label="Total Revenue"
-            value={`₹${data.totalRevenue.toLocaleString()}`}
+            value={data ? `₹${data.totalRevenue.toLocaleString()}` : undefined}
             colorClass="text-green-500"
+            isLoading={loading}
           />
-
           <StatCard
             label="Completed Assessments"
-            value={data.totalAssessments}
+            value={data?.totalAssessments}
             isHighlight
+            isLoading={loading}
           />
         </div>
 
-        {/* 🚀 NEW: Promo Code Analytics Section */}
+        {/* Promo Code Analytics Section */}
         <div className="mt-10">
           <div className="flex items-center gap-3 mb-6">
             <div className="p-2 rounded-lg bg-amber-500/10 text-amber-500">
@@ -153,8 +171,12 @@ export default function AdminDashboard() {
             </h2>
           </div>
 
-          <div className="bg-[#0F1724]/80 backdrop-blur-md border border-white/[0.05] rounded-[16px] overflow-hidden">
-            {data.couponUsage && data.couponUsage.length > 0 ? (
+          <div className="bg-[#0F1724]/80 backdrop-blur-md border border-white/[0.05] rounded-[16px] overflow-hidden min-h-[150px]">
+            {loading ? (
+              <div className="flex justify-center items-center h-full py-12">
+                <div className="w-8 h-8 border-2 border-amber-500/30 border-t-amber-500 rounded-full animate-spin" />
+              </div>
+            ) : data?.couponUsage && data.couponUsage.length > 0 ? (
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-black/40 border-b border-white/5">
@@ -185,7 +207,7 @@ export default function AdminDashboard() {
                 </tbody>
               </table>
             ) : (
-              <div className="p-8 text-center text-[#8A94A6]">
+              <div className="p-12 text-center text-[#8A94A6]">
                 <p className="font-bold uppercase tracking-wider">
                   No promo codes used yet.
                 </p>

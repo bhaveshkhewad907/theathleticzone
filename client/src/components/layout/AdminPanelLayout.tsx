@@ -21,28 +21,29 @@ export default function AdminLayout() {
 
   return (
     <div className="relative min-h-screen text-white flex flex-col md:flex-row font-sans selection:bg-amber-500/30 overflow-hidden">
-      {/* 🎬 FULL PAGE FIXED BACKGROUND */}
+      {/* 🎬 🚀 PERFORMANCE FIX: Eager Load Native Image instead of CSS Background */}
+      <img
+        src="https://media.theathleticzone.in/auth-bg-images/admin-bg.webp"
+        alt="Admin Framework"
+        fetchPriority="high"
+        loading="eager"
+        className="fixed inset-0 z-0 w-full h-full object-cover grayscale-[20%]"
+      />
+
+      {/* Deep Gradient Overlay */}
+      <div className="fixed inset-0 z-0 bg-gradient-to-br from-[#0F1724]/50 via-[#0B0F14]/20 to-[#0F1724]/50 mix-blend-multiply pointer-events-none" />
+
+      {/* Ambient Radial Spotlights */}
+      <div className="fixed top-0 left-1/4 w-[800px] h-[600px] bg-amber-500/10 blur-[120px] rounded-full mix-blend-screen z-0 pointer-events-none" />
+      <div className="fixed bottom-0 right-1/4 w-[600px] h-[600px] bg-amber-500/5 blur-[100px] rounded-full mix-blend-screen z-0 pointer-events-none" />
+
+      {/* Cinematic Grain Texture */}
       <div
-        className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat grayscale-[20%]"
+        className="fixed inset-0 z-0 opacity-[0.03] mix-blend-overlay pointer-events-none"
         style={{
-          backgroundImage: `url('https://media.theathleticzone.in/auth-bg-images/admin-bg.webp')`,
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
         }}
-      >
-        {/* Deep Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0F1724]/50 via-[#0B0F14]/20 to-[#0F1724]/50 mix-blend-multiply" />
-
-        {/* Ambient Radial Spotlights */}
-        <div className="absolute top-0 left-1/4 w-[800px] h-[600px] bg-amber-500/10 blur-[120px] rounded-full mix-blend-screen" />
-        <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-amber-500/5 blur-[100px] rounded-full mix-blend-screen" />
-
-        {/* Cinematic Grain Texture */}
-        <div
-          className="absolute inset-0 opacity-[0.03] mix-blend-overlay"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
-          }}
-        />
-      </div>
+      />
 
       {/* Mobile Topbar (Glassmorphic) */}
       <header className="md:hidden flex items-center justify-between p-6 border-b border-white/5 bg-[#0F1724]/40 backdrop-blur-xl z-40 relative shadow-lg">
@@ -84,7 +85,6 @@ export default function AdminLayout() {
           </div>
         </div>
 
-        {/* 🚀 THE FIX: Streamlined Navigation Section */}
         <div className="flex-1 space-y-8 overflow-y-auto scrollbar-hide">
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/30 mb-6 ml-3">
@@ -106,7 +106,7 @@ export default function AdminLayout() {
               <MenuLink
                 to="/admin/athletes"
                 label="Athlete Roster"
-                icon={User} // Don't forget to import User from 'lucide-react' at the top!
+                icon={User}
                 setSidebarOpen={setSidebarOpen}
               />
               <MenuLink
@@ -159,7 +159,6 @@ export default function AdminLayout() {
   );
 }
 
-// Reusable Navigation Link Component
 function MenuLink({
   to,
   label,
