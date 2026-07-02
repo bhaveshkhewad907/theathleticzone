@@ -50,6 +50,12 @@ function MobilityStep({ data, updateData }: Props) {
         <div className="relative">
           <input
             type="number"
+            min={0}
+            onKeyDown={(e) => {
+              if (e.key === "-" || e.key === "e") {
+                e.preventDefault();
+              }
+            }}
             value={data.kneeToWallCm}
             onChange={(e) =>
               updateData("mobility", "kneeToWallCm", e.target.value)
