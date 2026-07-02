@@ -1,15 +1,16 @@
 import User from "../user/user.model";
 import Assessment from "../assessment/assessment.model";
 import CoursePurchase from "../course/coursePurchase.model";
-// 🚀 NEW: Import the permanent financial ledger
 import PaymentLedger from "../payment/paymentLedger.model";
 
 export const getAdminDashboard = async () => {
   const totalAthletes = await User.countDocuments({ role: "ATHLETE" });
+
   const athletesInTraining = await User.countDocuments({
     role: "ATHLETE",
     "platformState.status": "ACTIVE_TRAINING",
   });
+
   const athletesNeedingAssessment = await User.countDocuments({
     role: "ATHLETE",
     $or: [
@@ -19,9 +20,10 @@ export const getAdminDashboard = async () => {
     ],
   });
 
-  const totalAssessments = await Assessment.countDocuments({
-    status: "COMPLETED",
-  });
+  // 🚀 THE BUG FIX: Removed the { status: "COMPLETED" } filter.
+  // Because assessments are only saved at the end of the wizard,
+  // every document in this collection represents a completed assessment.
+  const totalAssessments = await Assessment.countDocuments();
 
   // 🚀 1. EXACT REVENUE MATH (Sums all transactions in the permanent Ledger)
   const ledgerAggregation = await PaymentLedger.aggregate([
