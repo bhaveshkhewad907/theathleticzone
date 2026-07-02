@@ -90,6 +90,7 @@ function SprintStep({ data, updateData }: Props) {
             </span>
             <input
               type="number"
+              min={0}
               step="0.01"
               value={data.sprint30mSeconds}
               onChange={(e) =>
@@ -110,6 +111,7 @@ function SprintStep({ data, updateData }: Props) {
             </span>
             <input
               type="number"
+              min={0}
               step="0.01"
               value={data.sprint100mSeconds || ""}
               onChange={(e) =>
@@ -130,6 +132,7 @@ function SprintStep({ data, updateData }: Props) {
             </span>
             <input
               type="number"
+              min={0}
               step="0.01"
               value={data.sprint200mSeconds || ""}
               onChange={(e) =>

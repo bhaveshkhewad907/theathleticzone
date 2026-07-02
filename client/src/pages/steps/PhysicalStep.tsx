@@ -26,9 +26,21 @@ function PhysicalStep({ data, updateData }: PhysicalStepProps) {
           </label>
           <input
             type="number"
+            min={0}
+            onKeyDown={(e) => {
+              if (e.key === "-" || e.key === "e") {
+                e.preventDefault();
+              }
+            }}
             placeholder="e.g. 21"
             value={data.age}
-            onChange={(e) => updateData("physical", "age", e.target.value)}
+            onChange={(e) => {
+              let val = e.target.value;
+              if (Number(val) < 0) {
+                val = "0";
+              }
+              updateData("physical", "age", val);
+            }}
             className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-4 text-white text-base md:text-lg font-bold placeholder:text-white/20 focus:outline-none focus:border-amber-500 transition-all shadow-inner"
           />
         </div>
@@ -39,9 +51,21 @@ function PhysicalStep({ data, updateData }: PhysicalStepProps) {
           </label>
           <input
             type="number"
+            min={0}
+            onKeyDown={(e) => {
+              if (e.key === "-" || e.key === "e") {
+                e.preventDefault();
+              }
+            }}
             placeholder="e.g. 180"
             value={data.heightCm}
-            onChange={(e) => updateData("physical", "heightCm", e.target.value)}
+            onChange={(e) => {
+              let val = e.target.value;
+              if (Number(val) < 0) {
+                val = "0";
+              }
+              updateData("physical", "heightCm", val);
+            }}
             className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-4 text-white text-base md:text-lg font-bold placeholder:text-white/20 focus:outline-none focus:border-amber-500 transition-all shadow-inner"
           />
         </div>
@@ -52,11 +76,21 @@ function PhysicalStep({ data, updateData }: PhysicalStepProps) {
           </label>
           <input
             type="number"
+            min={0}
+            onKeyDown={(e) => {
+              if (e.key === "-" || e.key === "e") {
+                e.preventDefault();
+              }
+            }}
             placeholder="e.g. 75"
             value={data.bodyweightKg}
-            onChange={(e) =>
-              updateData("physical", "bodyweightKg", e.target.value)
-            }
+            onChange={(e) => {
+              let val = e.target.value;
+              if (Number(val) < 0) {
+                val = "0";
+              }
+              updateData("physical", "bodyweightKg", val);
+            }}
             className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-4 text-white text-base md:text-lg font-bold placeholder:text-white/20 focus:outline-none focus:border-amber-500 transition-all shadow-inner"
           />
         </div>

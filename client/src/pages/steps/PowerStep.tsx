@@ -49,6 +49,7 @@ function PowerStep({ data, updateData }: Props) {
         <div className="relative">
           <input
             type="number"
+            min={0}
             step="0.01"
             value={data.broadJumpMeters}
             onChange={(e) =>
@@ -90,6 +91,7 @@ function PowerStep({ data, updateData }: Props) {
         <div className="relative">
           <input
             type="number"
+            min={0}
             value={data.verticalJumpCm}
             onChange={(e) =>
               updateData("power", "verticalJumpCm", e.target.value)

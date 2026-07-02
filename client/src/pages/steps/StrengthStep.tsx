@@ -50,6 +50,7 @@ function StrengthStep({ data, updateData }: Props) {
         <div className="relative">
           <input
             type="number"
+            min={0}
             value={data.backSquatMaxKg}
             onChange={(e) =>
               updateData("strength", "backSquatMaxKg", e.target.value)
