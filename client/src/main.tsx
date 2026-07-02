@@ -10,6 +10,28 @@ import { Toaster } from "react-hot-toast";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 
+// 🚀 SAFE AUTO-RELOAD: Silently refreshes the page if a user hits a dead Vercel chunk
+window.addEventListener("vite:preloadError", (event) => {
+  event.preventDefault(); // Prevents the ugly browser error text
+
+  // 🛡️ SAFETY NET: Prevent infinite reload loops
+  const hasReloaded = sessionStorage.getItem("vite-chunk-reload");
+
+  if (!hasReloaded) {
+    // First time encountering the error: Set a flag and refresh
+    sessionStorage.setItem("vite-chunk-reload", "true");
+    window.location.reload();
+  } else {
+    // If it already refreshed and still failed, clear the flag and let the ErrorBoundary handle it
+    sessionStorage.removeItem("vite-chunk-reload");
+  }
+});
+
+// Reset the safety flag when the app successfully loads
+window.addEventListener("load", () => {
+  sessionStorage.removeItem("vite-chunk-reload");
+});
+
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     {/* 1. Moved Toaster inside StrictMode for best practices */}
