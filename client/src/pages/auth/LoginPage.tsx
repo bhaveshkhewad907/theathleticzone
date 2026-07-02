@@ -43,11 +43,6 @@ export default function LoginPage() {
 
   // 🎬 Cinematic Background Preloader & Looper
   useEffect(() => {
-    BACKGROUND_IMAGES.forEach((src) => {
-      const img = new Image();
-      img.src = src;
-    });
-
     const interval = setInterval(() => {
       setCurrentBg((prev) => (prev + 1) % BACKGROUND_IMAGES.length);
     }, 7000);
@@ -153,6 +148,8 @@ export default function LoginPage() {
             src={src}
             alt="Cinematic Athletic Background"
             className="absolute inset-0 w-full h-full object-cover"
+            loading={idx === 0 ? "eager" : "lazy"}
+            fetchPriority={idx === 0 ? "high" : "auto"}
             style={{
               opacity: idx === currentBg ? 1 : 0,
               transition: "opacity 1.5s ease-in-out",

@@ -1,4 +1,11 @@
-import { useEffect, useState, useContext, Fragment } from "react";
+import {
+  useEffect,
+  useState,
+  useContext,
+  Fragment,
+  lazy,
+  Suspense,
+} from "react";
 import AuthContext from "../../context/AuthContext";
 import api from "../../services/api";
 import { motion, AnimatePresence } from "framer-motion";
@@ -18,9 +25,13 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 
-import StructuredCoursePlayer from "./StructuredCoursePlayer";
-import ProgramPaywall from "../assessment/ProgramPaywall";
-import AssessmentWizard from "../../components/ui/AssessmentWizard";
+// 🚀 PERFORMANCE FIX 1: Lazy Load Heavy Child Components
+// The browser will NO LONGER download Razorpay, the Wizard, or the Video Player until they are actually needed!
+const StructuredCoursePlayer = lazy(() => import("./StructuredCoursePlayer"));
+const ProgramPaywall = lazy(() => import("../assessment/ProgramPaywall"));
+const AssessmentWizard = lazy(
+  () => import("../../components/ui/AssessmentWizard"),
+);
 
 interface ExtendedAuthUser {
   platformState?: { status?: string; hasPaidEntryFee?: boolean };
@@ -36,8 +47,15 @@ interface ActiveCourseData {
   title: string;
   description: string;
   thumbnailUrl: string;
-  videoUrl?: string | null; // 🚀 Added to capture the Intro Reel
+  videoUrl?: string | null;
 }
+
+// 🚀 Quick fallback loader for the lazy components
+const ComponentLoader = () => (
+  <div className="relative min-h-[60vh] flex items-center justify-center bg-[#0B0F14]">
+    <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin shadow-[0_0_15px_rgba(245,158,11,0.5)]" />
+  </div>
+);
 
 export default function AthleteDashboard() {
   const auth = useContext(AuthContext);
@@ -57,7 +75,6 @@ export default function AthleteDashboard() {
   const [showPaywall, setShowPaywall] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
 
-  // 🚀 NEW: State for the Cinematic Intro Reel
   const [showIntroReel, setShowIntroReel] = useState(false);
 
   useEffect(() => {
@@ -68,24 +85,16 @@ export default function AthleteDashboard() {
 
     const fetchDashboardData = async () => {
       try {
-        // 🚀 SMART FETCH: Retrieve the course from the backend
         try {
           const courseRes = await api.get("/courses/current");
-
-          // Debugger: You will now see the exact payload in your F12 Console!
-          console.log("Backend Course Payload:", courseRes.data);
-
-          // 🛡️ ARCHITECTURE FIX: Dynamically hunt for the course object regardless of backend wrapping
           const courseObj =
             courseRes.data?.data?.activeCourse ||
             courseRes.data?.data ||
             courseRes.data?.activeCourse;
 
-          // If we found a valid database ID, mount the course to the Dashboard!
           if (courseObj && (courseObj._id || courseObj.id)) {
             setActiveCourse({
               _id: courseObj._id || courseObj.id,
-              // Safety fallbacks applied in case MongoDB fields are temporarily empty
               title:
                 courseObj.meta?.title ||
                 courseObj.title ||
@@ -100,16 +109,11 @@ export default function AthleteDashboard() {
                 "https://media.theathleticzone.in/auth-bg-images/course-thumbnail-backup.webp",
               videoUrl: courseObj.meta?.videoUrl || courseObj.videoUrl,
             });
-          } else {
-            console.warn(
-              "Backend responded 200 OK, but no valid Course ID was found in the payload.",
-            );
           }
         } catch (courseErr) {
           console.error("Failed to fetch current course:", courseErr);
         }
 
-        // Fetch User Physical Assessment Data
         try {
           const assessmentRes = await api.get("/assessments/me");
           if (assessmentRes.data?.data?.length > 0) {
@@ -130,7 +134,6 @@ export default function AthleteDashboard() {
     fetchDashboardData();
   }, [userStatus]);
 
-  // 🚀 AUTO-POPUP LOGIC: Triggers the video once per session
   useEffect(() => {
     if (activeCourse?.videoUrl) {
       const storageKey = `has_seen_intro_${activeCourse._id}`;
@@ -155,27 +158,29 @@ export default function AthleteDashboard() {
   };
 
   // =========================================================
-  // 🛑 STATE INTERCEPTORS (Bulletproof Logic)
+  // 🛑 STATE INTERCEPTORS (Wrapped in Suspense for Lazy Loading)
   // =========================================================
 
   if (showPaywall || !hasPaid) {
-    return <ProgramPaywall onSuccess={() => window.location.reload()} />;
+    return (
+      <Suspense fallback={<ComponentLoader />}>
+        <ProgramPaywall onSuccess={() => window.location.reload()} />
+      </Suspense>
+    );
   }
 
   if (hasPaid && userStatus !== "ACTIVE_TRAINING") {
     return (
       <div className="animate-in fade-in duration-500">
-        <AssessmentWizard />
+        <Suspense fallback={<ComponentLoader />}>
+          <AssessmentWizard />
+        </Suspense>
       </div>
     );
   }
 
   if (loading) {
-    return (
-      <div className="relative min-h-[60vh] flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin shadow-[0_0_15px_rgba(245,158,11,0.5)]" />
-      </div>
-    );
+    return <ComponentLoader />;
   }
 
   // =========================================================
@@ -240,6 +245,9 @@ export default function AthleteDashboard() {
                       <img
                         src={activeCourse.thumbnailUrl}
                         alt={activeCourse.title}
+                        // 🚀 PERFORMANCE FIX 2: Eager Load & High Priority for the LCP Image
+                        fetchPriority="high"
+                        loading="eager"
                         className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-500"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-[#0F1724] via-transparent to-transparent opacity-80" />
@@ -256,7 +264,6 @@ export default function AthleteDashboard() {
                       </p>
 
                       <div className="mt-auto space-y-3 w-full">
-                        {/* 🚀 NEW: Mission Briefing Button */}
                         {activeCourse.videoUrl && (
                           <button
                             onClick={() => setShowIntroReel(true)}
@@ -332,7 +339,7 @@ export default function AthleteDashboard() {
         )}
       </AnimatePresence>
 
-      {/* 🏆 THE CONGRATULATIONS POPUP MODAL (Glassmorphic Upgrade) */}
+      {/* 🏆 THE CONGRATULATIONS POPUP MODAL */}
       <AnimatePresence>
         {isVictoryModalOpen && (
           <motion.div
@@ -347,41 +354,30 @@ export default function AthleteDashboard() {
               exit={{ scale: 0.9, y: 20 }}
               className="max-w-lg w-full bg-black/40 backdrop-blur-2xl border border-amber-500/30 rounded-[24px] p-8 md:p-10 text-center shadow-[0_40px_100px_rgba(0,0,0,0.8)] relative overflow-hidden"
             >
-              {/* Ambient Glow */}
               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[150px] bg-amber-500/20 blur-[80px] pointer-events-none rounded-full" />
-
               <div className="relative z-10">
-                {/* Trophy Icon */}
                 <div className="w-20 h-20 mx-auto bg-amber-500/10 backdrop-blur-md border border-amber-500/20 rounded-full flex items-center justify-center text-amber-500 mb-6 shadow-inner">
                   <Trophy
                     size={40}
                     className="drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]"
                   />
                 </div>
-
-                {/* Heading */}
                 <h2 className="text-3xl md:text-4xl font-black italic uppercase tracking-tighter text-white mb-4 drop-shadow-lg">
                   Protocol <span className="text-amber-500">Completed!</span>
                 </h2>
-
-                {/* Body Text */}
                 <p className="text-white/70 text-xs md:text-sm font-medium leading-relaxed mb-8 drop-shadow-md px-2">
                   Congratulations! You have successfully mastered your current
                   training block. Your central nervous system is primed. It's
                   time to recalibrate your biomechanics and push to the next
                   tier.
                 </p>
-
-                {/* Action Buttons */}
                 <div className="space-y-4">
                   <button
                     onClick={handleInitiateRenewal}
                     disabled={isResetting}
                     className="relative overflow-hidden w-full py-4 md:py-5 bg-amber-500 text-black font-black text-xs md:text-sm uppercase tracking-widest rounded-xl hover:bg-amber-400 transition-all shadow-[0_10px_30px_rgba(245,158,11,0.3)] hover:shadow-[0_15px_40px_rgba(245,158,11,0.5)] flex justify-center items-center gap-2 active:scale-95 group disabled:opacity-70 disabled:cursor-not-allowed"
                   >
-                    {/* Shimmer Sweep Effect */}
                     <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent group-hover:animate-[shimmer_1.5s_infinite]" />
-
                     <span className="relative z-10 flex items-center gap-2">
                       {isResetting
                         ? "Initializing..."
@@ -394,7 +390,6 @@ export default function AthleteDashboard() {
                       )}
                     </span>
                   </button>
-
                   <button
                     onClick={() => setIsVictoryModalOpen(false)}
                     disabled={isResetting}
@@ -433,7 +428,9 @@ export default function AthleteDashboard() {
               </button>
             </div>
             <div className="py-6 md:py-10">
-              <StructuredCoursePlayer courseId={activeCourse._id} />
+              <Suspense fallback={<ComponentLoader />}>
+                <StructuredCoursePlayer courseId={activeCourse._id} />
+              </Suspense>
             </div>
           </motion.div>
         )}
