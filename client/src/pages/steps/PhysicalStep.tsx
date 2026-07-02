@@ -27,19 +27,10 @@ function PhysicalStep({ data, updateData }: PhysicalStepProps) {
           <input
             type="number"
             min={0}
-            onKeyDown={(e) => {
-              if (e.key === "-" || e.key === "e") {
-                e.preventDefault();
-              }
-            }}
             placeholder="e.g. 21"
             value={data.age}
             onChange={(e) => {
-              let val = e.target.value;
-              if (Number(val) < 0) {
-                val = "0";
-              }
-              updateData("physical", "age", val);
+              updateData("physical", "age", e.target.value);
             }}
             className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-4 text-white text-base md:text-lg font-bold placeholder:text-white/20 focus:outline-none focus:border-amber-500 transition-all shadow-inner"
           />
@@ -52,19 +43,10 @@ function PhysicalStep({ data, updateData }: PhysicalStepProps) {
           <input
             type="number"
             min={0}
-            onKeyDown={(e) => {
-              if (e.key === "-" || e.key === "e") {
-                e.preventDefault();
-              }
-            }}
             placeholder="e.g. 180"
             value={data.heightCm}
             onChange={(e) => {
-              let val = e.target.value;
-              if (Number(val) < 0) {
-                val = "0";
-              }
-              updateData("physical", "heightCm", val);
+              updateData("physical", "heightCm", e.target.value);
             }}
             className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-4 text-white text-base md:text-lg font-bold placeholder:text-white/20 focus:outline-none focus:border-amber-500 transition-all shadow-inner"
           />
@@ -77,20 +59,11 @@ function PhysicalStep({ data, updateData }: PhysicalStepProps) {
           <input
             type="number"
             min={0}
-            onKeyDown={(e) => {
-              if (e.key === "-" || e.key === "e") {
-                e.preventDefault();
-              }
-            }}
             placeholder="e.g. 75"
             value={data.bodyweightKg}
-            onChange={(e) => {
-              let val = e.target.value;
-              if (Number(val) < 0) {
-                val = "0";
-              }
-              updateData("physical", "bodyweightKg", val);
-            }}
+            onChange={(e) =>
+              updateData("physical", "bodyweightKg", e.target.value)
+            }
             className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-4 text-white text-base md:text-lg font-bold placeholder:text-white/20 focus:outline-none focus:border-amber-500 transition-all shadow-inner"
           />
         </div>

@@ -51,18 +51,9 @@ function MobilityStep({ data, updateData }: Props) {
           <input
             type="number"
             min={0}
-            onKeyDown={(e) => {
-              if (e.key === "-" || e.key === "e") {
-                e.preventDefault();
-              }
-            }}
             value={data.kneeToWallCm}
             onChange={(e) => {
-              let val = e.target.value;
-              if (Number(val) < 0) {
-                val = "0";
-              }
-              updateData("mobility", "kneeToWallCm", val);
+              updateData("mobility", "kneeToWallCm", e.target.value);
             }}
             placeholder="e.g. 10"
             className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-4 text-white text-lg font-bold placeholder:text-white/20 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 transition-all shadow-inner"
