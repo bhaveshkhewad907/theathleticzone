@@ -1,29 +1,42 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
-// Automatically saves the form data to the device's hard drive as they type
 export function useAutoSave<T>(storageKey: string, data: T) {
   const isFirstRender = useRef(true);
+  // 🚀 NEW: Keep track of the save status for the UI
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">(
+    "idle",
+  );
 
   useEffect(() => {
-    // Skip the very first render so we don't accidentally overwrite a loaded draft
     if (isFirstRender.current) {
       isFirstRender.current = false;
       return;
     }
 
-    // Silently save the latest state to LocalStorage
-    localStorage.setItem(storageKey, JSON.stringify(data));
+    // 🚀 THE FIX: We wrap the save logic in a setTimeout (Debounce).
+    // This clears the linter error AND stops the app from saving
+    // 10 times in a row if an admin types a 10-letter word really fast.
+    const saveTimer = setTimeout(() => {
+      setSaveStatus("saving");
+      localStorage.setItem(storageKey, JSON.stringify(data));
+
+      // Show the green checkmark half a second after saving
+      setTimeout(() => {
+        setSaveStatus("saved");
+      }, 500);
+    }, 500); // Waits 500ms after they stop typing before executing
+
+    // Cleanup: If they type another letter before 500ms, cancel the previous save
+    return () => clearTimeout(saveTimer);
   }, [data, storageKey]);
 
-  // A helper function to call when the admin clicks "Deploy Course Plan"
   const clearDraft = () => {
     localStorage.removeItem(storageKey);
   };
 
-  return { clearDraft };
+  return { clearDraft, saveStatus }; // 🚀 NEW: Export the status
 }
 
-// Helper to pull the draft when the component first mounts
 export function getInitialDraft<T>(storageKey: string, fallbackState: T): T {
   try {
     const draft = localStorage.getItem(storageKey);

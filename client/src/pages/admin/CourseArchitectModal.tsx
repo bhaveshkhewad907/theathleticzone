@@ -12,6 +12,8 @@ import {
   ChevronUp,
   ChevronDown,
   PlusCircle,
+  Cloud,
+  CheckCircle2,
 } from "lucide-react";
 import api from "../../services/api";
 import toast from "react-hot-toast";
@@ -80,7 +82,10 @@ export default function CourseArchitectModal({
     "morning",
   );
   const [showStepPicker, setShowStepPicker] = useState(false);
-  const { clearDraft } = useAutoSave(`architect_draft_${courseId}`, days);
+  const { clearDraft, saveStatus } = useAutoSave(
+    `architect_draft_${courseId}`,
+    days,
+  );
 
   // ==========================================
   // 🔄 INITIALIZATION
@@ -356,6 +361,25 @@ export default function CourseArchitectModal({
               <p className="text-[10px] text-[#8A94A6] uppercase tracking-[0.2em] mt-2 font-bold truncate">
                 Target: {courseName}
               </p>
+              {/* 🚀 ADD THIS NEW BLOCK: The Live Sync Indicator */}
+              <div className="mt-4 flex items-center gap-2 h-6">
+                {saveStatus === "saving" && (
+                  <div className="flex items-center gap-1.5 text-amber-500 bg-amber-500/10 px-2 py-1 rounded-md border border-amber-500/20 animate-pulse">
+                    <Cloud size={12} />
+                    <span className="text-[9px] font-black uppercase tracking-widest">
+                      Saving Draft...
+                    </span>
+                  </div>
+                )}
+                {saveStatus === "saved" && (
+                  <div className="flex items-center gap-1.5 text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-md border border-emerald-500/20 animate-in fade-in zoom-in duration-300">
+                    <CheckCircle2 size={12} />
+                    <span className="text-[9px] font-black uppercase tracking-widest">
+                      Saved to Device
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="flex-1 overflow-y-auto custom-scrollbar p-3 md:p-4 space-y-2 flex flex-row md:flex-col overflow-x-auto md:overflow-x-hidden gap-2 md:gap-0">
