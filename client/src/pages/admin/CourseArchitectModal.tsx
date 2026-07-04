@@ -341,33 +341,36 @@ export default function CourseArchitectModal({
 
   return (
     <>
-      <div className="fixed inset-0 z-[50] flex items-center justify-center p-2 md:p-4 bg-black/90 backdrop-blur-xl animate-in fade-in">
-        <div className="bg-[#0F1724] border border-white/10 rounded-[2rem] w-full max-w-[1400px] h-[95vh] overflow-hidden shadow-2xl flex flex-col md:flex-row relative">
+      {/* 🚀 RESPONSIVE WRAPPER UPDATE */}
+      <div className="fixed inset-0 z-[50] flex items-center justify-center p-0 md:p-4 bg-black/90 backdrop-blur-xl animate-in fade-in">
+        <div className="bg-[#0F1724] border-0 md:border border-white/10 rounded-none md:rounded-[2rem] w-full md:w-[98vw] xl:max-w-[1400px] h-[100dvh] md:h-[95vh] overflow-hidden shadow-2xl flex flex-col md:flex-row relative">
+          {/* MOBILE HEADER */}
           <div className="md:hidden flex justify-between items-center p-4 border-b border-white/5 bg-[#121821]">
-            <h2 className="text-lg font-black italic uppercase text-white truncate">
+            <h2 className="text-lg font-black italic uppercase text-white truncate pr-4">
               Architect: {courseName}
             </h2>
-            <button onClick={onClose} className="text-white/50">
+            <button onClick={onClose} className="text-white/50 shrink-0">
               <X size={20} />
             </button>
           </div>
 
-          {/* LEFT PANEL: TIMELINE MAPPER */}
-          <div className="w-full md:w-[350px] lg:w-[400px] h-[150px] md:h-full flex flex-col border-b md:border-b-0 md:border-r border-white/5 bg-[#0B0F14]">
+          {/* LEFT PANEL: TIMELINE MAPPER (Responsive Widths) */}
+          <div className="w-full md:w-[280px] lg:w-[320px] xl:w-[380px] shrink-0 h-[150px] md:h-full flex flex-col border-b md:border-b-0 md:border-r border-white/5 bg-[#0B0F14]">
             <div className="hidden md:block p-6 border-b border-white/5 bg-gradient-to-b from-[#121821] to-[#0B0F14]">
-              <h2 className="text-2xl font-black italic uppercase text-white leading-none">
+              <h2 className="text-xl lg:text-2xl font-black italic uppercase text-white leading-none">
                 Course <span className="text-amber-500">Architect</span>
               </h2>
               <p className="text-[10px] text-[#8A94A6] uppercase tracking-[0.2em] mt-2 font-bold truncate">
                 Target: {courseName}
               </p>
-              {/* 🚀 ADD THIS NEW BLOCK: The Live Sync Indicator */}
+
+              {/* The Live Sync Indicator */}
               <div className="mt-4 flex items-center gap-2 h-6">
                 {saveStatus === "saving" && (
                   <div className="flex items-center gap-1.5 text-amber-500 bg-amber-500/10 px-2 py-1 rounded-md border border-amber-500/20 animate-pulse">
                     <Cloud size={12} />
                     <span className="text-[9px] font-black uppercase tracking-widest">
-                      Saving Draft...
+                      Saving...
                     </span>
                   </div>
                 )}
@@ -375,7 +378,7 @@ export default function CourseArchitectModal({
                   <div className="flex items-center gap-1.5 text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-md border border-emerald-500/20 animate-in fade-in zoom-in duration-300">
                     <CheckCircle2 size={12} />
                     <span className="text-[9px] font-black uppercase tracking-widest">
-                      Saved to Device
+                      Saved
                     </span>
                   </div>
                 )}
@@ -417,7 +420,7 @@ export default function CourseArchitectModal({
                       </span>
                     </div>
                     <span
-                      className={`text-[9px] font-black uppercase tracking-widest ${statusColor}`}
+                      className={`text-[9px] font-black uppercase tracking-widest ${statusColor} truncate`}
                     >
                       {statusText}
                     </span>
@@ -425,7 +428,6 @@ export default function CourseArchitectModal({
                 );
               })}
 
-              {/* 🚀 DYNAMIC TIMELINE ADD BUTTON */}
               <button
                 onClick={addNewDay}
                 className="w-[140px] md:w-full shrink-0 flex flex-col items-center justify-center p-3 md:p-4 rounded-2xl transition-all duration-300 border-2 border-dashed border-white/10 bg-transparent text-white/40 hover:text-amber-500 hover:border-amber-500/50 hover:bg-amber-500/5"
@@ -460,10 +462,10 @@ export default function CourseArchitectModal({
 
             {activeSessionData && (
               <>
-                <div className="p-6 md:p-8 border-b border-white/5 bg-gradient-to-b from-black/40 to-transparent sticky top-0 z-10 backdrop-blur-md">
-                  <div className="flex items-start justify-between mb-6">
+                <div className="p-4 sm:p-6 md:p-8 border-b border-white/5 bg-gradient-to-b from-black/40 to-transparent sticky top-0 z-10 backdrop-blur-md">
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
                     <div>
-                      <h3 className="text-3xl md:text-4xl font-black italic uppercase text-white drop-shadow-md flex items-center gap-4">
+                      <h3 className="text-2xl md:text-3xl xl:text-4xl font-black italic uppercase text-white drop-shadow-md flex items-center gap-3">
                         <span>
                           Day{" "}
                           <span className="text-amber-500">{activeDay}</span>
@@ -475,30 +477,31 @@ export default function CourseArchitectModal({
                     </div>
                     <button
                       onClick={removeActiveDay}
-                      className="flex items-center gap-2 px-3 py-2 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white border border-red-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+                      className="flex items-center justify-center gap-2 px-3 py-2 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white border border-red-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shrink-0"
                     >
                       <Trash2 size={14} />{" "}
-                      <span className="hidden sm:inline">Delete Day</span>
+                      {/* 🚀 HIDDEN ON LAPTOPS TO SAVE SPACE */}
+                      <span className="hidden xl:inline">Delete Day</span>
                     </button>
                   </div>
 
-                  <div className="flex p-1.5 bg-black/60 border border-white/10 rounded-2xl shadow-inner max-w-sm">
+                  <div className="flex p-1.5 bg-black/60 border border-white/10 rounded-2xl shadow-inner w-full md:max-w-sm">
                     <button
                       onClick={() => setActiveSession("morning")}
                       className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all duration-300 ${activeSession === "morning" ? "bg-[#121821] text-amber-500 shadow-[0_0_20px_rgba(245,158,11,0.2)] border border-amber-500/30" : "text-white/40 hover:text-white"}`}
                     >
-                      <Sun size={14} /> Morning Block
+                      <Sun size={14} /> Morning
                     </button>
                     <button
                       onClick={() => setActiveSession("evening")}
                       className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all duration-300 ${activeSession === "evening" ? "bg-[#121821] text-blue-400 shadow-[0_0_20px_rgba(96,165,250,0.2)] border border-blue-400/30" : "text-white/40 hover:text-white"}`}
                     >
-                      <Moon size={14} /> Evening Block
+                      <Moon size={14} /> Evening
                     </button>
                   </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-6 md:p-8 custom-scrollbar">
+                <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 custom-scrollbar">
                   <div className="flex items-center justify-between p-5 md:p-6 bg-black/40 border border-white/5 rounded-[20px] mb-8 group hover:border-white/10 transition-colors">
                     <div>
                       <h4 className="text-sm font-black uppercase tracking-widest text-white flex items-center gap-2">
@@ -518,7 +521,7 @@ export default function CourseArchitectModal({
                     </div>
                     <button
                       onClick={toggleRestDay}
-                      className={`relative w-14 h-8 rounded-full transition-all duration-300 border ${activeSessionData.isRest ? "bg-emerald-500/20 border-emerald-500" : "bg-white/5 border-white/20"}`}
+                      className={`relative w-14 h-8 rounded-full transition-all duration-300 border shrink-0 ${activeSessionData.isRest ? "bg-emerald-500/20 border-emerald-500" : "bg-white/5 border-white/20"}`}
                     >
                       <div
                         className={`absolute top-1 left-1 w-5 h-5 rounded-full transition-all duration-300 ${activeSessionData.isRest ? "translate-x-6 bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.8)]" : "bg-white/50"}`}
@@ -529,7 +532,8 @@ export default function CourseArchitectModal({
                   {!activeSessionData.isRest && (
                     <div className="space-y-6">
                       <div className="bg-amber-500/5 border border-amber-500/20 rounded-[20px] p-5 md:p-6">
-                        <div className="flex flex-col md:flex-row md:items-end gap-4">
+                        {/* 🚀 RESPONSIVE BLUEPRINT WRAPPER */}
+                        <div className="flex flex-col xl:flex-row xl:items-end gap-4">
                           <div className="flex-1">
                             <label className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-500 mb-2 block">
                               Import Blueprint (Optional)
@@ -563,13 +567,13 @@ export default function CourseArchitectModal({
                       </div>
 
                       <div>
-                        <div className="flex justify-between items-center mb-6">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
                           <h4 className="text-sm font-black uppercase tracking-widest text-white">
                             Programming Blocks
                           </h4>
                           <button
                             onClick={() => setShowStepPicker(true)}
-                            className="px-4 py-2 bg-white/5 text-white border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white/10 hover:border-white/20 transition-all flex items-center gap-2"
+                            className="px-4 py-2 bg-white/5 text-white border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white/10 hover:border-white/20 transition-all flex items-center justify-center gap-2"
                           >
                             <Plus size={14} /> Add Exercise
                           </button>
@@ -590,11 +594,12 @@ export default function CourseArchitectModal({
                             {activeSessionData.steps.map((stepData, index) => (
                               <div
                                 key={index}
-                                className="bg-black/40 border border-white/10 rounded-2xl p-5 relative group shadow-lg"
+                                className="bg-black/40 border border-white/10 rounded-2xl p-4 sm:p-5 relative group shadow-lg"
                               >
-                                <div className="flex justify-between items-start mb-5">
+                                {/* 🚀 RESPONSIVE REORDERING HEADER */}
+                                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 sm:gap-0 mb-5">
                                   <div>
-                                    <h4 className="text-sm font-black text-white uppercase tracking-wider pr-8">
+                                    <h4 className="text-sm font-black text-white uppercase tracking-wider pr-2">
                                       {index + 1}. {stepData.step.title}
                                     </h4>
                                     <p className="text-[9px] font-black uppercase tracking-widest text-[#8A94A6] mt-1">
@@ -602,8 +607,7 @@ export default function CourseArchitectModal({
                                     </p>
                                   </div>
 
-                                  {/* 🚀 EXERCISE REORDERING CONTROLS */}
-                                  <div className="flex items-center gap-2 bg-black/40 border border-white/5 rounded-xl p-1">
+                                  <div className="flex items-center gap-2 bg-black/40 border border-white/5 rounded-xl p-1 self-start">
                                     <button
                                       type="button"
                                       onClick={() => moveStep(index, "up")}
@@ -634,7 +638,8 @@ export default function CourseArchitectModal({
                                   </div>
                                 </div>
 
-                                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                                {/* 🚀 RESPONSIVE INPUT GRID (3 columns on laptops, 5 on big screens) */}
+                                <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3 md:gap-4">
                                   <div className="space-y-1.5">
                                     <label className="text-[9px] font-black uppercase text-[#8A94A6]">
                                       Sets
@@ -716,7 +721,7 @@ export default function CourseArchitectModal({
                                       className="w-full bg-[#121821] border border-white/5 rounded-lg px-3 py-2.5 text-xs font-bold text-white outline-none focus:border-amber-500/50 disabled:opacity-30 shadow-inner"
                                     />
                                   </div>
-                                  <div className="space-y-1.5">
+                                  <div className="space-y-1.5 sm:col-span-2 xl:col-span-1">
                                     <label className="text-[9px] font-black uppercase text-blue-400 flex items-center gap-1">
                                       <Timer size={10} /> Recovery
                                     </label>
