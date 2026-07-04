@@ -16,6 +16,7 @@ import {
 import api from "../../services/api";
 import toast from "react-hot-toast";
 import StepPickerModal from "./StepPickerModal";
+import { useAutoSave } from "../../utils/useAutoSave";
 
 // ==========================================
 // 🛡️ TYPESCRIPT INTERFACES
@@ -79,6 +80,7 @@ export default function CourseArchitectModal({
     "morning",
   );
   const [showStepPicker, setShowStepPicker] = useState(false);
+  const { clearDraft } = useAutoSave(`architect_draft_${courseId}`, days);
 
   // ==========================================
   // 🔄 INITIALIZATION
@@ -89,6 +91,20 @@ export default function CourseArchitectModal({
         const templatesRes = await api.get("/chapters/templates");
         setTemplates(templatesRes.data.data);
 
+        // 🚀 1. THE SAFETY INTERCEPTOR: Check for an unsaved draft first!
+        const savedDraft = localStorage.getItem(`architect_draft_${courseId}`);
+
+        // If a draft exists and it isn't an empty array, load it instantly!
+        if (savedDraft && JSON.parse(savedDraft).length > 0) {
+          const parsedDraft = JSON.parse(savedDraft);
+          setDays(parsedDraft);
+          setActiveDay(parsedDraft[0].dayNumber);
+          toast.success("Recovered unsaved draft!");
+          setIsLoading(false);
+          return; // STOP HERE! Do not overwrite the draft with older database data.
+        }
+
+        // 🚀 2. STANDARD BEHAVIOR: If no draft exists, load from the database
         const planRes = await api.get(`/chapters/plan/${courseId}`);
         const existingPlan = planRes.data.data;
 
@@ -299,6 +315,7 @@ export default function CourseArchitectModal({
         },
       }));
       await api.post("/chapters/plan", { courseId, days: mappedDays });
+      clearDraft();
       toast.success("Course Plan fully synchronized!");
       onSuccess();
       onClose();
