@@ -334,16 +334,18 @@ export default function CourseArchitectModal({
 
   if (isLoading)
     return (
-      <div className="fixed inset-0 z-[50] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+      // 🚀 FIX 1: Make loading screen respect the 288px sidebar on desktop
+      <div className="fixed inset-y-0 right-0 left-0 md:left-72 z-[50] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
         <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
 
   return (
     <>
-      {/* 🚀 RESPONSIVE WRAPPER UPDATE */}
-      <div className="fixed inset-0 z-[50] flex items-center justify-center p-0 md:p-4 bg-black/90 backdrop-blur-xl animate-in fade-in">
-        <div className="bg-[#0F1724] border-0 md:border border-white/10 rounded-none md:rounded-[2rem] w-full md:w-[98vw] xl:max-w-[1400px] h-[100dvh] md:h-[95vh] overflow-hidden shadow-2xl flex flex-col md:flex-row relative">
+      {/* 🚀 FIX 2: Shift the entire modal 288px right on desktop (`md:left-72`) so it never touches the sidebar */}
+      <div className="fixed inset-y-0 right-0 left-0 md:left-72 z-[50] flex items-center justify-center p-0 md:p-6 lg:p-8 bg-black/90 backdrop-blur-xl animate-in fade-in">
+        {/* 🚀 FIX 3: Removed `md:w-[98vw]` so it naturally fills the remaining space without overflowing */}
+        <div className="bg-[#0F1724] border-0 md:border border-white/10 rounded-none md:rounded-[2rem] w-full max-w-[1400px] h-[100dvh] md:h-[95vh] overflow-hidden shadow-2xl flex flex-col md:flex-row relative">
           {/* MOBILE HEADER */}
           <div className="md:hidden flex justify-between items-center p-4 border-b border-white/5 bg-[#121821]">
             <h2 className="text-lg font-black italic uppercase text-white truncate pr-4">
