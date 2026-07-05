@@ -281,12 +281,12 @@ export default function AthleteDashboard() {
                           <PlayCircle size={18} /> Start Training Session
                         </button>
 
-                        <button
+                        {/* <button
                           onClick={() => setIsVictoryModalOpen(true)}
                           className="w-full py-4 bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white rounded-[12px] font-black text-[10px] uppercase tracking-[0.2em] transition-colors shadow-inner active:scale-95"
                         >
                           End Protocol & Unlock Next Phase
-                        </button>
+                        </button> */}
                       </div>
                     </div>
                   </div>
