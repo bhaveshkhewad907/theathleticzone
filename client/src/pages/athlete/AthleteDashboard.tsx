@@ -26,7 +26,6 @@ import {
 import toast from "react-hot-toast";
 
 // 🚀 PERFORMANCE FIX 1: Lazy Load Heavy Child Components
-// The browser will NO LONGER download Razorpay, the Wizard, or the Video Player until they are actually needed!
 const StructuredCoursePlayer = lazy(() => import("./StructuredCoursePlayer"));
 const ProgramPaywall = lazy(() => import("../assessment/ProgramPaywall"));
 const AssessmentWizard = lazy(
@@ -158,24 +157,29 @@ export default function AthleteDashboard() {
   };
 
   // =========================================================
-  // 🛑 STATE INTERCEPTORS (Wrapped in Suspense for Lazy Loading)
+  // 🛑 STATE INTERCEPTORS (UPDATED BUSINESS LOGIC)
   // =========================================================
 
-  if (showPaywall || !hasPaid) {
-    return (
-      <Suspense fallback={<ComponentLoader />}>
-        <ProgramPaywall onSuccess={() => window.location.reload()} />
-      </Suspense>
-    );
-  }
-
-  if (hasPaid && userStatus !== "ACTIVE_TRAINING") {
+  // 🚀 1. Assessment Check (Runs First)
+  // If the user's status is "NEEDS_ASSESSMENT" (or anything not active), show the Wizard and Scorecard.
+  if (userStatus !== "ACTIVE_TRAINING") {
     return (
       <div className="animate-in fade-in duration-500">
         <Suspense fallback={<ComponentLoader />}>
           <AssessmentWizard />
         </Suspense>
       </div>
+    );
+  }
+
+  // 🚀 2. Paywall Check (Runs Second)
+  // Once the wizard finishes and status becomes "ACTIVE_TRAINING", this block is evaluated.
+  // If they have not paid, they are trapped here and cannot see the dashboard.
+  if (showPaywall || !hasPaid) {
+    return (
+      <Suspense fallback={<ComponentLoader />}>
+        <ProgramPaywall onSuccess={() => window.location.reload()} />
+      </Suspense>
     );
   }
 
@@ -245,7 +249,6 @@ export default function AthleteDashboard() {
                       <img
                         src={activeCourse.thumbnailUrl}
                         alt={activeCourse.title}
-                        // 🚀 PERFORMANCE FIX 2: Eager Load & High Priority for the LCP Image
                         fetchPriority="high"
                         loading="eager"
                         className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-500"
@@ -280,13 +283,6 @@ export default function AthleteDashboard() {
                         >
                           <PlayCircle size={18} /> Start Training Session
                         </button>
-
-                        {/* <button
-                          onClick={() => setIsVictoryModalOpen(true)}
-                          className="w-full py-4 bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white rounded-[12px] font-black text-[10px] uppercase tracking-[0.2em] transition-colors shadow-inner active:scale-95"
-                        >
-                          End Protocol & Unlock Next Phase
-                        </button> */}
                       </div>
                     </div>
                   </div>
