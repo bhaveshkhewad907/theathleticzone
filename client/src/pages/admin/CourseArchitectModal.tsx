@@ -14,6 +14,7 @@ import {
   PlusCircle,
   Cloud,
   CheckCircle2,
+  Copy,
 } from "lucide-react";
 import api from "../../services/api";
 import toast from "react-hot-toast";
@@ -81,7 +82,12 @@ export default function CourseArchitectModal({
   const [activeSession, setActiveSession] = useState<"morning" | "evening">(
     "morning",
   );
+
   const [showStepPicker, setShowStepPicker] = useState(false);
+
+  // 🚀 NEW: State for our Cloning UI
+  const [isCloneModalOpen, setIsCloneModalOpen] = useState(false);
+
   const { clearDraft, saveStatus } = useAutoSave(
     `architect_draft_${courseId}`,
     days,
@@ -96,20 +102,17 @@ export default function CourseArchitectModal({
         const templatesRes = await api.get("/chapters/templates");
         setTemplates(templatesRes.data.data);
 
-        // 🚀 1. THE SAFETY INTERCEPTOR: Check for an unsaved draft first!
         const savedDraft = localStorage.getItem(`architect_draft_${courseId}`);
 
-        // If a draft exists and it isn't an empty array, load it instantly!
         if (savedDraft && JSON.parse(savedDraft).length > 0) {
           const parsedDraft = JSON.parse(savedDraft);
           setDays(parsedDraft);
           setActiveDay(parsedDraft[0].dayNumber);
           toast.success("Recovered unsaved draft!");
           setIsLoading(false);
-          return; // STOP HERE! Do not overwrite the draft with older database data.
+          return;
         }
 
-        // 🚀 2. STANDARD BEHAVIOR: If no draft exists, load from the database
         const planRes = await api.get(`/chapters/plan/${courseId}`);
         const existingPlan = planRes.data.data;
 
@@ -130,7 +133,6 @@ export default function CourseArchitectModal({
           setDays(normalizedDays);
           setActiveDay(normalizedDays[0].dayNumber);
         } else {
-          // 🚀 FIX: Start with a clean slate of just Day 1 instead of 42 empty days
           setDays([
             {
               dayNumber: 1,
@@ -173,6 +175,45 @@ export default function CourseArchitectModal({
     });
   };
 
+  // 🚀 NEW: The Deep Clone Logic
+  const handleCloneWeek = (weekToClone: number) => {
+    // 1. Isolate the days that belong to the week we are cloning
+    const sourceDays = days
+      .filter((d) => Math.ceil(d.dayNumber / 7) === weekToClone)
+      .sort((a, b) => a.dayNumber - b.dayNumber);
+
+    if (sourceDays.length === 0) {
+      toast.error("Error: Selected week has no active days.");
+      return;
+    }
+
+    // 2. Find where our timeline currently ends
+    const maxDayNum =
+      days.length > 0 ? Math.max(...days.map((d) => d.dayNumber)) : 0;
+
+    // 3. Deep Clone the days so React doesn't mix up their memory references
+    const clonedDays = sourceDays.map((sourceDay, index) => {
+      // JSON stringify/parse is a perfectly safe deep-clone method for plain objects/arrays
+      const deepClone = <T,>(obj: T): T => JSON.parse(JSON.stringify(obj));
+
+      return {
+        dayNumber: maxDayNum + index + 1, // Append linearly
+        morning: deepClone(sourceDay.morning),
+        evening: deepClone(sourceDay.evening),
+      };
+    });
+
+    // 4. Update the state and Auto-Save
+    setDays((prev) => [...prev, ...clonedDays]);
+
+    // Jump the admin straight to the first day of their newly generated week
+    setActiveDay(clonedDays[0].dayNumber);
+    setIsCloneModalOpen(false);
+    toast.success(
+      `Week ${weekToClone} cloned successfully! (${clonedDays.length} Days Added)`,
+    );
+  };
+
   const removeActiveDay = () => {
     if (
       !window.confirm(
@@ -186,7 +227,6 @@ export default function CourseArchitectModal({
       if (newDays.length > 0) {
         setActiveDay(newDays[0].dayNumber);
       } else {
-        // If they delete the very last day, generate a fresh Day 1
         newDays.push({
           dayNumber: 1,
           morning: { isRest: false, templateRefName: "", steps: [] },
@@ -334,17 +374,19 @@ export default function CourseArchitectModal({
 
   if (isLoading)
     return (
-      // 🚀 FIX 1: Make loading screen respect the 288px sidebar on desktop
       <div className="fixed inset-y-0 right-0 left-0 md:left-72 z-[50] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
         <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
 
+  // Determine available weeks based on current days for the clone dropdown
+  const availableWeeks = Array.from(
+    new Set(days.map((d) => Math.ceil(d.dayNumber / 7))),
+  ).sort((a, b) => a - b);
+
   return (
     <>
-      {/* 🚀 FIX 2: Shift the entire modal 288px right on desktop (`md:left-72`) so it never touches the sidebar */}
       <div className="fixed inset-y-0 right-0 left-0 md:left-72 z-[50] flex items-center justify-center p-0 md:p-6 lg:p-8 bg-black/90 backdrop-blur-xl animate-in fade-in">
-        {/* 🚀 FIX 3: Removed `md:w-[98vw]` so it naturally fills the remaining space without overflowing */}
         <div className="bg-[#0F1724] border-0 md:border border-white/10 rounded-none md:rounded-[2rem] w-full max-w-[1400px] h-[100dvh] md:h-[95vh] overflow-hidden shadow-2xl flex flex-col md:flex-row relative">
           {/* MOBILE HEADER */}
           <div className="md:hidden flex justify-between items-center p-4 border-b border-white/5 bg-[#121821]">
@@ -356,7 +398,7 @@ export default function CourseArchitectModal({
             </button>
           </div>
 
-          {/* LEFT PANEL: TIMELINE MAPPER (Responsive Widths) */}
+          {/* LEFT PANEL: TIMELINE MAPPER */}
           <div className="w-full md:w-[280px] lg:w-[320px] xl:w-[380px] shrink-0 h-[150px] md:h-full flex flex-col border-b md:border-b-0 md:border-r border-white/5 bg-[#0B0F14]">
             <div className="hidden md:block p-6 border-b border-white/5 bg-gradient-to-b from-[#121821] to-[#0B0F14]">
               <h2 className="text-xl lg:text-2xl font-black italic uppercase text-white leading-none">
@@ -430,15 +472,30 @@ export default function CourseArchitectModal({
                 );
               })}
 
-              <button
-                onClick={addNewDay}
-                className="w-[140px] md:w-full shrink-0 flex flex-col items-center justify-center p-3 md:p-4 rounded-2xl transition-all duration-300 border-2 border-dashed border-white/10 bg-transparent text-white/40 hover:text-amber-500 hover:border-amber-500/50 hover:bg-amber-500/5"
-              >
-                <PlusCircle size={20} className="mb-1" />
-                <span className="text-[10px] font-black uppercase tracking-widest">
-                  Add Day
-                </span>
-              </button>
+              {/* 🚀 ACTION BUTTONS WRAPPER */}
+              <div className="flex md:flex-col gap-2 shrink-0 h-full md:h-auto md:mt-2">
+                <button
+                  onClick={addNewDay}
+                  className="w-[140px] md:w-full h-full md:h-auto shrink-0 flex flex-col items-center justify-center p-3 md:p-4 rounded-2xl transition-all duration-300 border-2 border-dashed border-white/10 bg-transparent text-white/40 hover:text-amber-500 hover:border-amber-500/50 hover:bg-amber-500/5"
+                >
+                  <PlusCircle size={20} className="mb-1" />
+                  <span className="text-[10px] font-black uppercase tracking-widest">
+                    Add Day
+                  </span>
+                </button>
+
+                {days.length > 0 && (
+                  <button
+                    onClick={() => setIsCloneModalOpen(true)}
+                    className="w-[140px] md:w-full h-full md:h-auto shrink-0 flex flex-col items-center justify-center p-3 md:p-4 rounded-2xl transition-all duration-300 border-2 border-dashed border-blue-400/20 bg-transparent text-blue-400/60 hover:text-blue-400 hover:border-blue-400/50 hover:bg-blue-400/5"
+                  >
+                    <Copy size={18} className="mb-1" />
+                    <span className="text-[10px] font-black uppercase tracking-widest">
+                      Clone Week
+                    </span>
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="p-4 border-t border-white/5 bg-[#121821] hidden md:block">
@@ -482,7 +539,6 @@ export default function CourseArchitectModal({
                       className="flex items-center justify-center gap-2 px-3 py-2 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white border border-red-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shrink-0"
                     >
                       <Trash2 size={14} />{" "}
-                      {/* 🚀 HIDDEN ON LAPTOPS TO SAVE SPACE */}
                       <span className="hidden xl:inline">Delete Day</span>
                     </button>
                   </div>
@@ -534,7 +590,6 @@ export default function CourseArchitectModal({
                   {!activeSessionData.isRest && (
                     <div className="space-y-6">
                       <div className="bg-amber-500/5 border border-amber-500/20 rounded-[20px] p-5 md:p-6">
-                        {/* 🚀 RESPONSIVE BLUEPRINT WRAPPER */}
                         <div className="flex flex-col xl:flex-row xl:items-end gap-4">
                           <div className="flex-1">
                             <label className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-500 mb-2 block">
@@ -598,7 +653,6 @@ export default function CourseArchitectModal({
                                 key={index}
                                 className="bg-black/40 border border-white/10 rounded-2xl p-4 sm:p-5 relative group shadow-lg"
                               >
-                                {/* 🚀 RESPONSIVE REORDERING HEADER */}
                                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 sm:gap-0 mb-5">
                                   <div>
                                     <h4 className="text-sm font-black text-white uppercase tracking-wider pr-2">
@@ -640,7 +694,6 @@ export default function CourseArchitectModal({
                                   </div>
                                 </div>
 
-                                {/* 🚀 RESPONSIVE INPUT GRID (3 columns on laptops, 5 on big screens) */}
                                 <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3 md:gap-4">
                                   <div className="space-y-1.5">
                                     <label className="text-[9px] font-black uppercase text-[#8A94A6]">
@@ -765,6 +818,50 @@ export default function CourseArchitectModal({
           </div>
         </div>
       </div>
+
+      {/* 🚀 NEW: The Clone Week Mini-Modal */}
+      {isCloneModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
+          <div className="bg-[#121821] border border-white/10 rounded-[20px] p-6 max-w-sm w-full shadow-2xl relative">
+            <button
+              onClick={() => setIsCloneModalOpen(false)}
+              className="absolute top-4 right-4 p-2 bg-black/40 rounded-full text-white/40 hover:text-white transition-colors"
+            >
+              <X size={16} />
+            </button>
+
+            <h3 className="text-xl font-black uppercase italic text-white mb-2 flex items-center gap-2">
+              <Copy className="text-blue-400" size={20} /> Clone a Week
+            </h3>
+            <p className="text-[10px] text-[#8A94A6] uppercase tracking-widest font-bold mb-6">
+              Select a week to duplicate. The copied days will be added
+              sequentially to the end of your course.
+            </p>
+
+            <div className="space-y-2 max-h-[40vh] overflow-y-auto custom-scrollbar pr-1">
+              {availableWeeks.map((weekNum) => {
+                const daysInWeek = days.filter(
+                  (d) => Math.ceil(d.dayNumber / 7) === weekNum,
+                ).length;
+                return (
+                  <button
+                    key={`clone-week-${weekNum}`}
+                    onClick={() => handleCloneWeek(weekNum)}
+                    className="w-full py-3.5 px-4 bg-white/5 hover:bg-blue-500/20 border border-white/5 hover:border-blue-500/50 rounded-xl text-left flex justify-between items-center transition-all group active:scale-95"
+                  >
+                    <span className="text-sm font-black text-white uppercase tracking-widest group-hover:text-blue-400 transition-colors">
+                      Week {weekNum}
+                    </span>
+                    <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest">
+                      {daysInWeek} Days
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       {showStepPicker && (
         <StepPickerModal
