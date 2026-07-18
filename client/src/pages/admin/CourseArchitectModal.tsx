@@ -87,6 +87,55 @@ export default function CourseArchitectModal({
 
   // 🚀 NEW: State for our Cloning UI
   const [isCloneModalOpen, setIsCloneModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+  const handleDeleteWeek = (weekToDelete: number) => {
+    if (
+      !window.confirm(
+        `⚠️ WARNING: Are you sure you want to permanently delete ALL days in Week ${weekToDelete}?`,
+      )
+    ) {
+      return;
+    }
+
+    setDays((prev) => {
+      // 1. Filter out the days from the target week
+      const newDays = prev.filter(
+        (d) => Math.ceil(d.dayNumber / 7) !== weekToDelete,
+      );
+
+      // 2. Re-index remaining days to maintain a linear 1, 2, 3... sequence
+      const reindexedDays = newDays
+        .sort((a, b) => a.dayNumber - b.dayNumber)
+        .map((d, index) => ({
+          ...d,
+          dayNumber: index + 1,
+        }));
+
+      if (reindexedDays.length > 0) {
+        // Ensure the admin isn't left staring at a day that no longer exists
+        const isActiveDayStillValid = reindexedDays.some(
+          (d) => d.dayNumber === activeDay,
+        );
+        if (!isActiveDayStillValid) {
+          setActiveDay(reindexedDays[0].dayNumber);
+        }
+      } else {
+        // If they deleted the ONLY week, generate a blank Day 1
+        reindexedDays.push({
+          dayNumber: 1,
+          morning: { isRest: false, templateRefName: "", steps: [] },
+          evening: { isRest: false, templateRefName: "", steps: [] },
+        });
+        setActiveDay(1);
+      }
+
+      return reindexedDays;
+    });
+
+    setIsDeleteModalOpen(false);
+    toast.success(`Week ${weekToDelete} deleted and timeline re-indexed!`);
+  };
 
   const { clearDraft, saveStatus } = useAutoSave(
     `architect_draft_${courseId}`,
@@ -495,6 +544,18 @@ export default function CourseArchitectModal({
                     </span>
                   </button>
                 )}
+                {/* 🚀 NEW: Delete Week Button */}
+                {days.length > 0 && (
+                  <button
+                    onClick={() => setIsDeleteModalOpen(true)}
+                    className="w-[140px] md:w-full h-full md:h-auto shrink-0 flex flex-col items-center justify-center p-3 md:p-4 rounded-2xl transition-all duration-300 border-2 border-dashed border-red-500/20 bg-transparent text-red-500/60 hover:text-red-500 hover:border-red-500/50 hover:bg-red-500/5"
+                  >
+                    <Trash2 size={18} className="mb-1" />
+                    <span className="text-[10px] font-black uppercase tracking-widest">
+                      Delete Week
+                    </span>
+                  </button>
+                )}
               </div>
             </div>
 
@@ -850,6 +911,50 @@ export default function CourseArchitectModal({
                     className="w-full py-3.5 px-4 bg-white/5 hover:bg-blue-500/20 border border-white/5 hover:border-blue-500/50 rounded-xl text-left flex justify-between items-center transition-all group active:scale-95"
                   >
                     <span className="text-sm font-black text-white uppercase tracking-widest group-hover:text-blue-400 transition-colors">
+                      Week {weekNum}
+                    </span>
+                    <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest">
+                      {daysInWeek} Days
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 🚀 NEW: The Delete Week Mini-Modal */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
+          <div className="bg-[#121821] border border-red-500/20 rounded-[20px] p-6 max-w-sm w-full shadow-2xl relative">
+            <button
+              onClick={() => setIsDeleteModalOpen(false)}
+              className="absolute top-4 right-4 p-2 bg-black/40 rounded-full text-white/40 hover:text-white transition-colors"
+            >
+              <X size={16} />
+            </button>
+
+            <h3 className="text-xl font-black uppercase italic text-white mb-2 flex items-center gap-2">
+              <Trash2 className="text-red-500" size={20} /> Delete a Week
+            </h3>
+            <p className="text-[10px] text-[#8A94A6] uppercase tracking-widest font-bold mb-6">
+              Select a week to permanently remove. Remaining days will be
+              automatically re-numbered to prevent gaps.
+            </p>
+
+            <div className="space-y-2 max-h-[40vh] overflow-y-auto custom-scrollbar pr-1">
+              {availableWeeks.map((weekNum) => {
+                const daysInWeek = days.filter(
+                  (d) => Math.ceil(d.dayNumber / 7) === weekNum,
+                ).length;
+                return (
+                  <button
+                    key={`delete-week-${weekNum}`}
+                    onClick={() => handleDeleteWeek(weekNum)}
+                    className="w-full py-3.5 px-4 bg-white/5 hover:bg-red-500/20 border border-white/5 hover:border-red-500/50 rounded-xl text-left flex justify-between items-center transition-all group active:scale-95"
+                  >
+                    <span className="text-sm font-black text-white uppercase tracking-widest group-hover:text-red-500 transition-colors">
                       Week {weekNum}
                     </span>
                     <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest">
