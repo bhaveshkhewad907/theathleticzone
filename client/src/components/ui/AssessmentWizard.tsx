@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import api from "../../services/api";
 import toast from "react-hot-toast";
 
@@ -9,6 +9,7 @@ import SprintStep from "../../pages/steps/SprintStep";
 import StrengthStep from "../../pages/steps/StrengthStep";
 
 import ProgressiveBackground from "./ProgressiveBackground";
+import { Activity, Zap, ShieldCheck } from "lucide-react";
 
 interface ScorePayload {
   engine: {
@@ -20,13 +21,25 @@ interface ScorePayload {
     strength: number;
     power: number;
     mobility: number;
-    // 🚀 TECHNIQUE REMOVED FROM INTERFACE
   };
 }
+
+// 🚀 NEW: Phased loading messages for the "Labor Illusion"
+const LOADING_PHRASES = [
+  "Initializing Algorithmic Engine...",
+  "Parsing Biomechanical Data...",
+  "Calculating Force Production Metrics...",
+  "Analyzing Joint Mobility Baselines...",
+  "Generating Elite Custom Protocol...",
+];
 
 export default function AssessmentWizard() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // 🚀 NEW: State to trigger the interstitial analysis screen
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [loadingPhraseIndex, setLoadingPhraseIndex] = useState(0);
 
   const [scoreData, setScoreData] = useState<ScorePayload | null>(null);
 
@@ -62,6 +75,19 @@ export default function AssessmentWizard() {
   const handleNext = () => setCurrentStep((prev) => prev + 1);
   const handleBack = () => setCurrentStep((prev) => prev - 1);
 
+  // 🚀 NEW: Cycle through loading phrases when analyzing is active
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval>;
+    if (isAnalyzing) {
+      interval = setInterval(() => {
+        setLoadingPhraseIndex((prev) =>
+          prev < LOADING_PHRASES.length - 1 ? prev + 1 : prev,
+        );
+      }, 800); // Changes text every 0.8 seconds
+    }
+    return () => clearInterval(interval);
+  }, [isAnalyzing]);
+
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
@@ -95,7 +121,9 @@ export default function AssessmentWizard() {
       };
 
       const response = await api.post("/assessments", payload);
-      toast.success("Assessment Processed! Algorithm Analysis Complete.");
+
+      // 🚀 TRIGGER THE INTERSTITIAL SCREEN INSTEAD OF INSTANT REVEAL
+      setIsAnalyzing(true);
 
       const trainingYears = payload.physical.trainingAgeYears;
       const trainingMonths = payload.physical.trainingAgeMonths;
@@ -115,22 +143,25 @@ export default function AssessmentWizard() {
         calculatedOverall - Math.floor(Math.random() * 4),
       );
 
-      // 🚀 TECHNIQUE CALCULATION REMOVED
-
-      setScoreData({
-        engine: response.data.data.engineResult,
-        scores: {
-          overall: calculatedOverall,
-          strength: calculatedStrength,
-          power: calculatedPower,
-          mobility: calculatedMobility,
-          // 🚀 TECHNIQUE REMOVED FROM PAYLOAD
-        },
-      });
+      // Wait exactly 4 seconds for the labor illusion to finish, then reveal scorecard
+      setTimeout(() => {
+        setScoreData({
+          engine: response.data.data.engineResult,
+          scores: {
+            overall: calculatedOverall,
+            strength: calculatedStrength,
+            power: calculatedPower,
+            mobility: calculatedMobility,
+          },
+        });
+        setIsAnalyzing(false);
+        toast.success("Algorithm Analysis Complete.");
+      }, 4000);
     } catch (err) {
       const error = err as { response?: { data?: { message?: string } } };
       toast.error(error.response?.data?.message || "Failed to submit.");
       setIsSubmitting(false);
+      setIsAnalyzing(false);
     }
   };
 
@@ -145,12 +176,44 @@ export default function AssessmentWizard() {
   const currentBgUrl = stepBackgrounds[currentStep] || stepBackgrounds[1];
 
   // =========================================================
+  // ⏳ THE LABOR ILLUSION (ANALYZING INTERSTITIAL)
+  // =========================================================
+  if (isAnalyzing) {
+    return (
+      <ProgressiveBackground
+        src="https://media.theathleticzone.in/auth-bg-images/video-player-bg.webp"
+        className="relative w-full min-h-screen"
+      >
+        <div className="min-h-screen flex flex-col items-center justify-center p-6 animate-in fade-in duration-500 w-full relative z-10">
+          <div className="w-24 h-24 relative flex items-center justify-center mb-8">
+            <div className="absolute inset-0 border-4 border-amber-500/20 rounded-full" />
+            <div className="absolute inset-0 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
+            <Activity className="text-amber-500 animate-pulse" size={32} />
+          </div>
+
+          <h2 className="text-2xl md:text-3xl font-black italic uppercase tracking-tighter text-white mb-2 text-center">
+            Processing <span className="text-amber-500">Diagnostics</span>
+          </h2>
+
+          <div className="h-6 overflow-hidden relative w-full max-w-sm text-center">
+            <p
+              key={loadingPhraseIndex}
+              className="text-[#8A94A6] text-xs font-bold uppercase tracking-widest animate-in slide-in-from-bottom-4 fade-in duration-300"
+            >
+              {LOADING_PHRASES[loadingPhraseIndex]}
+            </p>
+          </div>
+        </div>
+      </ProgressiveBackground>
+    );
+  }
+
+  // =========================================================
   // 🏆 THE GAMIFIED SCORECARD VIEW
   // =========================================================
   if (scoreData) {
     return (
       <ProgressiveBackground
-        // 🚀 FIXED: URL extension typo repaired
         src="https://media.theathleticzone.in/auth-bg-images/video-player-bg.webp"
         className="relative w-full min-h-screen"
       >
@@ -186,7 +249,6 @@ export default function AssessmentWizard() {
               </div>
 
               <div className="lg:col-span-2 flex flex-col gap-4">
-                {/* 🚀 FIXED: Changed grid to 3 columns to perfectly fit the 3 remaining metrics */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 flex-1">
                   <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-[20px] p-6 flex flex-col justify-center shadow-inner">
                     <p className="text-[9px] font-black text-[#8A94A6] uppercase tracking-widest mb-1">
@@ -227,7 +289,6 @@ export default function AssessmentWizard() {
                       </span>
                     </div>
                   </div>
-                  {/* 🚀 TECHNIQUE UI BLOCK REMOVED ENTIRELY */}
                 </div>
 
                 <div className="bg-amber-500/10 backdrop-blur-md border border-amber-500/20 rounded-[20px] p-6 flex items-center justify-between shadow-inner shrink-0 mt-2">
@@ -240,6 +301,10 @@ export default function AssessmentWizard() {
                       {scoreData.engine?.identifiedDeficit} Track
                     </p>
                   </div>
+                  <ShieldCheck
+                    size={32}
+                    className="text-amber-500/50 hidden sm:block"
+                  />
                 </div>
               </div>
             </div>
@@ -247,9 +312,13 @@ export default function AssessmentWizard() {
             <div className="relative z-10">
               <button
                 onClick={() => window.location.reload()}
-                className="w-full py-5 bg-amber-500 text-black font-black text-xs md:text-sm uppercase tracking-widest rounded-xl hover:bg-amber-400 transition-all shadow-[0_0_30px_rgba(245,158,11,0.3)] active:scale-95 flex justify-center items-center gap-3"
+                className="w-full py-5 bg-amber-500 text-black font-black text-sm md:text-base uppercase tracking-widest rounded-xl hover:bg-amber-400 transition-all shadow-[0_10px_30px_rgba(245,158,11,0.4)] active:scale-95 flex justify-center items-center gap-3 group"
               >
-                Acknowledge & Access Dashboard
+                Activate Custom Protocol
+                <Zap
+                  size={18}
+                  className="group-hover:scale-110 transition-transform"
+                />
               </button>
             </div>
           </div>
@@ -261,6 +330,14 @@ export default function AssessmentWizard() {
   // =========================================================
   // ⚡ STANDARD ASSESSMENT WIZARD VIEW
   // =========================================================
+
+  // 🚀 UX FIX: The Goal Gradient Math. Registration = Step 1. They are now on Step 2 out of 6 total onboarding steps.
+  const logicalPhase = currentStep + 1;
+  const totalLogicalPhases = 6;
+  const percentageComplete = Math.round(
+    (logicalPhase / totalLogicalPhases) * 100,
+  );
+
   return (
     <ProgressiveBackground
       src={currentBgUrl}
@@ -270,13 +347,15 @@ export default function AssessmentWizard() {
         <div className="max-w-xl mx-auto w-full">
           <div className="mb-8">
             <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-amber-500 mb-3 drop-shadow-md">
-              <span>Phase {currentStep} of 5</span>
-              <span>{currentStep * 20}% Complete</span>
+              <span>
+                Phase {logicalPhase} of {totalLogicalPhases}
+              </span>
+              <span>{percentageComplete}% Complete</span>
             </div>
             <div className="h-2 w-full bg-black/40 backdrop-blur-md rounded-full overflow-hidden border border-white/10">
               <div
                 className="h-full bg-amber-500 transition-all duration-500 ease-out shadow-[0_0_10px_rgba(245,158,11,0.8)]"
-                style={{ width: `${currentStep * 20}%` }}
+                style={{ width: `${percentageComplete}%` }}
               />
             </div>
           </div>
@@ -313,7 +392,7 @@ export default function AssessmentWizard() {
                 onClick={handleNext}
                 className="flex-1 bg-amber-500 text-black px-6 py-4 rounded-xl font-black uppercase tracking-wider text-sm hover:bg-amber-400 active:scale-95 transition-all shadow-[0_10px_30px_rgba(245,158,11,0.3)]"
               >
-                Continue to Phase {currentStep + 1}
+                Continue Analysis
               </button>
             ) : (
               <button
@@ -321,7 +400,7 @@ export default function AssessmentWizard() {
                 disabled={isSubmitting}
                 className="flex-1 bg-green-500 text-black px-6 py-4 rounded-xl font-black uppercase tracking-wider text-sm hover:bg-green-400 active:scale-95 transition-all shadow-[0_10px_30px_rgba(34,197,94,0.3)] disabled:opacity-50"
               >
-                {isSubmitting ? "Calculating..." : "Calculate Assessment"}
+                {isSubmitting ? "Initiating..." : "Generate My Protocol"}
               </button>
             )}
           </div>
